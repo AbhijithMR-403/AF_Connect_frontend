@@ -1,0 +1,423 @@
+import React, { useState } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { TrendingUp, Calendar, BarChart3 } from 'lucide-react';
+import { useAppSelector } from '../hooks';
+import OpportunityModal from './OpportunityModal';
+import { generateOpportunitiesForMetric } from '../utils/mockOpportunityData';
+
+const TrendGraphs = () => {
+  const { salesMetrics } = useAppSelector((state) => state.dashboard);
+  const [activeView, setActiveView] = useState('weekly');
+  const [modalData, setModalData] = useState({
+    isOpen: false,
+    title: '',
+    opportunities: [],
+    totalCount: 0,
+  });
+
+  const openModal = (metricType, title, count, period) => {
+    if (!salesMetrics) return;
+    
+    const opportunities = generateOpportunitiesForMetric(metricType, Math.min(count, 50), salesMetrics);
+    setModalData({
+      isOpen: true,
+      title: `${title} - ${period}`,
+      opportunities,
+      totalCount: count,
+    });
+  };
+
+  const closeModal = () => {
+    setModalData({
+      isOpen: false,
+      title: '',
+      opportunities: [],
+      totalCount: 0,
+    });
+  };
+
+  if (!salesMetrics) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-8">
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Generate mock trend data based on the selected view
+  const generateTrendData = (view) => {
+    const baseLeads = salesMetrics.totalLeads;
+    const baseAppointments = salesMetrics.totalAppointments;
+    const baseNJMs = salesMetrics.totalNJMs;
+
+    switch (view) {
+      case 'daily':
+        return Array.from({ length: 7 }, (_, i) => {
+          const day = new Date();
+          day.setDate(day.getDate() - (6 - i));
+          const dayName = day.toLocaleDateString('en-US', { weekday: 'short' });
+          
+          return {
+            period: dayName,
+            leads: Math.floor(baseLeads / 30 + Math.random() * 50 - 25),
+            appointments: Math.floor(baseAppointments / 30 + Math.random() * 30 - 15),
+            njms: Math.floor(baseNJMs / 30 + Math.random() * 20 - 10),
+          };
+        });
+
+      case 'weekly':
+        return Array.from({ length: 8 }, (_, i) => {
+          const weekStart = new Date();
+          weekStart.setDate(weekStart.getDate() - (7 - i) * 7);
+          const weekLabel = `W${i + 1}`;
+          
+          return {
+            period: weekLabel,
+            leads: Math.floor(baseLeads / 4 + Math.random() * 200 - 100),
+            appointments: Math.floor(baseAppointments / 4 + Math.random() * 120 - 60),
+            njms: Math.floor(baseNJMs / 4 + Math.random() * 80 - 40),
+          };
+        });
+
+      case 'monthly':
+        return Array.from({ length: 6 }, (_, i) => {
+          const month = new Date();
+          month.setMonth(month.getMonth() - (5 - i));
+          const monthName = month.toLocaleDateString('en-US', { month: 'short' });
+          
+          return {
+            period: monthName,
+            leads: Math.floor(baseLeads + Math.random() * 400 - 200),
+            appointments: Math.floor(baseAppointments + Math.random() * 240 - 120),
+            njms: Math.floor(baseNJMs + Math.random() * 160 - 80),
+          };
+        });
+
+      default:
+        return [];
+    }
+  };
+
+  const trendData = generateTrendData(activeView);
+  
+  // Calculate current period totals and changes
+  const currentPeriod = trendData[trendData.length - 1];
+  const previousPeriod = trendData[trendData.length - 2];
+  
+  const calculateChange = (current, previous) => {
+    if (!previous || previous === 0) return 0;
+    return ((current - previous) / previous * 100);
+  };
+
+  const leadsChange = calculateChange(currentPeriod?.leads, previousPeriod?.leads);
+  const appointmentsChange = calculateChange(currentPeriod?.appointments, previousPeriod?.appointments);
+  const njmsChange = calculateChange(currentPeriod?.njms, previousPeriod?.njms);
+
+  const viewOptions = [
+    { value: 'daily', label: 'Daily', period: 'Last 7 Days' },
+    { value: 'weekly', label: 'Weekly', period: 'Last 8 Weeks' },
+    { value: 'monthly', label: 'Monthly', period: 'Last 6 Months' },
+  ];
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-gray-800 p-4 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg backdrop-blur-sm">
+          <p className="font-semibold text-gray-900 dark:text-white mb-2">{label}</p>
+          {payload.map((entry, index) => (
+            <p key={index} className="text-sm" style={{ color: entry.color }}>
+              {entry.name}: {entry.value.toLocaleString()}
+            </p>
+          ))}
+          <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Click to view opportunities</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const handleBarClick = (data, dataKey) => {
+    const metricTypes = {
+      leads: 'total-leads',
+      appointments: 'total-appointments', 
+      njms: 'total-njms'
+    };
+    
+    const titles = {
+      leads: 'Leads',
+      appointments: 'Appointments',
+      njms: 'NJMs'
+    };
+    
+    const metricType = metricTypes[dataKey];
+    const title = titles[dataKey];
+    const count = data[dataKey];
+    const period = data.period;
+    
+    if (metricType && title && count) {
+      openModal(metricType, title, count, period);
+    }
+  };
+
+
+  const formatChange = (change) => {
+    const prefix = change > 0 ? '+' : '';
+    return `${prefix}${change.toFixed(1)}%`;
+  };
+
+  const getChangeColor = (change) => {
+    return change > 0 
+      ? 'text-green-600 dark:text-green-400' 
+      : change < 0 
+        ? 'text-red-600 dark:text-red-400' 
+        : 'text-gray-500 dark:text-gray-400';
+  };
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 sm:p-6 transition-colors duration-200">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
+            Trends
+          </h3>
+        </div>
+
+        {/* View Toggle */}
+        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          {viewOptions.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => setActiveView(option.value)}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                activeView === option.value
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        {/* Leads Summary */}
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Leads</span>
+            <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+              {currentPeriod?.leads?.toLocaleString() || '0'}
+            </span>
+            <span className={`text-sm font-medium ${getChangeColor(leadsChange)}`}>
+              {formatChange(leadsChange)}
+            </span>
+          </div>
+          <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+            Current {activeView.slice(0, -2)} period
+          </p>
+        </div>
+
+        {/* Appointments Summary */}
+        <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 rounded-lg p-4 border border-green-200 dark:border-green-700">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-green-700 dark:text-green-300">Appointments</span>
+            <Calendar className="w-4 h-4 text-green-600 dark:text-green-400" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-green-900 dark:text-green-100">
+              {currentPeriod?.appointments?.toLocaleString() || '0'}
+            </span>
+            <span className={`text-sm font-medium ${getChangeColor(appointmentsChange)}`}>
+              {formatChange(appointmentsChange)}
+            </span>
+          </div>
+          <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+            Current {activeView.slice(0, -2)} period
+          </p>
+        </div>
+
+        {/* NJMs Summary */}
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900 dark:to-purple-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-purple-700 dark:text-purple-300">NJMs</span>
+            <TrendingUp className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-purple-900 dark:text-purple-100">
+              {currentPeriod?.njms?.toLocaleString() || '0'}
+            </span>
+            <span className={`text-sm font-medium ${getChangeColor(njmsChange)}`}>
+              {formatChange(njmsChange)}
+            </span>
+          </div>
+          <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+            Current {activeView.slice(0, -2)} period
+          </p>
+        </div>
+      </div>
+
+      {/* Trend Chart */}
+      <div className="h-80">
+        <div className="mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {viewOptions.find(opt => opt.value === activeView)?.period}
+          </p>
+        </div>
+        
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={trendData}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            barCategoryGap="20%"
+          >
+            <defs>
+              <linearGradient id="leadsGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.8}/>
+                <stop offset="100%" stopColor="#1E40AF" stopOpacity={1}/>
+              </linearGradient>
+              <linearGradient id="appointmentsGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#10B981" stopOpacity={0.8}/>
+                <stop offset="100%" stopColor="#047857" stopOpacity={1}/>
+              </linearGradient>
+              <linearGradient id="njmsGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.8}/>
+                <stop offset="100%" stopColor="#6D28D9" stopOpacity={1}/>
+              </linearGradient>
+            </defs>
+            
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke="#E5E7EB" 
+              strokeOpacity={0.5}
+              className="dark:stroke-gray-600"
+            />
+            <XAxis 
+              dataKey="period" 
+              tick={{ fontSize: 12, fill: '#6B7280' }}
+              axisLine={{ stroke: '#D1D5DB' }}
+              tickLine={{ stroke: '#D1D5DB' }}
+              className="dark:fill-gray-400"
+            />
+            <YAxis 
+              tick={{ fontSize: 12, fill: '#6B7280' }}
+              axisLine={{ stroke: '#D1D5DB' }}
+              tickLine={{ stroke: '#D1D5DB' }}
+              className="dark:fill-gray-400"
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend 
+              wrapperStyle={{ 
+                paddingTop: '20px',
+                fontSize: '14px'
+              }}
+            />
+            
+            <Bar 
+              dataKey="leads" 
+              name="Leads"
+              fill="url(#leadsGradient)"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={60}
+              cursor="pointer"
+              onClick={(data) => handleBarClick(data, 'leads')}
+              cursor="pointer"
+              onClick={(data) => handleBarClick(data, 'leads')}
+            />
+            <Bar 
+              dataKey="appointments" 
+              name="Appointments"
+              fill="url(#appointmentsGradient)"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={60}
+              cursor="pointer"
+              onClick={(data) => handleBarClick(data, 'appointments')}
+              cursor="pointer"
+              onClick={(data) => handleBarClick(data, 'appointments')}
+            />
+            <Bar 
+              dataKey="njms" 
+              name="NJMs"
+              fill="url(#njmsGradient)"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={60}
+              cursor="pointer"
+              onClick={(data) => handleBarClick(data, 'njms')}
+              cursor="pointer"
+              onClick={(data) => handleBarClick(data, 'njms')}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Highlights Section */}
+      <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Highlights</h4>
+          <button className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium">
+            Show All
+          </button>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">Peak Performance</span>
+            </div>
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              Highest leads recorded in {activeView === 'daily' ? 'the last week' : activeView === 'weekly' ? 'week 6' : 'last month'}
+            </p>
+          </div>
+          
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">Conversion Trend</span>
+            </div>
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              Appointment to NJM ratio improving over time
+            </p>
+          </div>
+          
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">Growth Pattern</span>
+            </div>
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              Consistent upward trend in all metrics
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Opportunity Modal */}
+      <OpportunityModal
+        isOpen={modalData.isOpen}
+        onClose={closeModal}
+        title={modalData.title}
+        opportunities={modalData.opportunities}
+        totalCount={modalData.totalCount}
+      />
+
+      {/* Opportunity Modal */}
+      <OpportunityModal
+        isOpen={modalData.isOpen}
+        onClose={closeModal}
+        title={modalData.title}
+        opportunities={modalData.opportunities}
+        totalCount={modalData.totalCount}
+      />
+    </div>
+  );
+};
+
+export default TrendGraphs;
