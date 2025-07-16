@@ -6,6 +6,7 @@ import ChartSection from './ChartSection';
 import TrendGraphs from './TrendGraphs';
 import OpportunityModal from './OpportunityModal';
 import { generateOpportunitiesForMetric, generateTabbedOpportunities } from '../utils/mockOpportunityData';
+import NJMAnalysis from './NJMAnalysis';
 
 const SalesPipeline = () => {
   const { salesMetrics } = useAppSelector((state) => state.dashboard);
@@ -174,89 +175,7 @@ const SalesPipeline = () => {
       </div>
 
       {/* NJM Analysis Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-        <div className="flex items-center gap-2 mb-6">
-          <Target className="w-5 h-5 text-purple-600" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">NJM Analysis</h3>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <ClickableMetricCard
-            title="Contacted"
-            value={Math.round(salesMetrics.totalNJMs * 0.85)}
-            change={12.3}
-            icon={Phone}
-            iconColor="text-blue-600 dark:text-blue-400"
-            iconBgColor="bg-blue-100 dark:bg-blue-900"
-            onClick={() => openModal('contacted-njms', 'Contacted NJMs - GHL Opportunities', Math.round(salesMetrics.totalNJMs * 0.85))}
-          />
-          
-          <div 
-            onClick={() => openModal('facebook-leads', 'NJM by Lead Source - GHL Opportunities', salesMetrics.totalNJMs)}
-            className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg p-6 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">NJM by Lead Source</h3>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-700 dark:text-gray-300">Facebook:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">{Math.round(salesMetrics.totalNJMs * 0.35)}</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-700 dark:text-gray-300">Instagram:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">{Math.round(salesMetrics.totalNJMs * 0.25)}</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-700 dark:text-gray-300">Google Ads:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">{Math.round(salesMetrics.totalNJMs * 0.19)}</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-700 dark:text-gray-300">Outreach:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">{Math.round(salesMetrics.totalNJMs * 0.12)}</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-700 dark:text-gray-300">Referral:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">{Math.round(salesMetrics.totalNJMs * 0.09)}</span>
-                  </div>
-                </div>
-                <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Click to view opportunities
-                </div>
-              </div>
-              <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900 group-hover:scale-110 transition-transform">
-                <BarChart3 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-              </div>
-            </div>
-          </div>
-
-          <div 
-            onClick={() => openModal('paid-media-njms', 'NJM from Paid Media - GHL Opportunities', Math.round(salesMetrics.totalNJMs * 0.79))}
-            className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg p-6 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">NJM from Paid Media</h3>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {Math.round(salesMetrics.totalNJMs * 0.79).toLocaleString()}
-                  </span>
-                  <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                    79%
-                  </span>
-                </div>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Facebook + IG + Google Ads</p>
-                <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Click to view opportunities
-                </div>
-              </div>
-              <div className="p-3 rounded-xl bg-green-100 dark:bg-green-900 group-hover:scale-110 transition-transform">
-                <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <NJMAnalysis salesMetrics={salesMetrics} openModal={openModal} />
 
       {/* Sales Funnel Ratios Section */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">

@@ -59,7 +59,7 @@ const DashboardHeader = () => {
               AF Connect
             </h1>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 leading-relaxed">
-              Regional reporting across 119 clubs in 6 countries
+              Regional reporting
             </p>
           </div>
         </div>
@@ -91,40 +91,41 @@ const DashboardHeader = () => {
                 </>
               )}
             </button>
+            {/* ***Div below Might be uncommented in the future so don't delete them*** */}
 
             {/* Export buttons - hidden on mobile, shown as dropdown on small screens */}
-            <div className="hidden sm:flex gap-2">
-              {/* <button className="flex items-center gap-2 px-3 lg:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs lg:text-sm">
+            {/* <div className="hidden sm:flex gap-2">
+              <button className="flex items-center gap-2 px-3 lg:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs lg:text-sm">
                 <Download className="w-4 h-4 flex-shrink-0 text-gray-600 dark:text-gray-400" />
                 <span className="hidden lg:inline font-medium text-gray-700 dark:text-gray-300">Export CSV</span>
                 <span className="lg:hidden font-medium text-gray-700 dark:text-gray-300">CSV</span>
-              </button> */}
+              </button>
 
               <button className="flex items-center gap-2 px-3 lg:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs lg:text-sm">
                 <FileText className="w-4 h-4 flex-shrink-0 text-gray-600 dark:text-gray-400" />
                 <span className="hidden lg:inline font-medium text-gray-700 dark:text-gray-300">Export PDF</span>
                 <span className="lg:hidden font-medium text-gray-700 dark:text-gray-300">PDF</span>
               </button>
-            </div>
+            </div> */}
 
             {/* Mobile export dropdown */}
-            <div className="sm:hidden">
+            {/* <div className="sm:hidden">
               <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300">
                 <option value="">Export Options</option>
-                {/* <option value="csv">Export CSV</option> */}
+                <option value="csv">Export CSV</option>
                 <option value="pdf">Export PDF</option>
               </select>
-            </div>
+            </div> */}
 
             {/* Refresh button */}
-            <button
+            {/* <button
               onClick={handleRefresh}
               disabled={loading}
               className="flex items-center justify-center gap-2 px-3 lg:px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 text-xs lg:text-sm font-medium"
             >
               <RefreshCw className={`w-4 h-4 flex-shrink-0 ${loading ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
-            </button>
+            </button> */}
           </div>
         </div>
       </div>

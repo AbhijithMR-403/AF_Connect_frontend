@@ -15,12 +15,12 @@ const initialState = {
   onboardingMetrics: null,
   defaulterMetrics: null,
   countries: [
-    { id: 'ph', name: 'Philippines', flag: '🇵🇭', clubCount: 53 },
-    { id: 'id', name: 'Indonesia', flag: '🇮🇩', clubCount: 13 },
-    { id: 'my', name: 'Malaysia', flag: '🇲🇾', clubCount: 20 },
-    { id: 'sg', name: 'Singapore', flag: '🇸🇬', clubCount: 11 },
-    { id: 'th', name: 'Thailand', flag: '🇹🇭', clubCount: 14 },
-    { id: 'vn', name: 'Vietnam', flag: '🇻🇳', clubCount: 8 },
+    { id: 'PH', name: 'Philippines', flag: '🇵🇭', clubCount: 53 },
+    { id: 'ID', name: 'Indonesia', flag: '🇮🇩', clubCount: 13 },
+    { id: 'MY', name: 'Malaysia', flag: '🇲🇾', clubCount: 20 },
+    { id: 'SG', name: 'Singapore', flag: '🇸🇬', clubCount: 11 },
+    { id: 'TH', name: 'Thailand', flag: '🇹🇭', clubCount: 14 },
+    { id: 'VN', name: 'Vietnam', flag: '🇻🇳', clubCount: 8 },
   ],
   clubs: [
     { id: 'club-1', name: 'Manila Central', countryId: 'ph' },
