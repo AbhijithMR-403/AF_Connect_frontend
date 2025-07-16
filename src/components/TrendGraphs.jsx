@@ -328,8 +328,6 @@ const TrendGraphs = () => {
               maxBarSize={60}
               cursor="pointer"
               onClick={(data) => handleBarClick(data, 'leads')}
-              cursor="pointer"
-              onClick={(data) => handleBarClick(data, 'leads')}
             />
             <Bar 
               dataKey="appointments" 
@@ -339,8 +337,6 @@ const TrendGraphs = () => {
               maxBarSize={60}
               cursor="pointer"
               onClick={(data) => handleBarClick(data, 'appointments')}
-              cursor="pointer"
-              onClick={(data) => handleBarClick(data, 'appointments')}
             />
             <Bar 
               dataKey="njms" 
@@ -348,8 +344,6 @@ const TrendGraphs = () => {
               fill="url(#njmsGradient)"
               radius={[4, 4, 0, 0]}
               maxBarSize={60}
-              cursor="pointer"
-              onClick={(data) => handleBarClick(data, 'njms')}
               cursor="pointer"
               onClick={(data) => handleBarClick(data, 'njms')}
             />
