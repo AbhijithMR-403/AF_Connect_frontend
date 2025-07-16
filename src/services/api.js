@@ -54,9 +54,15 @@ export const generateDummyData = (filters) => {
 
   const defaulterMetrics = {
     totalDefaulters: 89,
+    totalDefaulters2Month: 45, // 2-month defaulters
+    totalDefaulters3Month: 22, // 3-month defaulters
     communicationsSent: 234,
     ptpConversion: 67.8,
     paymentRecoveryRate: 45.2,
+    paid: 30, // Paid
+    totalPTP: 50, // Total PTP
+    noResponse: 15, // No Response
+    cancelledMembership: 8, // Cancelled Membership
   };
 
   const clubs = [

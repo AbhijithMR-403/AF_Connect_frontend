@@ -97,8 +97,17 @@ const FilterBar = () => {
       <div className="relative">
         <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">{label}</label>
         
-        {/* Selected items display */}
-        <div className="flex flex-wrap gap-1 mb-2 min-h-[24px]">
+        {/* Dropdown button */}
+        <button
+          onClick={() => toggleDropdown(filterType)}
+          className="w-full flex items-center justify-between px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+        >
+          <span className="text-gray-700 dark:text-gray-300">Select {label}</span>
+          <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+        
+        {/* Selected items display BELOW the dropdown button */}
+        <div className="flex flex-wrap gap-1 mt-2 min-h-[24px]">
           {selectedValues.includes('all') ? (
             <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
               All {label}
@@ -125,15 +134,6 @@ const FilterBar = () => {
             <span className="text-xs text-gray-500 dark:text-gray-400">No {label.toLowerCase()} selected</span>
           )}
         </div>
-        
-        {/* Dropdown button */}
-        <button
-          onClick={() => toggleDropdown(filterType)}
-          className="w-full flex items-center justify-between px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
-        >
-          <span className="text-gray-700 dark:text-gray-300">Select {label}</span>
-          <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-        </button>
         
         {/* Dropdown menu */}
         {isOpen && (
@@ -180,13 +180,6 @@ const FilterBar = () => {
       <div className="relative">
         <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">{label}</label>
         
-        {/* Current selection display */}
-        <div className="mb-2 min-h-[24px]">
-          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-            {getDisplayValue()}
-          </span>
-        </div>
-        
         {/* Dropdown button */}
         <button
           onClick={() => toggleDropdown('dateRange')}
@@ -195,6 +188,13 @@ const FilterBar = () => {
           <span className="text-gray-700 dark:text-gray-300">Change Date Range</span>
           <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
+        
+        {/* Current selection display BELOW the dropdown button */}
+        <div className="mt-2 min-h-[24px]">
+          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+            {getDisplayValue()}
+          </span>
+        </div>
         
         {/* Dropdown menu */}
         {isOpen && (
@@ -225,25 +225,6 @@ const FilterBar = () => {
     );
   };
 
-  const SingleSelectDropdown = ({ label, value, options, onChange }) => (
-    <div className="flex flex-col gap-1">
-      <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
-      <div className="relative">
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="appearance-none bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 sm:px-4 py-2 pr-8 sm:pr-10 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full min-w-0 text-gray-700 dark:text-gray-300"
-        >
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <ChevronDown className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
-      </div>
-    </div>
-  );
 
   const countryOptions = [
     { value: 'all', label: 'All Countries' },
@@ -331,11 +312,12 @@ const FilterBar = () => {
             onChange={(value) => handleSingleSelectChange('dateRange', value)}
           />
           
-          <SingleSelectDropdown
+          {/* Change Lead Source to MultiSelectDropdown */}
+          <MultiSelectDropdown
             label="Lead Source"
-            value={filters.leadSource}
+            filterType="leadSource"
             options={leadSourceOptions}
-            onChange={(value) => handleSingleSelectChange('leadSource', value)}
+            selectedValues={Array.isArray(filters.leadSource) ? filters.leadSource : [filters.leadSource || 'all']}
           />
         </div>
       </div>

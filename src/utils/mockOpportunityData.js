@@ -208,6 +208,63 @@ export const generateOpportunitiesForMetric = (
       }
       break;
 
+    case 'defaulter-1m':
+      for (let i = 0; i < count; i++) {
+        opportunities.push(generateOpportunity({
+          stage: 'Default 1M',
+          status: 'hot',
+        }));
+      }
+      break;
+    case 'defaulter-2m':
+      for (let i = 0; i < count; i++) {
+        opportunities.push(generateOpportunity({
+          stage: 'Default 2M',
+          status: 'warm',
+        }));
+      }
+      break;
+    case 'defaulter-3m':
+      for (let i = 0; i < count; i++) {
+        opportunities.push(generateOpportunity({
+          stage: 'Default 3M',
+          status: 'cold',
+        }));
+      }
+      break;
+    case 'defaulter-paid':
+      for (let i = 0; i < count; i++) {
+        opportunities.push(generateOpportunity({
+          stage: 'Paid',
+          status: 'hot',
+        }));
+      }
+      break;
+    case 'defaulter-ptp':
+      for (let i = 0; i < count; i++) {
+        opportunities.push(generateOpportunity({
+          stage: 'PTP',
+          status: 'warm',
+        }));
+      }
+      break;
+    case 'defaulter-noresponse':
+      for (let i = 0; i < count; i++) {
+        opportunities.push(generateOpportunity({
+          stage: 'No Response',
+          status: 'cold',
+        }));
+      }
+      break;
+    case 'defaulter-cancelled':
+      for (let i = 0; i < count; i++) {
+        opportunities.push(generateOpportunity({
+          stage: 'Cancelled',
+          status: 'cold',
+        }));
+      }
+      break;
+
     default:
       for (let i = 0; i < count; i++) {
         opportunities.push(generateOpportunity());

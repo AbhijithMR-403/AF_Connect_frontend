@@ -56,7 +56,7 @@ const DashboardHeader = () => {
           {/* Title and Description */}
           <div className="min-w-0 flex-1">
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2 leading-tight">
-              Macro Report Dashboard
+              AF Connect
             </h1>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 leading-relaxed">
               Regional reporting across 119 clubs in 6 countries
@@ -94,11 +94,11 @@ const DashboardHeader = () => {
 
             {/* Export buttons - hidden on mobile, shown as dropdown on small screens */}
             <div className="hidden sm:flex gap-2">
-              <button className="flex items-center gap-2 px-3 lg:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs lg:text-sm">
+              {/* <button className="flex items-center gap-2 px-3 lg:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs lg:text-sm">
                 <Download className="w-4 h-4 flex-shrink-0 text-gray-600 dark:text-gray-400" />
                 <span className="hidden lg:inline font-medium text-gray-700 dark:text-gray-300">Export CSV</span>
                 <span className="lg:hidden font-medium text-gray-700 dark:text-gray-300">CSV</span>
-              </button>
+              </button> */}
 
               <button className="flex items-center gap-2 px-3 lg:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs lg:text-sm">
                 <FileText className="w-4 h-4 flex-shrink-0 text-gray-600 dark:text-gray-400" />
@@ -111,7 +111,7 @@ const DashboardHeader = () => {
             <div className="sm:hidden">
               <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300">
                 <option value="">Export Options</option>
-                <option value="csv">Export CSV</option>
+                {/* <option value="csv">Export CSV</option> */}
                 <option value="pdf">Export PDF</option>
               </select>
             </div>

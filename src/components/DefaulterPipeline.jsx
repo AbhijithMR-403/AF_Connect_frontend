@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AlertTriangle, MessageCircle, DollarSign, TrendingDown } from 'lucide-react';
 import { useAppSelector } from '../hooks';
+import OpportunityModal from './OpportunityModal';
+import { generateOpportunitiesForMetric } from '../utils/mockOpportunityData';
 
 const DefaulterPipeline = () => {
   const { defaulterMetrics } = useAppSelector((state) => state.dashboard);
+  const [modalData, setModalData] = useState({ isOpen: false, title: '', opportunities: [], totalCount: 0 });
 
   if (!defaulterMetrics) {
     return (
@@ -15,6 +18,20 @@ const DefaulterPipeline = () => {
     );
   }
 
+  // Map metric index to metricType for generateOpportunitiesForMetric
+  const metricTypes = [
+    'defaulter-1m',
+    'defaulter-2m',
+    'defaulter-3m',
+    'defaulter-paid',
+    'defaulter-ptp',
+    'defaulter-noresponse',
+    'defaulter-cancelled',
+    null, // Communications Sent (no modal)
+    null, // PTP Conversion (no modal)
+    null, // Payment Recovery Rate (no modal)
+  ];
+
   const metrics = [
     {
       title: 'Total 1-Month Defaulters',
@@ -23,6 +40,60 @@ const DefaulterPipeline = () => {
       icon: AlertTriangle,
       color: 'text-red-600 dark:text-red-400',
       bgColor: 'bg-red-100 dark:bg-red-900',
+      isPercentage: false,
+    },
+    {
+      title: 'Total 2-Month Defaulters',
+      value: defaulterMetrics.totalDefaulters2Month,
+      description: 'Members in default status (D2)',
+      icon: AlertTriangle,
+      color: 'text-orange-600 dark:text-orange-400',
+      bgColor: 'bg-orange-100 dark:bg-orange-900',
+      isPercentage: false,
+    },
+    {
+      title: 'Total 3-Month Defaulters',
+      value: defaulterMetrics.totalDefaulters3Month,
+      description: 'Members in default status (D3)',
+      icon: AlertTriangle,
+      color: 'text-yellow-600 dark:text-yellow-400',
+      bgColor: 'bg-yellow-100 dark:bg-yellow-900',
+      isPercentage: false,
+    },
+    {
+      title: 'Paid',
+      value: defaulterMetrics.paid,
+      description: 'Number of members who paid',
+      icon: DollarSign,
+      color: 'text-green-600 dark:text-green-400',
+      bgColor: 'bg-green-100 dark:bg-green-900',
+      isPercentage: false,
+    },
+    {
+      title: 'Total PTP',
+      value: defaulterMetrics.totalPTP,
+      description: 'Total Promise to Pay cases',
+      icon: TrendingDown,
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-100 dark:bg-blue-900',
+      isPercentage: false,
+    },
+    {
+      title: 'No Response',
+      value: defaulterMetrics.noResponse,
+      description: 'No response from members',
+      icon: MessageCircle,
+      color: 'text-gray-600 dark:text-gray-400',
+      bgColor: 'bg-gray-100 dark:bg-gray-900',
+      isPercentage: false,
+    },
+    {
+      title: 'Cancelled Membership',
+      value: defaulterMetrics.cancelledMembership,
+      description: 'Memberships cancelled',
+      icon: AlertTriangle,
+      color: 'text-pink-600 dark:text-pink-400',
+      bgColor: 'bg-pink-100 dark:bg-pink-900',
       isPercentage: false,
     },
     {
@@ -54,6 +125,23 @@ const DefaulterPipeline = () => {
     },
   ];
 
+  const handleCardClick = (metric, index) => {
+    const metricType = metricTypes[index];
+    if (!metricType) return;
+    // Use the value as count, but parse if string (for % metrics)
+    let count = typeof metric.value === 'string' ? parseInt(metric.value) : metric.value;
+    if (isNaN(count) || count <= 0) count = 10;
+    const opportunities = generateOpportunitiesForMetric(metricType, count);
+    setModalData({
+      isOpen: true,
+      title: metric.title + ' - GHL Opportunities',
+      opportunities,
+      totalCount: count,
+    });
+  };
+
+  const closeModal = () => setModalData({ ...modalData, isOpen: false });
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors duration-200">
       <div className="flex items-center gap-2 mb-6">
@@ -64,13 +152,17 @@ const DefaulterPipeline = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {metrics.map((metric, index) => {
           const Icon = metric.icon;
+          // Only add cursor-pointer and enhanced hover for cards that are clickable (i.e., have a metricType)
+          const isClickable = !!metricTypes[index];
           return (
             <div
               key={index}
-              className="border border-gray-100 dark:border-gray-700 rounded-lg p-6 hover:shadow-md transition-shadow duration-200 bg-white dark:bg-gray-800"
+              className={`border border-gray-100 dark:border-gray-700 rounded-lg p-6 transition-shadow duration-200 bg-white dark:bg-gray-800${isClickable ? ' cursor-pointer hover:shadow-lg hover:border-blue-400 dark:hover:border-blue-500 hover:scale-[1.03] transform' : ' hover:shadow-md'}`}
+              onClick={isClickable ? () => handleCardClick(metric, index) : undefined}
+              style={{ transition: 'box-shadow 0.2s, border-color 0.2s, transform 0.2s' }}
             >
               <div className="flex items-center justify-between mb-4">
-                <div className={`p-2 rounded-lg ${metric.bgColor}`}>
+                <div className={`p-2 rounded-lg ${metric.bgColor}`}> 
                   <Icon className={`w-5 h-5 ${metric.color}`} />
                 </div>
                 <div className={`text-2xl font-bold ${metric.color}`}>
@@ -85,34 +177,13 @@ const DefaulterPipeline = () => {
           );
         })}
       </div>
-
-      {/* Recovery Performance Indicator */}
-      <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900 dark:to-green-900 rounded-lg border border-blue-100 dark:border-blue-800">
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 className="font-medium text-gray-900 dark:text-white">Recovery Performance</h4>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Current recovery rate vs. target (50%)
-            </p>
-          </div>
-          <div className="text-right">
-            <div className="text-lg font-bold text-green-600 dark:text-green-400">
-              {defaulterMetrics.paymentRecoveryRate}%
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              {defaulterMetrics.paymentRecoveryRate >= 50 ? 'Above Target' : 'Below Target'}
-            </div>
-          </div>
-        </div>
-        <div className="mt-3">
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div
-              className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${Math.min(defaulterMetrics.paymentRecoveryRate, 100)}%` }}
-            ></div>
-          </div>
-        </div>
-      </div>
+      <OpportunityModal
+        isOpen={modalData.isOpen}
+        onClose={closeModal}
+        title={modalData.title}
+        opportunities={modalData.opportunities}
+        totalCount={modalData.totalCount}
+      />
     </div>
   );
 };
