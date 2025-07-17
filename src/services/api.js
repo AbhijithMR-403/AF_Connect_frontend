@@ -1,6 +1,8 @@
+import { config } from '../config/env.js';
+
 export const fetchDashboardData = async (filters) => {
   // Simulate API call
-  const response = await fetch('/api/dashboard', {
+  const response = await fetch(`${config.api.baseUrl}/api/dashboard`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -13,6 +15,28 @@ export const fetchDashboardData = async (filters) => {
   }
 
   return response.json();
+};
+
+export const fetchUsers = async () => {
+  try {
+    const response = await fetch(`${config.api.baseUrl}/ghlusers`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': true
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch users: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    throw error;
+  }
 };
 
 export const generateDummyData = (filters) => {

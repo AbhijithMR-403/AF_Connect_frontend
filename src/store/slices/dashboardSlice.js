@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchDashboardData, generateDummyData } from '../../services/api';
+import { fetchDashboardData, generateDummyData, fetchUsers } from '../../services/api';
 
 const initialState = {
   filters: {
@@ -14,6 +14,9 @@ const initialState = {
   salesMetrics: null,
   onboardingMetrics: null,
   defaulterMetrics: null,
+  users: [],
+  usersLoading: false,
+  usersError: null,
   countries: [
     { id: 'PH', name: 'Philippines', flag: '🇵🇭', clubCount: 53 },
     { id: 'ID', name: 'Indonesia', flag: '🇮🇩', clubCount: 13 },
@@ -56,6 +59,19 @@ export const loadDashboardData = createAsyncThunk(
   }
 );
 
+// Async thunk for fetching users
+export const loadUsers = createAsyncThunk(
+  'dashboard/loadUsers',
+  async (_, { rejectWithValue }) => {
+    try {
+      const data = await fetchUsers();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState,
@@ -84,6 +100,18 @@ const dashboardSlice = createSlice({
       .addCase(loadDashboardData.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to load dashboard data';
+      })
+      .addCase(loadUsers.pending, (state) => {
+        state.usersLoading = true;
+        state.usersError = null;
+      })
+      .addCase(loadUsers.fulfilled, (state, action) => {
+        state.usersLoading = false;
+        state.users = action.payload;
+      })
+      .addCase(loadUsers.rejected, (state, action) => {
+        state.usersLoading = false;
+        state.usersError = action.payload || 'Failed to load users';
       });
   },
 });

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, X, Check, Calendar } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../hooks';
-import { updateFilters } from '../store/slices/dashboardSlice';
+import { updateFilters, loadUsers } from '../store/slices/dashboardSlice';
 
 const FilterBar = () => {
   const dispatch = useAppDispatch();
-  const { filters, countries, clubs } = useAppSelector((state) => state.dashboard);
+  const { filters, countries, clubs, users, usersLoading, usersError } = useAppSelector((state) => state.dashboard);
   
   // State for dropdown visibility
   const [dropdownStates, setDropdownStates] = useState({
@@ -21,6 +21,11 @@ const FilterBar = () => {
     endDate: '',
     isOpen: false,
   });
+
+  // Fetch users on component mount
+  useEffect(() => {
+    dispatch(loadUsers());
+  }, [dispatch]);
 
   const toggleDropdown = (filterType) => {
     setDropdownStates(prev => ({
@@ -90,7 +95,7 @@ const FilterBar = () => {
     }
   };
 
-  const MultiSelectDropdown = ({ label, filterType, options, selectedValues = [] }) => {
+  const MultiSelectDropdown = ({ label, filterType, options, selectedValues = [], isLoading = false, error = null }) => {
     const isOpen = dropdownStates[filterType];
     
     return (
@@ -100,15 +105,26 @@ const FilterBar = () => {
         {/* Dropdown button */}
         <button
           onClick={() => toggleDropdown(filterType)}
-          className="w-full flex items-center justify-between px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+          disabled={isLoading}
+          className="w-full flex items-center justify-between px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 dark:hover:border-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <span className="text-gray-700 dark:text-gray-300">Select {label}</span>
-          <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <span className="text-gray-700 dark:text-gray-300">
+            {isLoading ? `Loading ${label}...` : `Select ${label}`}
+          </span>
+          {isLoading ? (
+            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          ) : (
+            <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          )}
         </button>
         
         {/* Selected items display BELOW the dropdown button */}
         <div className="flex flex-wrap gap-1 mt-2 min-h-[24px]">
-          {selectedValues.includes('all') ? (
+          {error ? (
+            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+              Error loading {label.toLowerCase()}
+            </span>
+          ) : selectedValues.includes('all') ? (
             <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
               All {label}
             </span>
@@ -143,21 +159,32 @@ const FilterBar = () => {
               onClick={() => closeDropdown(filterType)}
             />
             <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-              {options.map((option) => {
-                const isSelected = selectedValues.includes(option.value);
-                return (
-                  <button
-                    key={option.value}
-                    onClick={() => handleMultiSelectChange(filterType, option.value)}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                      isSelected ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'
-                    }`}
-                  >
-                    <span>{option.label}</span>
-                    {isSelected && <Check className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
-                  </button>
-                );
-              })}
+              {isLoading ? (
+                <div className="flex items-center justify-center px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Loading...
+                </div>
+              ) : error ? (
+                <div className="px-3 py-4 text-sm text-red-600 dark:text-red-400">
+                  Failed to load {label.toLowerCase()}. Please try again.
+                </div>
+              ) : (
+                options.map((option) => {
+                  const isSelected = selectedValues.includes(option.value);
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => handleMultiSelectChange(filterType, option.value)}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                        isSelected ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      <span>{option.label}</span>
+                      {isSelected && <Check className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
+                    </button>
+                  );
+                })
+              )}
             </div>
           </>
         )}
@@ -244,16 +271,10 @@ const FilterBar = () => {
 
   const assignedUserOptions = [
     { value: 'all', label: 'All Users' },
-    { value: 'john-smith', label: 'John Smith' },
-    { value: 'sarah-johnson', label: 'Sarah Johnson' },
-    { value: 'mike-chen', label: 'Mike Chen' },
-    { value: 'lisa-rodriguez', label: 'Lisa Rodriguez' },
-    { value: 'david-kim', label: 'David Kim' },
-    { value: 'emma-wilson', label: 'Emma Wilson' },
-    { value: 'alex-brown', label: 'Alex Brown' },
-    { value: 'maria-garcia', label: 'Maria Garcia' },
-    { value: 'james-taylor', label: 'James Taylor' },
-    { value: 'anna-lee', label: 'Anna Lee' },
+    ...(usersLoading ? [] : users.map(user => ({
+      value: user.id || user._id,
+      label: `${user.firstName || user.first_name || ''} ${user.lastName || user.last_name || ''}`.trim() || user.email || 'Unknown User',
+    }))),
   ];
 
   const dateRangeOptions = [
@@ -303,6 +324,8 @@ const FilterBar = () => {
             filterType="assignedUser"
             options={assignedUserOptions}
             selectedValues={Array.isArray(filters.assignedUser) ? filters.assignedUser : [filters.assignedUser || 'all']}
+            isLoading={usersLoading}
+            error={usersError}
           />
           
           <DateRangeDropdown

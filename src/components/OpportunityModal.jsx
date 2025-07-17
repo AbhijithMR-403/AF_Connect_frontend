@@ -103,10 +103,10 @@ const OpportunityModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-7xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4" onClick={onClose}>
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-7xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <div className="min-w-0 flex-1 mr-4">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white truncate">{title}</h2>
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1">
@@ -128,7 +128,7 @@ const OpportunityModal = ({
 
         {/* Tabs (if provided) */}
         {tabs && tabs.length > 0 && (
-          <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+          <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex-shrink-0">
             <div className="flex space-x-1 p-2 sm:p-4 overflow-x-auto">
               {tabs.map((tab, index) => (
                 <button
@@ -155,7 +155,7 @@ const OpportunityModal = ({
         )}
 
         {/* Modal Content */}
-        <div className="overflow-auto max-h-[calc(95vh-280px)] sm:max-h-[calc(90vh-280px)]">
+        <div className="overflow-auto flex-1 min-h-0">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px]">
               <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
@@ -288,7 +288,7 @@ const OpportunityModal = ({
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 gap-3">
+          <div className="flex flex-col sm:flex-row items-center justify-between p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 gap-3 flex-shrink-0">
             <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 text-center sm:text-left">
               Showing {startIndex + 1} to {Math.min(endIndex, currentOpportunities.length)} of {currentOpportunities.length} entries
             </div>
@@ -340,18 +340,18 @@ const OpportunityModal = ({
         )}
 
         {/* Modal Footer */}
-        <div className="flex flex-col sm:flex-row items-center justify-between p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-between p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 gap-3 flex-shrink-0">
           <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 text-center sm:text-left">
             Total opportunities: {currentCount.toLocaleString()}
           </div>
-          <div className="flex gap-3 w-full sm:w-auto">
+          <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
             <button
               onClick={onClose}
-              className="flex-1 sm:flex-none px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Close
             </button>
-            <button className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-500 transition-colors">
+            <button className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-500 transition-colors">
               Export Data
             </button>
           </div>

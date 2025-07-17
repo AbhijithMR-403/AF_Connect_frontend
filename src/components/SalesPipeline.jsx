@@ -31,6 +31,10 @@ const SalesPipeline = () => {
 
   const openTabbedModal = (metricType, title) => {
     if (!salesMetrics) return;
+    console.log("[][][][][][][[]]");
+    console.log('salesMetrics', metricType);
+    console.log("[][][][][][][[]]");
+    console.log('salesMetrics', salesMetrics);
     
     const tabs = generateTabbedOpportunities(metricType, salesMetrics);
     setModalData({
