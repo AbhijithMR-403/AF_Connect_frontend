@@ -48,7 +48,14 @@ const OpportunityModal = ({
   // If tabs are present, use tabbed display
   const isTabbed = Array.isArray(tabs) && tabs.length > 0;
   const tab = isTabbed ? tabs[activeTab] : null;
-  const tabPage = isTabbed ? (activeTab === 0 ? tabbedPages.online : tabbedPages.offline) : currentPage;
+  let tabPage = currentPage;
+  if (isTabbed) {
+    if (title && title.includes('Lead to Sale')) {
+      tabPage = activeTab === 0 ? tabbedPages.njm : tabbedPages.lead;
+    } else if (title && title.includes('Online vs Offline')) {
+      tabPage = activeTab === 0 ? tabbedPages.online : tabbedPages.offline;
+    }
+  }
   const tabTotalPages = isTabbed ? Math.ceil((tab?.totalCount || 0) / pageSize) : 1;
   const tabOpportunities = isTabbed ? tab?.data || [] : opportunities;
   const tabTotalCount = isTabbed ? tab?.totalCount || 0 : totalCount;

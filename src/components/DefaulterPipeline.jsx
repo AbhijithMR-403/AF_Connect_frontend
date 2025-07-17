@@ -2,11 +2,71 @@ import React, { useState } from 'react';
 import { AlertTriangle, MessageCircle, DollarSign, TrendingDown } from 'lucide-react';
 import { useAppSelector } from '../hooks';
 import OpportunityModal from './OpportunityModal';
-import { generateOpportunitiesForMetric } from '../utils/mockOpportunityData';
+import { fetchOpportunities, normalizeOpportunitiesResponse } from '../services/api';
+import metricTypeConfigs from '../config/metricTypes';
+
+const PAGE_SIZE = 10;
+
+const stageNames = [
+  'D1',
+  'D2',
+  'D3',
+  'Paid',
+  'PTP',
+  'No Response',
+  'Cancelled Membership',
+];
+
+const metricTypeKeys = [
+  'defaulter-1m',
+  'defaulter-2m',
+  'defaulter-3m',
+  'defaulter-paid',
+  'defaulter-ptp',
+  'defaulter-noresponse',
+  'defaulter-cancelled',
+  null, // Communications Sent (no modal)
+  null, // PTP Conversion (no modal)
+  null, // Payment Recovery Rate (no modal)
+];
 
 const DefaulterPipeline = () => {
-  const { defaulterMetrics } = useAppSelector((state) => state.dashboard);
-  const [modalData, setModalData] = useState({ isOpen: false, title: '', opportunities: [], totalCount: 0 });
+  const { defaulterMetrics, filters } = useAppSelector((state) => state.dashboard);
+  const [modalData, setModalData] = useState({
+    isOpen: false,
+    title: '',
+    opportunities: [],
+    totalCount: 0,
+    loading: false,
+    error: null,
+    metricType: '',
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Helper to map filters to API params (same as SalesPipeline)
+  const buildOpportunityParams = (metricTypeKey) => {
+    const params = {};
+    if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
+      params.assigned_to = filters.assignedUser;
+    }
+    if (filters.country && Array.isArray(filters.country) && !filters.country.includes('all')) {
+      params.country = filters.country;
+    }
+    if (filters.club && Array.isArray(filters.club) && !filters.club.includes('all')) {
+      params.location = filters.club;
+    }
+    if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
+      params.lead_source = filters.leadSource;
+    }
+    if (filters.dateRange === 'custom-range' && filters.customStartDate && filters.customEndDate) {
+      params.created_at_min = filters.customStartDate;
+      params.created_at_max = filters.customEndDate;
+    }
+    if (metricTypeConfigs[metricTypeKey]) {
+      Object.assign(params, metricTypeConfigs[metricTypeKey]);
+    }
+    return params;
+  };
 
   if (!defaulterMetrics) {
     return (
@@ -18,20 +78,6 @@ const DefaulterPipeline = () => {
     );
   }
 
-  // Map metric index to metricType for generateOpportunitiesForMetric
-  const metricTypes = [
-    'defaulter-1m',
-    'defaulter-2m',
-    'defaulter-3m',
-    'defaulter-paid',
-    'defaulter-ptp',
-    'defaulter-noresponse',
-    'defaulter-cancelled',
-    null, // Communications Sent (no modal)
-    null, // PTP Conversion (no modal)
-    null, // Payment Recovery Rate (no modal)
-  ];
-
   const metrics = [
     {
       title: 'Total 1-Month Defaulters',
@@ -41,6 +87,7 @@ const DefaulterPipeline = () => {
       color: 'text-red-600 dark:text-red-400',
       bgColor: 'bg-red-100 dark:bg-red-900',
       isPercentage: false,
+      stage_name: 'D1',
     },
     {
       title: 'Total 2-Month Defaulters',
@@ -50,6 +97,7 @@ const DefaulterPipeline = () => {
       color: 'text-orange-600 dark:text-orange-400',
       bgColor: 'bg-orange-100 dark:bg-orange-900',
       isPercentage: false,
+      stage_name: 'D2',
     },
     {
       title: 'Total 3-Month Defaulters',
@@ -59,6 +107,7 @@ const DefaulterPipeline = () => {
       color: 'text-yellow-600 dark:text-yellow-400',
       bgColor: 'bg-yellow-100 dark:bg-yellow-900',
       isPercentage: false,
+      stage_name: 'D3',
     },
     {
       title: 'Paid',
@@ -68,6 +117,7 @@ const DefaulterPipeline = () => {
       color: 'text-green-600 dark:text-green-400',
       bgColor: 'bg-green-100 dark:bg-green-900',
       isPercentage: false,
+      stage_name: 'Paid',
     },
     {
       title: 'Total PTP',
@@ -77,6 +127,7 @@ const DefaulterPipeline = () => {
       color: 'text-blue-600 dark:text-blue-400',
       bgColor: 'bg-blue-100 dark:bg-blue-900',
       isPercentage: false,
+      stage_name: 'PTP',
     },
     {
       title: 'No Response',
@@ -86,6 +137,7 @@ const DefaulterPipeline = () => {
       color: 'text-gray-600 dark:text-gray-400',
       bgColor: 'bg-gray-100 dark:bg-gray-900',
       isPercentage: false,
+      stage_name: 'No Response',
     },
     {
       title: 'Cancelled Membership',
@@ -95,49 +147,25 @@ const DefaulterPipeline = () => {
       color: 'text-pink-600 dark:text-pink-400',
       bgColor: 'bg-pink-100 dark:bg-pink-900',
       isPercentage: false,
+      stage_name: 'Cancelled Membership',
     },
-    {
-      title: 'Communications Sent',
-      value: defaulterMetrics.communicationsSent,
-      description: 'Number of contacts under Calls stage',
-      icon: MessageCircle,
-      color: 'text-blue-600 dark:text-blue-400',
-      bgColor: 'bg-blue-100 dark:bg-blue-900',
-      isPercentage: false,
-    },
-    {
-      title: 'Promise to Pay Conversion',
-      value: `${defaulterMetrics.ptpConversion}%`,
-      description: 'Paid ÷ Total PTP',
-      icon: TrendingDown,
-      color: 'text-orange-600 dark:text-orange-400',
-      bgColor: 'bg-orange-100 dark:bg-orange-900',
-      isPercentage: true,
-    },
-    {
-      title: 'Payment Recovery Rate',
-      value: `${defaulterMetrics.paymentRecoveryRate}%`,
-      description: 'Paid ÷ Total in Default',
-      icon: DollarSign,
-      color: 'text-green-600 dark:text-green-400',
-      bgColor: 'bg-green-100 dark:bg-green-900',
-      isPercentage: true,
-    },
+    // The rest are not opportunity metrics
   ];
 
-  const handleCardClick = (metric, index) => {
-    const metricType = metricTypes[index];
-    if (!metricType) return;
-    // Use the value as count, but parse if string (for % metrics)
-    let count = typeof metric.value === 'string' ? parseInt(metric.value) : metric.value;
-    if (isNaN(count) || count <= 0) count = 10;
-    const opportunities = generateOpportunitiesForMetric(metricType, count);
-    setModalData({
-      isOpen: true,
-      title: metric.title + ' - GHL Opportunities',
-      opportunities,
-      totalCount: count,
-    });
+  const handleCardClick = async (metric, index, page = 1) => {
+    const metricTypeKey = metricTypeKeys[index];
+    if (!metricTypeKey) return;
+    setModalData((prev) => ({ ...prev, isOpen: true, title: metric.title + ' - GHL Opportunities', loading: true, error: null, opportunities: [], totalCount: metric.value, metricType: metricTypeKey }));
+    try {
+      const params = buildOpportunityParams(metricTypeKey);
+      params.page = page;
+      const data = await fetchOpportunities(params);
+      const normalized = normalizeOpportunitiesResponse(data);
+      setModalData((prev) => ({ ...prev, loading: false, opportunities: normalized, totalCount: data.count, metricType: metricTypeKey }));
+      setCurrentPage(page);
+    } catch (error) {
+      setModalData((prev) => ({ ...prev, loading: false, error: error.message || 'Failed to fetch opportunities', metricType: metricTypeKey }));
+    }
   };
 
   const closeModal = () => setModalData({ ...modalData, isOpen: false });
@@ -152,8 +180,7 @@ const DefaulterPipeline = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {metrics.map((metric, index) => {
           const Icon = metric.icon;
-          // Only add cursor-pointer and enhanced hover for cards that are clickable (i.e., have a metricType)
-          const isClickable = !!metricTypes[index];
+          const isClickable = !!metric.stage_name;
           return (
             <div
               key={index}
@@ -183,6 +210,11 @@ const DefaulterPipeline = () => {
         title={modalData.title}
         opportunities={modalData.opportunities}
         totalCount={modalData.totalCount}
+        loading={modalData.loading}
+        error={modalData.error}
+        currentPage={currentPage}
+        pageSize={PAGE_SIZE}
+        onPageChange={(page) => handleCardClick(metrics[metricTypeKeys.findIndex(k => k === modalData.metricType)], metricTypeKeys.findIndex(k => k === modalData.metricType), page)}
       />
     </div>
   );

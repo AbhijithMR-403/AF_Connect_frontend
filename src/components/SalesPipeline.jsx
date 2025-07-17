@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, Calendar, Target, FileText, TrendingUp, AlertCircle, BarChart3, Phone, Eye } from 'lucide-react';
 import { useAppSelector } from '../hooks';
 import ClickableMetricCard from './ClickableMetricCard';
@@ -24,7 +24,7 @@ const SalesPipeline = () => {
     metricType: '', // <-- add this
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [tabbedPages, setTabbedPages] = useState({ online: 1, offline: 1 });
+  const [tabbedPages, setTabbedPages] = useState({ online: 1, offline: 1, njm: 1, lead: 1 });
   const [activeTab, setActiveTab] = useState(0);
 
   // Helper to map filters to API query params
@@ -44,12 +44,13 @@ const SalesPipeline = () => {
       params.lead_source = filters.leadSource;
     }
     // Date range
-    if (filters.dateRange === 'custom-range' && filters.customStartDate && filters.customEndDate) {
+    if (
+      filters.customStartDate &&
+      filters.customEndDate &&
+      filters.dateRange !== 'all'
+    ) {
       params.created_at_min = filters.customStartDate;
       params.created_at_max = filters.customEndDate;
-    } else if (filters.dateRange !== 'all' && filters.dateRange) {
-      // Optionally map preset ranges to dates if needed
-      // For now, skip if not custom
     }
     // Metric-specific params from config
     if (metricTypeConfigs[metricType]) {
@@ -97,6 +98,27 @@ const SalesPipeline = () => {
       } catch (error) {
         setModalData((prev) => ({ ...prev, loading: false, error: error.message }));
       }
+    } else if (metricType === 'lead-to-sale') {
+      setModalData({ isOpen: true, title, loading: true, tabs: [], activeTab: tabIdx });
+      try {
+        const [njms, leads] = await Promise.all([
+          fetchOpportunities({ ...buildOpportunityParams('total-njms'), page: tabbedPages.njm || 1 }),
+          fetchOpportunities({ ...buildOpportunityParams('total-leads'), page: tabbedPages.lead || 1 }),
+        ]);
+        setModalData({
+          isOpen: true,
+          title,
+          loading: false,
+          tabs: [
+            { label: 'NJMs', data: normalizeOpportunitiesResponse(njms), totalCount: njms.count, metricType: 'total-njms' },
+            { label: 'Leads', data: normalizeOpportunitiesResponse(leads), totalCount: leads.count, metricType: 'total-leads' },
+          ],
+          activeTab: tabIdx,
+        });
+        setActiveTab(tabIdx);
+      } catch (error) {
+        setModalData((prev) => ({ ...prev, loading: false, error: error.message }));
+      }
     } else {
       // Placeholder for future implementation for other tabbed modals
       setModalData({
@@ -110,9 +132,24 @@ const SalesPipeline = () => {
   };
 
   // When tabbedPages or activeTab changes, refetch the correct data for the tabbed modal
-  React.useEffect(() => {
+  useEffect(() => {
     if (modalData.tabs && modalData.tabs.length > 0) {
-      openTabbedModal('online-vs-offline', 'Online vs Offline Leads - GHL Opportunities', activeTab, tabbedPages[activeTab === 0 ? 'online' : 'offline']);
+      if (modalData.title && modalData.title.includes('Lead to Sale')) {
+        openTabbedModal(
+          'lead-to-sale',
+          modalData.title,
+          activeTab,
+          tabbedPages[activeTab === 0 ? 'njm' : 'lead']
+        );
+      } else if (modalData.title && modalData.title.includes('Online vs Offline')) {
+        openTabbedModal(
+          'online-vs-offline',
+          modalData.title,
+          activeTab,
+          tabbedPages[activeTab === 0 ? 'online' : 'offline']
+        );
+      }
+      // Add more cases if you have more tabbed modals
     }
     // eslint-disable-next-line
   }, [tabbedPages, activeTab]);
@@ -122,7 +159,11 @@ const SalesPipeline = () => {
   };
 
   const handleTabPageChange = (tabIdx, page) => {
-    setTabbedPages((prev) => ({ ...prev, [tabIdx === 0 ? 'online' : 'offline']: page }));
+    if (modalData.title && modalData.title.includes('Lead to Sale')) {
+      setTabbedPages((prev) => ({ ...prev, [tabIdx === 0 ? 'njm' : 'lead']: page }));
+    } else {
+      setTabbedPages((prev) => ({ ...prev, [tabIdx === 0 ? 'online' : 'offline']: page }));
+    }
   };
 
   const closeModal = () => {
@@ -277,7 +318,7 @@ const SalesPipeline = () => {
                 {salesMetrics.leadToSaleRatio}%
               </div>
               <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">Lead to Sale Ratio</div>
-              <div className="text-xs text-gray-600 dark:text-gray-400">NJM ÷ Total Leads</div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">NJM / Total Leads</div>
               <div className="mt-3 text-xs text-blue-700 dark:text-blue-300 bg-blue-200 dark:bg-blue-800 px-2 py-1 rounded-full inline-block">
                 {salesMetrics.totalNJMs} / {salesMetrics.totalLeads}
               </div>
@@ -296,7 +337,7 @@ const SalesPipeline = () => {
                 {salesMetrics.leadToAppointmentRatio}%
               </div>
               <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">Lead to Appointment Ratio</div>
-              <div className="text-xs text-gray-600 dark:text-gray-400">Appointments ÷ Total Leads</div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">Appointments / Total Leads</div>
               <div className="mt-3 text-xs text-green-700 dark:text-green-300 bg-green-200 dark:bg-green-800 px-2 py-1 rounded-full inline-block">
                 {salesMetrics.totalAppointments} / {salesMetrics.totalLeads}
               </div>
@@ -315,7 +356,7 @@ const SalesPipeline = () => {
                 {salesMetrics.appointmentToSaleRatio}%
               </div>
               <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">Appointment to Sale Ratio</div>
-              <div className="text-xs text-gray-600 dark:text-gray-400">NJM ÷ Appointments</div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">NJM / Appointments</div>
               <div className="mt-3 text-xs text-purple-700 dark:text-purple-300 bg-purple-200 dark:bg-purple-800 px-2 py-1 rounded-full inline-block">
                 {salesMetrics.totalNJMs} / {salesMetrics.totalAppointments}
               </div>

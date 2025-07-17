@@ -68,6 +68,31 @@ const FilterBar = () => {
   const handleSingleSelectChange = (filterType, value) => {
     if (value === 'custom-range') {
       setCustomDateRange(prev => ({ ...prev, isOpen: true }));
+    } else if (
+      value === 'last-7-days' ||
+      value === 'last-30-days' ||
+      value === 'last-90-days' ||
+      value === 'last-year'
+    ) {
+      // Calculate start and end dates
+      const today = new Date();
+      let startDate = new Date(today);
+      if (value === 'last-7-days') {
+        startDate.setDate(today.getDate() - 6);
+      } else if (value === 'last-30-days') {
+        startDate.setDate(today.getDate() - 29);
+      } else if (value === 'last-90-days') {
+        startDate.setDate(today.getDate() - 89);
+      } else if (value === 'last-year') {
+        startDate.setFullYear(today.getFullYear() - 1);
+        startDate.setDate(startDate.getDate() + 1); // To make it a rolling year
+      }
+      const format = (d) => d.toISOString().slice(0, 10);
+      dispatch(updateFilters({
+        [filterType]: value,
+        customStartDate: format(startDate),
+        customEndDate: format(today),
+      }));
     } else {
       dispatch(updateFilters({ [filterType]: value }));
     }
@@ -299,11 +324,24 @@ const FilterBar = () => {
 
   const leadSourceOptions = [
     { value: 'all', label: 'All Sources' },
-    { value: 'facebook', label: 'Facebook' },
-    { value: 'instagram', label: 'Instagram' },
-    { value: 'google-ads', label: 'Google Ads' },
-    { value: 'outreach', label: 'Outreach' },
-    { value: 'referral', label: 'Referral' },
+    { value: 'Facebook', label: 'Facebook' },
+    { value: 'Instagram', label: 'Instagram' },
+    { value: 'Tiktok', label: 'Tiktok' },
+    { value: 'Whatsapp', label: 'Whatsapp' },
+    { value: 'Google', label: 'Google' },
+    { value: 'Email', label: 'Email' },
+    { value: 'SMS', label: 'SMS' },
+    { value: 'Walk-in', label: 'Walk-in' },
+    { value: 'Outreach', label: 'Outreach' },
+    { value: 'Referral', label: 'Referral' },
+    { value: 'POS Referral', label: 'POS Referral' },
+    { value: 'Corporate', label: 'Corporate' },
+    { value: 'Existing Member', label: 'Existing Member' },
+    { value: 'Ex-member', label: 'Ex-member' },
+    { value: 'Bulk Import', label: 'Bulk Import' },
+    { value: 'Flyers', label: 'Flyers' },
+    { value: 'Website', label: 'Website' },
+    { value: 'Retail Partner', label: 'Retail Partner' },
   ];
 
   return (
