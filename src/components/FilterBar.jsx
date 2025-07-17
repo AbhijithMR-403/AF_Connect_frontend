@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, X, Check, Calendar } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../hooks';
-import { updateFilters, loadUsers } from '../store/slices/dashboardSlice';
+import { updateFilters, loadUsers, loadCountries } from '../store/slices/dashboardSlice';
 
 const FilterBar = () => {
   const dispatch = useAppDispatch();
@@ -22,9 +22,10 @@ const FilterBar = () => {
     isOpen: false,
   });
 
-  // Fetch users on component mount
+  // Fetch users and countries on component mount
   useEffect(() => {
     dispatch(loadUsers());
+    dispatch(loadCountries());
   }, [dispatch]);
 
   const toggleDropdown = (filterType) => {
@@ -282,7 +283,7 @@ const FilterBar = () => {
     { value: 'all', label: 'All Countries' },
     ...countries.map((country) => ({
       value: country.id,
-      label: `${country.flag} ${country.name}`,
+      label: country.name,
     })),
   ];
 

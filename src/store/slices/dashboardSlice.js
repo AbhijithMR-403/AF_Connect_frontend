@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchDashboardData, generateDummyData, fetchUsers, fetchClubs } from '../../services/api';
+import { fetchDashboardData, generateDummyData, fetchUsers, fetchClubs, fetchCountries } from '../../services/api';
 
 const initialState = {
   filters: {
@@ -17,14 +17,9 @@ const initialState = {
   users: [],
   usersLoading: false,
   usersError: null,
-  countries: [
-    { id: 'PH', name: 'Philippines', flag: '🇵🇭', clubCount: 53 },
-    { id: 'ID', name: 'Indonesia', flag: '🇮🇩', clubCount: 13 },
-    { id: 'MY', name: 'Malaysia', flag: '🇲🇾', clubCount: 20 },
-    { id: 'SG', name: 'Singapore', flag: '🇸🇬', clubCount: 11 },
-    { id: 'TH', name: 'Thailand', flag: '🇹🇭', clubCount: 14 },
-    { id: 'VN', name: 'Vietnam', flag: '🇻🇳', clubCount: 8 },
-  ],
+  countries: [], // Will be loaded from API
+  countriesLoading: false,
+  countriesError: null,
   clubs: [], // Will be loaded from API
   clubsLoading: false,
   clubsError: null,
@@ -67,6 +62,19 @@ export const loadClubs = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const data = await fetchClubs();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Async thunk for fetching countries
+export const loadCountries = createAsyncThunk(
+  'dashboard/loadCountries',
+  async (_, { rejectWithValue }) => {
+    try {
+      const data = await fetchCountries();
       return data;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -126,6 +134,18 @@ const dashboardSlice = createSlice({
       .addCase(loadClubs.rejected, (state, action) => {
         state.clubsLoading = false;
         state.clubsError = action.payload || 'Failed to load clubs';
+      })
+      .addCase(loadCountries.pending, (state) => {
+        state.countriesLoading = true;
+        state.countriesError = null;
+      })
+      .addCase(loadCountries.fulfilled, (state, action) => {
+        state.countriesLoading = false;
+        state.countries = action.payload;
+      })
+      .addCase(loadCountries.rejected, (state, action) => {
+        state.countriesLoading = false;
+        state.countriesError = action.payload || 'Failed to load countries';
       });
   },
 });

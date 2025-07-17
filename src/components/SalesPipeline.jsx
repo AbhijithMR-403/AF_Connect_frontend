@@ -462,7 +462,6 @@ const SalesPipeline = () => {
           <ClickableMetricCard
             title="Total Membership Agreements"
             value={salesMetrics.membershipAgreements}
-            change={salesMetrics.percentageChanges.memberships}
             icon={FileText}
             iconColor="text-orange-600 dark:text-orange-400"
             iconBgColor="bg-orange-100 dark:bg-orange-900"

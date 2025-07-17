@@ -133,6 +133,35 @@ export const fetchClubs = async () => {
     : [];
 };
 
+/**
+ * Fetch unique countries from the locations API.
+ * @returns {Promise<Array>} - Array of country objects: { id, name }
+ */
+export const fetchCountries = async () => {
+  const response = await fetch(`${config.api.baseUrl}/locations/`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch locations for countries');
+  }
+
+  const data = await response.json();
+  // Extract unique countries
+  const countryMap = {};
+  if (Array.isArray(data)) {
+    data.forEach(loc => {
+      if (loc.country && loc.country_display) {
+        countryMap[loc.country] = loc.country_display;
+      }
+    });
+  }
+  return Object.entries(countryMap).map(([id, name]) => ({ id, name }));
+};
+
 export const generateDummyData = (filters) => {
   const salesMetrics = {
     totalLeads: 1045,

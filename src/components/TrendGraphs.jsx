@@ -216,9 +216,6 @@ const TrendGraphs = () => {
             <span className="text-2xl font-bold text-blue-900 dark:text-blue-100">
               {currentPeriod?.leads?.toLocaleString() || '0'}
             </span>
-            <span className={`text-sm font-medium ${getChangeColor(leadsChange)}`}>
-              {formatChange(leadsChange)}
-            </span>
           </div>
           <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
             Current {activeView.slice(0, -2)} period
@@ -235,9 +232,6 @@ const TrendGraphs = () => {
             <span className="text-2xl font-bold text-green-900 dark:text-green-100">
               {currentPeriod?.appointments?.toLocaleString() || '0'}
             </span>
-            <span className={`text-sm font-medium ${getChangeColor(appointmentsChange)}`}>
-              {formatChange(appointmentsChange)}
-            </span>
           </div>
           <p className="text-xs text-green-600 dark:text-green-400 mt-1">
             Current {activeView.slice(0, -2)} period
@@ -253,9 +247,6 @@ const TrendGraphs = () => {
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-purple-900 dark:text-purple-100">
               {currentPeriod?.njms?.toLocaleString() || '0'}
-            </span>
-            <span className={`text-sm font-medium ${getChangeColor(njmsChange)}`}>
-              {formatChange(njmsChange)}
             </span>
           </div>
           <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">

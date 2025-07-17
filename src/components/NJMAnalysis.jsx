@@ -57,7 +57,6 @@ const NJMAnalysis = ({ salesMetrics, openModal }) => {
           <ClickableMetricCard
             title="Contacted"
             value={Math.round(salesMetrics.totalNJMs * 0.85)}
-            change={12.3}
             icon={Phone}
             iconColor="text-blue-600 dark:text-blue-400"
             iconBgColor="bg-blue-100 dark:bg-blue-900"
@@ -73,9 +72,6 @@ const NJMAnalysis = ({ salesMetrics, openModal }) => {
                 <div className="flex items-baseline gap-3">
                   <span className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {Math.round(salesMetrics.totalNJMs * 0.79).toLocaleString()}
-                  </span>
-                  <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                    79%
                   </span>
                 </div>
                 <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Facebook + IG + Google Ads + Whatsapp</p>
