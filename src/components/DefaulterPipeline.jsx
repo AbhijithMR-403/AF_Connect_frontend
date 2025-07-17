@@ -149,7 +149,33 @@ const DefaulterPipeline = () => {
       isPercentage: false,
       stage_name: 'Cancelled Membership',
     },
-    // The rest are not opportunity metrics
+    {
+      title: 'Communications Sent',
+      value: defaulterMetrics.communicationsSent,
+      description: 'Number of contacts under Calls stage',
+      icon: MessageCircle,
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-100 dark:bg-blue-900',
+      isPercentage: false,
+    },
+    {
+      title: 'Promise to Pay Conversion',
+      value: `${defaulterMetrics.ptpConversion}%`,
+      description: 'Paid ÷ Total PTP',
+      icon: TrendingDown,
+      color: 'text-orange-600 dark:text-orange-400',
+      bgColor: 'bg-orange-100 dark:bg-orange-900',
+      isPercentage: true,
+    },
+    {
+      title: 'Payment Recovery Rate',
+      value: `${defaulterMetrics.paymentRecoveryRate}%`,
+      description: 'Paid ÷ Total in Default',
+      icon: DollarSign,
+      color: 'text-green-600 dark:text-green-400',
+      bgColor: 'bg-green-100 dark:bg-green-900',
+      isPercentage: true,
+    },
   ];
 
   const handleCardClick = async (metric, index, page = 1) => {
