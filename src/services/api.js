@@ -106,6 +106,33 @@ export function normalizeOpportunitiesResponse(apiResponse) {
   }));
 }
 
+/**
+ * Fetch clubs (locations) from the API and normalize to { id, name, countryDisplay }
+ * @returns {Promise<Array>} - Array of club objects
+ */
+export const fetchClubs = async () => {
+  const response = await fetch(`${config.api.baseUrl}/locations/`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch clubs');
+  }
+
+  const data = await response.json();
+  // Normalize to { id, name, countryDisplay }
+  return Array.isArray(data)
+    ? data.map(loc => ({
+        id: loc.id,
+        name: loc.name,
+        countryDisplay: loc.country_display,
+      }))
+    : [];
+};
+
 export const generateDummyData = (filters) => {
   const salesMetrics = {
     totalLeads: 1045,

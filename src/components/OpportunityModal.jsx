@@ -15,8 +15,11 @@ const OpportunityModal = ({
   currentPage = 1,
   pageSize = 10,
   onPageChange,
+  activeTab = 0,
+  onTabChange,
+  onTabPageChange,
+  tabbedPages = { online: 1, offline: 1 },
 }) => {
-  const [activeTab, setActiveTab] = useState(0);
 
   if (!isOpen) return null;
 
@@ -42,17 +45,22 @@ const OpportunityModal = ({
     );
   }
 
-  const currentOpportunities = tabs ? tabs[activeTab]?.opportunities || [] : opportunities;
-  const currentCount = tabs ? tabs[activeTab]?.count || 0 : totalCount;
+  // If tabs are present, use tabbed display
+  const isTabbed = Array.isArray(tabs) && tabs.length > 0;
+  const tab = isTabbed ? tabs[activeTab] : null;
+  const tabPage = isTabbed ? (activeTab === 0 ? tabbedPages.online : tabbedPages.offline) : currentPage;
+  const tabTotalPages = isTabbed ? Math.ceil((tab?.totalCount || 0) / pageSize) : 1;
+  const tabOpportunities = isTabbed ? tab?.data || [] : opportunities;
+  const tabTotalCount = isTabbed ? tab?.totalCount || 0 : totalCount;
 
   // Reset to first page when switching tabs
   const handleTabChange = (tabIndex) => {
-    setActiveTab(tabIndex);
+    if (onTabChange) onTabChange(tabIndex);
     if (onPageChange) onPageChange(1); // Reset to first page when switching tabs
   };
 
   // Pagination calculations
-  const totalPages = Math.ceil((totalCount || currentOpportunities.length) / pageSize);
+  const totalPages = Math.ceil((totalCount || opportunities.length) / pageSize);
   const paginatedOpportunities = opportunities;
 
   // Generate page numbers for pagination
@@ -135,10 +143,10 @@ const OpportunityModal = ({
           <div className="min-w-0 flex-1 mr-4">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white truncate">{title}</h2>
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1">
-              Showing {paginatedOpportunities.length} of {currentCount.toLocaleString()} opportunities
-              {totalPages > 1 && (
+              Showing {tabOpportunities.length} of {tabTotalCount} opportunities
+              {tabTotalPages > 1 && (
                 <span className="ml-2">
-                  (Page {currentPage} of {totalPages})
+                  (Page {tabPage} of {tabTotalPages})
                 </span>
               )}
             </p>
@@ -152,26 +160,26 @@ const OpportunityModal = ({
         </div>
 
         {/* Tabs (if provided) */}
-        {tabs && tabs.length > 0 && (
+        {isTabbed && (
           <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex-shrink-0">
             <div className="flex space-x-1 p-2 sm:p-4 overflow-x-auto">
-              {tabs.map((tab, index) => (
+              {tabs.map((tab, idx) => (
                 <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(index)}
+                  key={tab.label}
+                  onClick={() => handleTabChange(idx)}
                   className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
-                    activeTab === index
+                    activeTab === idx
                       ? 'bg-blue-600 text-white shadow-sm'
                       : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700'
                   }`}
                 >
                   <span>{tab.label}</span>
                   <span className={`px-1.5 sm:px-2 py-0.5 rounded-full text-xs ${
-                    activeTab === index
+                    activeTab === idx
                       ? 'bg-blue-500 text-white'
                       : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                   }`}>
-                    {tab.count.toLocaleString()}
+                    {tab.totalCount}
                   </span>
                 </button>
               ))}
@@ -221,7 +229,7 @@ const OpportunityModal = ({
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                {paginatedOpportunities.map((opportunity) => (
+                {(tabOpportunities || []).map((opportunity) => (
                   <tr key={opportunity.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="px-3 sm:px-6 py-4">
                       <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate max-w-[150px]">
@@ -328,15 +336,19 @@ const OpportunityModal = ({
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
+        {(isTabbed ? tabTotalPages : totalPages) > 1 && (
           <div className="flex flex-col sm:flex-row items-center justify-between p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 gap-3 flex-shrink-0">
             <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 text-center sm:text-left">
-              Page {currentPage} of {totalPages} (Total: {totalCount})
+              {isTabbed
+                ? `Page ${tabPage} of ${tabTotalPages} (Total: ${tabTotalCount})`
+                : `Page ${currentPage} of ${totalPages} (Total: ${totalCount})`}
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
               <button
-                onClick={() => onPageChange && onPageChange(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
+                onClick={() => (isTabbed
+                  ? onTabPageChange && onTabPageChange(activeTab, Math.max(1, tabPage - 1))
+                  : onPageChange && onPageChange(Math.max(1, currentPage - 1)))}
+                disabled={isTabbed ? tabPage === 1 : currentPage === 1}
                 className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -345,34 +357,33 @@ const OpportunityModal = ({
               <div className="flex items-center gap-1">
                 {(() => {
                   const pages = [];
-                  if (totalPages <= 7) {
-                    for (let i = 1; i <= totalPages; i++) {
+                  const numPages = isTabbed ? tabTotalPages : totalPages;
+                  const currPage = isTabbed ? tabPage : currentPage;
+                  if (numPages <= 7) {
+                    for (let i = 1; i <= numPages; i++) {
                       pages.push(i);
                     }
                   } else {
-                    // Always show first
                     pages.push(1);
-                    // Show ellipsis if needed
-                    if (currentPage > 4) pages.push('...');
-                    // Show up to 3 pages around current
-                    const start = Math.max(2, currentPage - 1);
-                    const end = Math.min(totalPages - 1, currentPage + 1);
+                    if (currPage > 4) pages.push('...');
+                    const start = Math.max(2, currPage - 1);
+                    const end = Math.min(numPages - 1, currPage + 1);
                     for (let i = start; i <= end; i++) {
                       pages.push(i);
                     }
-                    // Show ellipsis if needed
-                    if (currentPage < totalPages - 3) pages.push('...');
-                    // Always show last
-                    pages.push(totalPages);
+                    if (currPage < numPages - 3) pages.push('...');
+                    pages.push(numPages);
                   }
                   return pages.map((page, idx) =>
                     page === '...'
                       ? <span key={"ellipsis-" + idx} className="px-2 sm:px-3 py-2 text-xs sm:text-sm text-gray-500 dark:text-gray-300">...</span>
                       : <button
                           key={page}
-                          onClick={() => onPageChange && onPageChange(page)}
+                          onClick={() => (isTabbed
+                            ? onTabPageChange && onTabPageChange(activeTab, page)
+                            : onPageChange && onPageChange(page))}
                           className={`px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
-                            currentPage === page
+                            currPage === page
                               ? 'bg-blue-600 text-white'
                               : 'text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                           }`}
@@ -383,8 +394,10 @@ const OpportunityModal = ({
                 })()}
               </div>
               <button
-                onClick={() => onPageChange && onPageChange(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
+                onClick={() => (isTabbed
+                  ? onTabPageChange && onTabPageChange(activeTab, Math.min(tabTotalPages, tabPage + 1))
+                  : onPageChange && onPageChange(Math.min(totalPages, currentPage + 1)))}
+                disabled={isTabbed ? tabPage === tabTotalPages : currentPage === totalPages}
                 className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="hidden sm:inline">Next</span>
@@ -397,7 +410,7 @@ const OpportunityModal = ({
         {/* Modal Footer */}
         <div className="flex flex-col sm:flex-row items-center justify-between p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 gap-3 flex-shrink-0">
           <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 text-center sm:text-left">
-            Total opportunities: {currentCount.toLocaleString()}
+            Total opportunities: {totalCount.toLocaleString()}
           </div>
           <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
             <button

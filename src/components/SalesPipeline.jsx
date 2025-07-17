@@ -8,6 +8,7 @@ import OpportunityModal from './OpportunityModal';
 // import { generateOpportunitiesForMetric, generateTabbedOpportunities } from '../utils/mockOpportunityData';
 import NJMAnalysis from './NJMAnalysis';
 import { fetchOpportunities, normalizeOpportunitiesResponse } from '../services/api';
+import metricTypeConfigs from '../config/metricTypes';
 
 const PAGE_SIZE = 10;
 
@@ -20,8 +21,11 @@ const SalesPipeline = () => {
     totalCount: 0,
     loading: false,
     error: null,
+    metricType: '', // <-- add this
   });
   const [currentPage, setCurrentPage] = useState(1);
+  const [tabbedPages, setTabbedPages] = useState({ online: 1, offline: 1 });
+  const [activeTab, setActiveTab] = useState(0);
 
   // Helper to map filters to API query params
   const buildOpportunityParams = (metricType, count) => {
@@ -47,10 +51,9 @@ const SalesPipeline = () => {
       // Optionally map preset ranges to dates if needed
       // For now, skip if not custom
     }
-    // Metric-specific params
-    if (metricType === 'total-njms') {
-      params.pipeline_name = 'AFC Sales Pipeline';
-      params.stage_name = 'Sale';
+    // Metric-specific params from config
+    if (metricTypeConfigs[metricType]) {
+      Object.assign(params, metricTypeConfigs[metricType]);
     }
     // Limit
     if (count) params.limit = Math.min(count, 50);
@@ -58,29 +61,68 @@ const SalesPipeline = () => {
   };
 
   const openModal = async (metricType, title, count, page = 1) => {
-    setModalData((prev) => ({ ...prev, isOpen: true, title, loading: true, error: null, opportunities: [], totalCount: count }));
+    setModalData((prev) => ({ ...prev, isOpen: true, title, loading: true, error: null, opportunities: [], totalCount: count, metricType }));
     try {
       const params = buildOpportunityParams(metricType);
       params.page = page;
       const data = await fetchOpportunities(params);
       const normalized = normalizeOpportunitiesResponse(data);
-      setModalData((prev) => ({ ...prev, loading: false, opportunities: normalized, totalCount: data.count }));
+      setModalData((prev) => ({ ...prev, loading: false, opportunities: normalized, totalCount: data.count, metricType }));
       setCurrentPage(page);
     } catch (error) {
-      setModalData((prev) => ({ ...prev, loading: false, error: error.message || 'Failed to fetch opportunities' }));
+      setModalData((prev) => ({ ...prev, loading: false, error: error.message || 'Failed to fetch opportunities', metricType }));
     }
   };
 
   // TODO: Refactor openTabbedModal to use real API when backend supports tabbed/grouped data
-  const openTabbedModal = (metricType, title) => {
-    // Placeholder for future implementation
-    setModalData({
-      isOpen: true,
-      title,
-      opportunities: [],
-      totalCount: 0,
-      tabs: [],
-    });
+  const openTabbedModal = async (metricType, title, tabIdx = 0, page = 1) => {
+    if (metricType === 'online-vs-offline') {
+      setModalData({ isOpen: true, title, loading: true, tabs: [], activeTab: tabIdx });
+      try {
+        const [online, offline] = await Promise.all([
+          fetchOpportunities({ ...buildOpportunityParams('online-leads'), page: tabbedPages.online }),
+          fetchOpportunities({ ...buildOpportunityParams('offline-leads'), page: tabbedPages.offline }),
+        ]);
+        setModalData({
+          isOpen: true,
+          title,
+          loading: false,
+          tabs: [
+            { label: 'Online Leads', data: normalizeOpportunitiesResponse(online), totalCount: online.count, metricType: 'online-leads' },
+            { label: 'Offline Leads', data: normalizeOpportunitiesResponse(offline), totalCount: offline.count, metricType: 'offline-leads' },
+          ],
+          activeTab: tabIdx,
+        });
+        setActiveTab(tabIdx);
+      } catch (error) {
+        setModalData((prev) => ({ ...prev, loading: false, error: error.message }));
+      }
+    } else {
+      // Placeholder for future implementation for other tabbed modals
+      setModalData({
+        isOpen: true,
+        title,
+        opportunities: [],
+        totalCount: 0,
+        tabs: [],
+      });
+    }
+  };
+
+  // When tabbedPages or activeTab changes, refetch the correct data for the tabbed modal
+  React.useEffect(() => {
+    if (modalData.tabs && modalData.tabs.length > 0) {
+      openTabbedModal('online-vs-offline', 'Online vs Offline Leads - GHL Opportunities', activeTab, tabbedPages[activeTab === 0 ? 'online' : 'offline']);
+    }
+    // eslint-disable-next-line
+  }, [tabbedPages, activeTab]);
+
+  const handleTabChange = (tabIdx) => {
+    setActiveTab(tabIdx);
+  };
+
+  const handleTabPageChange = (tabIdx, page) => {
+    setTabbedPages((prev) => ({ ...prev, [tabIdx === 0 ? 'online' : 'offline']: page }));
   };
 
   const closeModal = () => {
@@ -341,6 +383,10 @@ const SalesPipeline = () => {
         currentPage={currentPage}
         pageSize={PAGE_SIZE}
         onPageChange={(page) => openModal(modalData.metricType, modalData.title, modalData.totalCount, page)}
+        activeTab={modalData.activeTab}
+        onTabChange={handleTabChange}
+        onTabPageChange={handleTabPageChange}
+        tabbedPages={tabbedPages}
       />
     </div>
   );

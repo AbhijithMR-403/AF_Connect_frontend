@@ -5,6 +5,7 @@ import { generateOpportunitiesForMetric, generateTabbedOpportunities } from '../
 import { useAppSelector } from '../hooks';
 import LeadSourcesChart from './charts/LeadSourcesChart';
 import AppointmentStatusChart from './charts/AppointmentStatusChart';
+import { fetchOpportunities, normalizeOpportunitiesResponse } from '../services/api';
 
 const ChartSection = ({ leadSources, appointmentStatus }) => {
   
@@ -17,10 +18,21 @@ const ChartSection = ({ leadSources, appointmentStatus }) => {
     tabs: null,
   });
 
-  const openModal = (metricType, title, count, data) => {
+  const openModal = async (metricType, title, count, data) => {
     if (!salesMetrics) return;
-    
-    const opportunities = generateOpportunitiesForMetric(metricType, Math.min(count, 50), salesMetrics);
+    let opportunities = [];
+    if (metricType === 'lead-source' && data && data.name) {
+      // Fetch from API with lead_source param
+      try {
+        const apiData = await fetchOpportunities({ lead_source: data.name, limit: Math.min(count, 50) });
+        opportunities = normalizeOpportunitiesResponse(apiData);
+      } catch (e) {
+        opportunities = [];
+      }
+    } else {
+      // fallback to mock for other types (or implement API as needed)
+      opportunities = generateOpportunitiesForMetric(metricType, Math.min(count, 50), salesMetrics);
+    }
     setModalData({
       isOpen: true,
       title,

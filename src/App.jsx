@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { useAppDispatch } from './hooks';
-import { loadDashboardData } from './store/slices/dashboardSlice';
+import { loadDashboardData, loadClubs } from './store/slices/dashboardSlice';
 import DashboardHeader from './components/DashboardHeader';
 import FilterBar from './components/FilterBar';
 import PipelineTabs from './components/PipelineTabs';
@@ -23,6 +23,7 @@ const DashboardContent = () => {
       dateRange: 'last-30-days',
       leadSource: 'all',
     }));
+    dispatch(loadClubs());
   }, [dispatch]);
 
   return (

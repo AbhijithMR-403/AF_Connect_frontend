@@ -5,7 +5,7 @@ import { updateFilters, loadUsers } from '../store/slices/dashboardSlice';
 
 const FilterBar = () => {
   const dispatch = useAppDispatch();
-  const { filters, countries, clubs, users, usersLoading, usersError } = useAppSelector((state) => state.dashboard);
+  const { filters, countries, clubs, users, usersLoading, usersError, clubsLoading, clubsError } = useAppSelector((state) => state.dashboard);
   
   // State for dropdown visibility
   const [dropdownStates, setDropdownStates] = useState({
@@ -261,12 +261,24 @@ const FilterBar = () => {
     })),
   ];
 
+  // Map country code to display name for filtering
+  const countryIdToName = Object.fromEntries(countries.map(c => [c.id.toLowerCase(), c.name]));
+  const selectedCountryNames =
+    filters.country && !filters.country.includes('all')
+      ? filters.country.map(c => countryIdToName[c.toLowerCase()]).filter(Boolean)
+      : null;
+
   const clubOptions = [
     { value: 'all', label: 'All Clubs' },
-    ...clubs.map((club) => ({
-      value: club.id,
-      label: club.name,
-    })),
+    ...clubs
+      .filter(club => {
+        if (!selectedCountryNames) return true; // 'all' selected, show all
+        return selectedCountryNames.includes(club.countryDisplay);
+      })
+      .map(club => ({
+        value: club.id,
+        label: club.name,
+      })),
   ];
 
   const assignedUserOptions = [
@@ -317,6 +329,8 @@ const FilterBar = () => {
             filterType="club"
             options={clubOptions}
             selectedValues={Array.isArray(filters.club) ? filters.club : [filters.club]}
+            isLoading={clubsLoading}
+            error={clubsError}
           />
           
           <MultiSelectDropdown

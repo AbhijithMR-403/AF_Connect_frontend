@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchDashboardData, generateDummyData, fetchUsers } from '../../services/api';
+import { fetchDashboardData, generateDummyData, fetchUsers, fetchClubs } from '../../services/api';
 
 const initialState = {
   filters: {
@@ -25,20 +25,9 @@ const initialState = {
     { id: 'TH', name: 'Thailand', flag: '🇹🇭', clubCount: 14 },
     { id: 'VN', name: 'Vietnam', flag: '🇻🇳', clubCount: 8 },
   ],
-  clubs: [
-    { id: 'club-1', name: 'Manila Central', countryId: 'ph' },
-    { id: 'club-2', name: 'Makati Premium', countryId: 'ph' },
-    { id: 'club-3', name: 'Jakarta Elite', countryId: 'id' },
-    { id: 'club-4', name: 'Kuala Lumpur City', countryId: 'my' },
-    { id: 'club-5', name: 'Singapore Marina', countryId: 'sg' },
-    { id: 'club-6', name: 'Bangkok Central', countryId: 'th' },
-    { id: 'club-7', name: 'Cebu Elite', countryId: 'ph' },
-    { id: 'club-8', name: 'Bali Paradise', countryId: 'id' },
-    { id: 'club-9', name: 'Penang Elite', countryId: 'my' },
-    { id: 'club-10', name: 'Orchard Premium', countryId: 'sg' },
-    { id: 'club-11', name: 'Phuket Elite', countryId: 'th' },
-    { id: 'club-12', name: 'Ho Chi Minh Elite', countryId: 'vn' },
-  ],
+  clubs: [], // Will be loaded from API
+  clubsLoading: false,
+  clubsError: null,
   loading: false,
   error: null,
   lastUpdated: null,
@@ -72,6 +61,19 @@ export const loadUsers = createAsyncThunk(
   }
 );
 
+// Async thunk for fetching clubs
+export const loadClubs = createAsyncThunk(
+  'dashboard/loadClubs',
+  async (_, { rejectWithValue }) => {
+    try {
+      const data = await fetchClubs();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState,
@@ -94,7 +96,7 @@ const dashboardSlice = createSlice({
         state.salesMetrics = action.payload.salesMetrics;
         state.onboardingMetrics = action.payload.onboardingMetrics;
         state.defaulterMetrics = action.payload.defaulterMetrics;
-        state.clubs = action.payload.clubs || state.clubs;
+        // Do not update clubs here; clubs are loaded separately
         state.lastUpdated = new Date().toISOString();
       })
       .addCase(loadDashboardData.rejected, (state, action) => {
@@ -112,6 +114,18 @@ const dashboardSlice = createSlice({
       .addCase(loadUsers.rejected, (state, action) => {
         state.usersLoading = false;
         state.usersError = action.payload || 'Failed to load users';
+      })
+      .addCase(loadClubs.pending, (state) => {
+        state.clubsLoading = true;
+        state.clubsError = null;
+      })
+      .addCase(loadClubs.fulfilled, (state, action) => {
+        state.clubsLoading = false;
+        state.clubs = action.payload;
+      })
+      .addCase(loadClubs.rejected, (state, action) => {
+        state.clubsLoading = false;
+        state.clubsError = action.payload || 'Failed to load clubs';
       });
   },
 });
