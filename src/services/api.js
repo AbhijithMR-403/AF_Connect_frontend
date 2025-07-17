@@ -19,7 +19,7 @@ export const fetchDashboardData = async (filters) => {
 
 export const fetchUsers = async () => {
   try {
-    const response = await fetch(`${config.api.baseUrl}/ghlusers`, {
+    const response = await fetch(`${config.api.baseUrl}/ghlusers/`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
