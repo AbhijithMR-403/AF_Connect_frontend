@@ -78,7 +78,7 @@ const NJMAnalysis = ({ salesMetrics, openModal }) => {
                     79%
                   </span>
                 </div>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Facebook + IG + Google Ads</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Facebook + IG + Google Ads + Whatsapp</p>
                 <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
                   Click to view opportunities
                 </div>

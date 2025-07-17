@@ -351,56 +351,7 @@ const TrendGraphs = () => {
         </ResponsiveContainer>
       </div>
 
-      {/* Highlights Section */}
-      <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Highlights</h4>
-          <button className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium">
-            Show All
-          </button>
-        </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">Peak Performance</span>
-            </div>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              Highest leads recorded in {activeView === 'daily' ? 'the last week' : activeView === 'weekly' ? 'week 6' : 'last month'}
-            </p>
-          </div>
-          
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">Conversion Trend</span>
-            </div>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              Appointment to NJM ratio improving over time
-            </p>
-          </div>
-          
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">Growth Pattern</span>
-            </div>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              Consistent upward trend in all metrics
-            </p>
-          </div>
-        </div>
-      </div>
 
-      {/* Opportunity Modal */}
-      <OpportunityModal
-        isOpen={modalData.isOpen}
-        onClose={closeModal}
-        title={modalData.title}
-        opportunities={modalData.opportunities}
-        totalCount={modalData.totalCount}
-      />
 
       {/* Opportunity Modal */}
       <OpportunityModal

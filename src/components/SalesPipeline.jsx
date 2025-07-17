@@ -24,7 +24,7 @@ const SalesPipeline = () => {
     metricType: '', // <-- add this
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [tabbedPages, setTabbedPages] = useState({ online: 1, offline: 1, njm: 1, lead: 1 });
+  const [tabbedPages, setTabbedPages] = useState({ online: 1, offline: 1, njm: 1, lead: 1, appointment: 1 });
   const [activeTab, setActiveTab] = useState(0);
 
   // Helper to map filters to API query params
@@ -119,6 +119,69 @@ const SalesPipeline = () => {
       } catch (error) {
         setModalData((prev) => ({ ...prev, loading: false, error: error.message }));
       }
+    } else if (metricType === 'lead-to-appointment') {
+      setModalData({ isOpen: true, title, loading: true, tabs: [], activeTab: tabIdx });
+      try {
+        const [appointments, leads] = await Promise.all([
+          fetchOpportunities({ ...buildOpportunityParams('total-appointments'), page: tabbedPages.appointment || 1 }),
+          fetchOpportunities({ ...buildOpportunityParams('total-leads'), page: tabbedPages.lead || 1 }),
+        ]);
+        setModalData({
+          isOpen: true,
+          title,
+          loading: false,
+          tabs: [
+            { label: 'Appointments', data: normalizeOpportunitiesResponse(appointments), totalCount: appointments.count, metricType: 'total-appointments' },
+            { label: 'Total Leads', data: normalizeOpportunitiesResponse(leads), totalCount: leads.count, metricType: 'total-leads' },
+          ],
+          activeTab: tabIdx,
+        });
+        setActiveTab(tabIdx);
+      } catch (error) {
+        setModalData((prev) => ({ ...prev, loading: false, error: error.message }));
+      }
+    } else if (metricType === 'appointment-to-sale') {
+      setModalData({ isOpen: true, title, loading: true, tabs: [], activeTab: tabIdx });
+      try {
+        const [njms, appointments] = await Promise.all([
+          fetchOpportunities({ ...buildOpportunityParams('total-njms'), page: tabbedPages.njm || 1 }),
+          fetchOpportunities({ ...buildOpportunityParams('total-appointments'), page: tabbedPages.appointment || 1 }),
+        ]);
+        setModalData({
+          isOpen: true,
+          title,
+          loading: false,
+          tabs: [
+            { label: 'NJMs', data: normalizeOpportunitiesResponse(njms), totalCount: njms.count, metricType: 'total-njms' },
+            { label: 'Appointments', data: normalizeOpportunitiesResponse(appointments), totalCount: appointments.count, metricType: 'total-appointments' },
+          ],
+          activeTab: tabIdx,
+        });
+        setActiveTab(tabIdx);
+      } catch (error) {
+        setModalData((prev) => ({ ...prev, loading: false, error: error.message }));
+      }
+    } else if (metricType === 'agreement-vs-njm') {
+      setModalData({ isOpen: true, title, loading: true, tabs: [], activeTab: tabIdx });
+      try {
+        const [agreements, njms] = await Promise.all([
+          fetchOpportunities({ ...buildOpportunityParams('membership-agreements'), page: tabbedPages.agreement || 1 }),
+          fetchOpportunities({ ...buildOpportunityParams('total-njms'), page: tabbedPages.njm || 1 }),
+        ]);
+        setModalData({
+          isOpen: true,
+          title,
+          loading: false,
+          tabs: [
+            { label: 'Agreements', data: normalizeOpportunitiesResponse(agreements), totalCount: agreements.count, metricType: 'membership-agreements' },
+            { label: 'NJMs', data: normalizeOpportunitiesResponse(njms), totalCount: njms.count, metricType: 'total-njms' },
+          ],
+          activeTab: tabIdx,
+        });
+        setActiveTab(tabIdx);
+      } catch (error) {
+        setModalData((prev) => ({ ...prev, loading: false, error: error.message }));
+      }
     } else {
       // Placeholder for future implementation for other tabbed modals
       setModalData({
@@ -148,6 +211,27 @@ const SalesPipeline = () => {
           activeTab,
           tabbedPages[activeTab === 0 ? 'online' : 'offline']
         );
+      } else if (modalData.title && modalData.title.includes('Lead to Appointment')) {
+        openTabbedModal(
+          'lead-to-appointment',
+          modalData.title,
+          activeTab,
+          tabbedPages[activeTab === 0 ? 'appointment' : 'lead']
+        );
+      } else if (modalData.title && modalData.title.includes('Appointment to Sale')) {
+        openTabbedModal(
+          'appointment-to-sale',
+          modalData.title,
+          activeTab,
+          tabbedPages[activeTab === 0 ? 'njm' : 'appointment']
+        );
+      } else if (modalData.title && modalData.title.includes('Membership Agreement Conversion Rate')) {
+        openTabbedModal(
+          'agreement-vs-njm',
+          modalData.title,
+          activeTab,
+          tabbedPages[activeTab === 0 ? 'agreement' : 'njm']
+        );
       }
       // Add more cases if you have more tabbed modals
     }
@@ -161,6 +245,12 @@ const SalesPipeline = () => {
   const handleTabPageChange = (tabIdx, page) => {
     if (modalData.title && modalData.title.includes('Lead to Sale')) {
       setTabbedPages((prev) => ({ ...prev, [tabIdx === 0 ? 'njm' : 'lead']: page }));
+    } else if (modalData.title && modalData.title.includes('Lead to Appointment')) {
+      setTabbedPages((prev) => ({ ...prev, [tabIdx === 0 ? 'appointment' : 'lead']: page }));
+    } else if (modalData.title && modalData.title.includes('Appointment to Sale')) {
+      setTabbedPages((prev) => ({ ...prev, [tabIdx === 0 ? 'njm' : 'appointment']: page }));
+    } else if (modalData.title && modalData.title.includes('Membership Agreement Conversion Rate')) {
+      setTabbedPages((prev) => ({ ...prev, [tabIdx === 0 ? 'agreement' : 'njm']: page }));
     } else {
       setTabbedPages((prev) => ({ ...prev, [tabIdx === 0 ? 'online' : 'offline']: page }));
     }
@@ -198,7 +288,6 @@ const SalesPipeline = () => {
           <ClickableMetricCard
             title="Total NJMs (Sales)"
             value={salesMetrics.totalNJMs}
-            change={salesMetrics.percentageChanges.njms}
             icon={Target}
             iconColor="text-purple-600 dark:text-purple-400"
             iconBgColor="bg-purple-100 dark:bg-purple-900"
@@ -207,7 +296,6 @@ const SalesPipeline = () => {
           <ClickableMetricCard
             title="Total Appointments"
             value={salesMetrics.totalAppointments}
-            change={salesMetrics.percentageChanges.appointments}
             icon={Calendar}
             iconColor="text-green-600 dark:text-green-400"
             iconBgColor="bg-green-100 dark:bg-green-900"
@@ -224,9 +312,6 @@ const SalesPipeline = () => {
                   <span className="text-2xl font-bold text-red-600 dark:text-red-400">
                     {Math.round(salesMetrics.totalLeads * 0.08).toLocaleString()}
                   </span>
-                  <span className="text-sm font-medium text-red-600 dark:text-red-400">
-                    8%
-                  </span>
                 </div>
                 <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
                   Click to view opportunities
@@ -240,7 +325,6 @@ const SalesPipeline = () => {
           <ClickableMetricCard
             title="Total Leads"
             value={salesMetrics.totalLeads}
-            change={salesMetrics.percentageChanges.leads}
             icon={Users}
             iconColor="text-blue-600 dark:text-blue-400"
             iconBgColor="bg-blue-100 dark:bg-blue-900"
@@ -273,7 +357,6 @@ const SalesPipeline = () => {
           <ClickableMetricCard
             title="Total Shown Appointments"
             value={Math.round(salesMetrics.totalAppointments * 0.65)}
-            change={8.7}
             icon={Eye}
             iconColor="text-emerald-600 dark:text-emerald-400"
             iconBgColor="bg-emerald-100 dark:bg-emerald-900"
@@ -387,7 +470,7 @@ const SalesPipeline = () => {
           />
           
           <div 
-            onClick={() => openModal('membership-agreements', 'Membership Agreement Conversion Rate - GHL Opportunities', salesMetrics.membershipAgreements)}
+            onClick={() => openTabbedModal('agreement-vs-njm', 'Membership Agreement Conversion Rate - GHL Opportunities')}
             className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg p-6 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group"
           >
             <div className="flex items-center justify-between">

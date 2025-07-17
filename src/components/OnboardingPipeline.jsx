@@ -3,6 +3,10 @@ import { CheckCircle, Users, Smartphone, TrendingUp } from 'lucide-react';
 import { useAppSelector } from '../hooks';
 import OpportunityModal from './OpportunityModal';
 import { generateTabbedOpportunities } from '../utils/mockOpportunityData';
+import { fetchOpportunities, normalizeOpportunitiesResponse } from '../services/api';
+import metricTypeConfigs from '../config/metricTypes';
+
+const PAGE_SIZE = 10;
 
 const OnboardingPipeline = () => {
   const { onboardingMetrics, salesMetrics } = useAppSelector((state) => state.dashboard);
@@ -10,16 +14,70 @@ const OnboardingPipeline = () => {
     isOpen: false,
     title: '',
   });
+  const [tabbedPages, setTabbedPages] = useState({ agreement: 1, apps: 1, gofast: 1, afresults: 1 });
+  const [activeTab, setActiveTab] = useState(0);
+  const [modalTabs, setModalTabs] = useState([]);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalError, setModalError] = useState(null);
 
-  const openTabbedModal = (metricType, title) => {
-    if (!onboardingMetrics || !salesMetrics) return;
-    
-    const tabs = generateTabbedOpportunities(metricType, salesMetrics, onboardingMetrics);
-    setModalData({
-      isOpen: true,
-      title,
-      tabs,
-    });
+  const onboardingTabTypes = [
+    { label: 'Membership Agreement', metricType: 'membership-agreement', tabKey: 'agreement' },
+    { label: 'Apps', metricType: 'apps', tabKey: 'apps' },
+    { label: '15min GoFast', metricType: '15min-gofast', tabKey: 'gofast' },
+    { label: 'AF Results', metricType: 'af-results', tabKey: 'afresults' },
+  ];
+
+  const onboardingTabTypesMap = {
+    'assessment-uptake': [
+      { label: '15min GoFast', metricType: '15min-gofast', tabKey: 'gofast' },
+      { label: 'Membership Agreement', metricType: 'membership-agreements', tabKey: 'agreement' },
+    ],
+    'af-results': [
+      { label: 'AF Results', metricType: 'af-results', tabKey: 'afresults' },
+    ],
+    'af-conversion': [
+      { label: 'AF Results', metricType: 'af-results', tabKey: 'afresults' },
+      { label: '15min GoFast', metricType: '15min-gofast', tabKey: 'gofast' },
+    ],
+    'app-adoption': [
+      { label: 'Apps', metricType: 'apps', tabKey: 'apps' },
+      { label: 'Membership Agreement', metricType: 'membership-agreements', tabKey: 'agreement' },
+    ],
+  };
+
+  const openTabbedModal = async (metricType, title, tabIdx = 0, page = 1) => {
+    const tabTypes = onboardingTabTypesMap[metricType];
+    setModalData((prev) => ({ ...prev, isOpen: true, title }));
+    setModalLoading(true);
+    setModalError(null);
+    setActiveTab(tabIdx);
+    try {
+      const results = await Promise.all(tabTypes.map((tab, idx) =>
+        fetchOpportunities({ ...metricTypeConfigs[tab.metricType], page: tabbedPages[tab.tabKey] || 1 })
+      ));
+      setModalTabs(tabTypes.map((tab, idx) => ({
+        label: tab.label,
+        data: normalizeOpportunitiesResponse(results[idx]),
+        totalCount: results[idx].count,
+        metricType: tab.metricType,
+      })));
+      setModalLoading(false);
+    } catch (error) {
+      setModalError(error.message || 'Failed to fetch opportunities');
+      setModalLoading(false);
+    }
+  };
+
+  const handleTabChange = (tabIdx) => {
+    setActiveTab(tabIdx);
+  };
+
+  const handleTabPageChange = (tabIdx, page) => {
+    const metricType = metrics[metrics.findIndex(m => m.metricType === modalTabs[tabIdx]?.metricType)]?.metricType;
+    const tabTypes = onboardingTabTypesMap[metricType] || [];
+    const tabKey = tabTypes[tabIdx]?.tabKey;
+    setTabbedPages((prev) => ({ ...prev, [tabKey]: page }));
+    openTabbedModal(metricType, modalData.title, tabIdx, page);
   };
 
   const closeModal = () => {
@@ -27,6 +85,9 @@ const OnboardingPipeline = () => {
       isOpen: false,
       title: '',
     });
+    setModalTabs([]);
+    setModalLoading(false);
+    setModalError(null);
   };
 
   if (!onboardingMetrics) {
@@ -119,7 +180,14 @@ const OnboardingPipeline = () => {
         isOpen={modalData.isOpen}
         onClose={closeModal}
         title={modalData.title}
-        tabs={modalData.tabs}
+        tabs={modalTabs}
+        loading={modalLoading}
+        error={modalError}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        onTabPageChange={handleTabPageChange}
+        tabbedPages={tabbedPages}
+        pageSize={PAGE_SIZE}
         opportunities={[]}
         totalCount={0}
       />

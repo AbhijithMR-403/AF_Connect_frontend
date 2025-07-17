@@ -54,6 +54,10 @@ const OpportunityModal = ({
       tabPage = activeTab === 0 ? tabbedPages.njm : tabbedPages.lead;
     } else if (title && title.includes('Online vs Offline')) {
       tabPage = activeTab === 0 ? tabbedPages.online : tabbedPages.offline;
+    } else if (title && title.includes('Lead to Appointment')) {
+      tabPage = activeTab === 0 ? tabbedPages.appointment : tabbedPages.lead;
+    } else if (title && title.includes('Appointment to Sale')) {
+      tabPage = activeTab === 0 ? tabbedPages.njm : tabbedPages.appointment;
     }
   }
   const tabTotalPages = isTabbed ? Math.ceil((tab?.totalCount || 0) / pageSize) : 1;
