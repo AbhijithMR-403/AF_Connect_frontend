@@ -10,11 +10,37 @@ const OpportunityModal = ({
   opportunities = [],
   totalCount = 0,
   tabs,
+  loading = false,
+  error = null,
+  currentPage = 1,
+  pageSize = 10,
+  onPageChange,
 }) => {
   const [activeTab, setActiveTab] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
 
   if (!isOpen) return null;
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 flex flex-col items-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+          <div className="text-gray-900 dark:text-white font-semibold">Loading opportunities...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 flex flex-col items-center">
+          <div className="text-red-600 dark:text-red-400 font-semibold mb-2">{error}</div>
+          <button onClick={onClose} className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg">Close</button>
+        </div>
+      </div>
+    );
+  }
 
   const currentOpportunities = tabs ? tabs[activeTab]?.opportunities || [] : opportunities;
   const currentCount = tabs ? tabs[activeTab]?.count || 0 : totalCount;
@@ -22,14 +48,12 @@ const OpportunityModal = ({
   // Reset to first page when switching tabs
   const handleTabChange = (tabIndex) => {
     setActiveTab(tabIndex);
-    setCurrentPage(1);
+    if (onPageChange) onPageChange(1); // Reset to first page when switching tabs
   };
 
   // Pagination calculations
-  const totalPages = Math.ceil(currentOpportunities.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const paginatedOpportunities = currentOpportunities.slice(startIndex, endIndex);
+  const totalPages = Math.ceil((totalCount || currentOpportunities.length) / pageSize);
+  const paginatedOpportunities = opportunities;
 
   // Generate page numbers for pagination
   const getPageNumbers = () => {
@@ -76,6 +100,7 @@ const OpportunityModal = ({
   };
 
   const getStageColor = (stage) => {
+    if (typeof stage !== 'string') return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     switch (stage.toLowerCase()) {
       case 'new lead':
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
@@ -210,7 +235,9 @@ const OpportunityModal = ({
                       <div className="flex items-center">
                         <User className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
                         <div className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
-                          {opportunity.contact}
+                          {typeof opportunity.contact === 'string' ? opportunity.contact :
+                            (opportunity.contact && typeof opportunity.contact === 'object' && (opportunity.contact.first_name || opportunity.contact.firstName || opportunity.contact.email)) ||
+                            '-'}
                         </div>
                       </div>
                     </td>
@@ -218,7 +245,9 @@ const OpportunityModal = ({
                       <div className="flex items-center">
                         <Globe className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
                         <span className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
-                          {opportunity.country}
+                          {typeof opportunity.country === 'string' ? opportunity.country :
+                            (opportunity.country && typeof opportunity.country === 'object' && (opportunity.country.name || opportunity.country.id)) ||
+                            '-'}
                         </span>
                       </div>
                     </td>
@@ -226,20 +255,26 @@ const OpportunityModal = ({
                       <div className="flex items-center">
                         <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
                         <span className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
-                          {opportunity.location}
+                          {typeof opportunity.location === 'string' ? opportunity.location :
+                            (opportunity.location && typeof opportunity.location === 'object' && (opportunity.location.name || opportunity.location.id)) ||
+                            '-'}
                         </span>
                       </div>
                     </td>
                     <td className="px-3 sm:px-6 py-4">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStageColor(opportunity.stage)}`}>
-                        {opportunity.stage}
+                        {typeof opportunity.stage === 'string' ? opportunity.stage :
+                          (opportunity.stage && typeof opportunity.stage === 'object' && (opportunity.stage.name || opportunity.stage.id)) ||
+                          '-'}
                       </span>
                     </td>
                     <td className="px-3 sm:px-6 py-4">
                       <div className="flex items-center">
                         <DollarSign className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-1 flex-shrink-0" />
                         <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
-                          ${opportunity.value.toLocaleString()}
+                          {typeof opportunity.value === 'number' && !isNaN(opportunity.value)
+                            ? `$${opportunity.value.toLocaleString()}`
+                            : '-'}
                         </span>
                       </div>
                     </td>
@@ -247,12 +282,18 @@ const OpportunityModal = ({
                       <div className="flex items-center">
                         <Tag className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
                         <span className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
-                          {opportunity.source}
+                          {typeof opportunity.source === 'string' ? opportunity.source :
+                            (opportunity.source && typeof opportunity.source === 'object' && (opportunity.source.name || opportunity.source.id)) ||
+                            '-'}
                         </span>
                       </div>
                     </td>
                     <td className="px-3 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 dark:text-white hidden sm:table-cell">
-                      <div className="truncate max-w-[120px]">{opportunity.assignedTo}</div>
+                      <div className="truncate max-w-[120px]">
+                        {typeof opportunity.assignedTo === 'string' ? opportunity.assignedTo :
+                          (opportunity.assignedTo && typeof opportunity.assignedTo === 'object' && (opportunity.assignedTo.first_name || opportunity.assignedTo.firstName || opportunity.assignedTo.email)) ||
+                          '-'}
+                      </div>
                     </td>
                     <td className="px-3 sm:px-6 py-4 hidden md:table-cell">
                       <div className="flex items-center">
@@ -290,45 +331,59 @@ const OpportunityModal = ({
         {totalPages > 1 && (
           <div className="flex flex-col sm:flex-row items-center justify-between p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 gap-3 flex-shrink-0">
             <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 text-center sm:text-left">
-              Showing {startIndex + 1} to {Math.min(endIndex, currentOpportunities.length)} of {currentOpportunities.length} entries
+              Page {currentPage} of {totalPages} (Total: {totalCount})
             </div>
-            
             <div className="flex items-center gap-1 sm:gap-2">
-              {/* Previous Button */}
               <button
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                onClick={() => onPageChange && onPageChange(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
                 className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronLeft className="w-4 h-4" />
                 <span className="hidden sm:inline">Previous</span>
               </button>
-
-              {/* Page Numbers */}
               <div className="flex items-center gap-1">
-                {getPageNumbers().map((page, index) => (
-                  <React.Fragment key={index}>
-                    {page === '...' ? (
-                      <span className="px-2 sm:px-3 py-2 text-xs sm:text-sm text-gray-500 dark:text-gray-300">...</span>
-                    ) : (
-                      <button
-                        onClick={() => setCurrentPage(page)}
-                        className={`px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
-                          currentPage === page
-                            ? 'bg-blue-600 text-white'
-                            : 'text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    )}
-                  </React.Fragment>
-                ))}
+                {(() => {
+                  const pages = [];
+                  if (totalPages <= 7) {
+                    for (let i = 1; i <= totalPages; i++) {
+                      pages.push(i);
+                    }
+                  } else {
+                    // Always show first
+                    pages.push(1);
+                    // Show ellipsis if needed
+                    if (currentPage > 4) pages.push('...');
+                    // Show up to 3 pages around current
+                    const start = Math.max(2, currentPage - 1);
+                    const end = Math.min(totalPages - 1, currentPage + 1);
+                    for (let i = start; i <= end; i++) {
+                      pages.push(i);
+                    }
+                    // Show ellipsis if needed
+                    if (currentPage < totalPages - 3) pages.push('...');
+                    // Always show last
+                    pages.push(totalPages);
+                  }
+                  return pages.map((page, idx) =>
+                    page === '...'
+                      ? <span key={"ellipsis-" + idx} className="px-2 sm:px-3 py-2 text-xs sm:text-sm text-gray-500 dark:text-gray-300">...</span>
+                      : <button
+                          key={page}
+                          onClick={() => onPageChange && onPageChange(page)}
+                          className={`px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
+                            currentPage === page
+                              ? 'bg-blue-600 text-white'
+                              : 'text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                  );
+                })()}
               </div>
-
-              {/* Next Button */}
               <button
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                onClick={() => onPageChange && onPageChange(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
                 className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >

@@ -5,44 +5,81 @@ import ClickableMetricCard from './ClickableMetricCard';
 import ChartSection from './ChartSection';
 import TrendGraphs from './TrendGraphs';
 import OpportunityModal from './OpportunityModal';
-import { generateOpportunitiesForMetric, generateTabbedOpportunities } from '../utils/mockOpportunityData';
+// import { generateOpportunitiesForMetric, generateTabbedOpportunities } from '../utils/mockOpportunityData';
 import NJMAnalysis from './NJMAnalysis';
+import { fetchOpportunities, normalizeOpportunitiesResponse } from '../services/api';
+
+const PAGE_SIZE = 10;
 
 const SalesPipeline = () => {
-  const { salesMetrics } = useAppSelector((state) => state.dashboard);
+  const { salesMetrics, filters } = useAppSelector((state) => state.dashboard);
   const [modalData, setModalData] = useState({
     isOpen: false,
     title: '',
     opportunities: [],
     totalCount: 0,
+    loading: false,
+    error: null,
   });
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const openModal = (metricType, title, count) => {
-    if (!salesMetrics) return;
-    
-    const opportunities = generateOpportunitiesForMetric(metricType, Math.min(count, 50), salesMetrics);
-    setModalData({
-      isOpen: true,
-      title,
-      opportunities,
-      totalCount: count,
-    });
+  // Helper to map filters to API query params
+  const buildOpportunityParams = (metricType, count) => {
+    const params = {};
+    // Map filters to API params
+    if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
+      params.assigned_to = filters.assignedUser;
+    }
+    if (filters.country && Array.isArray(filters.country) && !filters.country.includes('all')) {
+      params.country = filters.country;
+    }
+    if (filters.club && Array.isArray(filters.club) && !filters.club.includes('all')) {
+      params.location = filters.club;
+    }
+    if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
+      params.lead_source = filters.leadSource;
+    }
+    // Date range
+    if (filters.dateRange === 'custom-range' && filters.customStartDate && filters.customEndDate) {
+      params.created_at_min = filters.customStartDate;
+      params.created_at_max = filters.customEndDate;
+    } else if (filters.dateRange !== 'all' && filters.dateRange) {
+      // Optionally map preset ranges to dates if needed
+      // For now, skip if not custom
+    }
+    // Metric-specific params
+    if (metricType === 'total-njms') {
+      params.pipeline_name = 'AFC Sales Pipeline';
+      params.stage_name = 'Sale';
+    }
+    // Limit
+    if (count) params.limit = Math.min(count, 50);
+    return params;
   };
 
+  const openModal = async (metricType, title, count, page = 1) => {
+    setModalData((prev) => ({ ...prev, isOpen: true, title, loading: true, error: null, opportunities: [], totalCount: count }));
+    try {
+      const params = buildOpportunityParams(metricType);
+      params.page = page;
+      const data = await fetchOpportunities(params);
+      const normalized = normalizeOpportunitiesResponse(data);
+      setModalData((prev) => ({ ...prev, loading: false, opportunities: normalized, totalCount: data.count }));
+      setCurrentPage(page);
+    } catch (error) {
+      setModalData((prev) => ({ ...prev, loading: false, error: error.message || 'Failed to fetch opportunities' }));
+    }
+  };
+
+  // TODO: Refactor openTabbedModal to use real API when backend supports tabbed/grouped data
   const openTabbedModal = (metricType, title) => {
-    if (!salesMetrics) return;
-    console.log("[][][][][][][[]]");
-    console.log('salesMetrics', metricType);
-    console.log("[][][][][][][[]]");
-    console.log('salesMetrics', salesMetrics);
-    
-    const tabs = generateTabbedOpportunities(metricType, salesMetrics);
+    // Placeholder for future implementation
     setModalData({
       isOpen: true,
       title,
       opportunities: [],
       totalCount: 0,
-      tabs,
+      tabs: [],
     });
   };
 
@@ -299,6 +336,11 @@ const SalesPipeline = () => {
         opportunities={modalData.opportunities}
         totalCount={modalData.totalCount}
         tabs={modalData.tabs}
+        loading={modalData.loading}
+        error={modalData.error}
+        currentPage={currentPage}
+        pageSize={PAGE_SIZE}
+        onPageChange={(page) => openModal(modalData.metricType, modalData.title, modalData.totalCount, page)}
       />
     </div>
   );

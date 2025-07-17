@@ -38,6 +38,74 @@ export const fetchUsers = async () => {
   }
 };
 
+/**
+ * Fetch opportunities from the API with query parameters.
+ * @param {Object} params - Query parameters as key-value pairs. Arrays will be repeated as multiple params.
+ * @returns {Promise<Object>} - The response JSON from the API.
+ */
+export const fetchOpportunities = async (params = {}) => {
+  // Helper to build query string from params object
+  const buildQueryString = (paramsObj) => {
+    const esc = encodeURIComponent;
+    return Object.entries(paramsObj)
+      .flatMap(([key, value]) => {
+        if (Array.isArray(value)) {
+          return value.map(v => `${esc(key)}=${esc(v)}`);
+        } else if (value !== undefined && value !== null) {
+          return `${esc(key)}=${esc(value)}`;
+        } else {
+          return [];
+        }
+      })
+      .join('&');
+  };
+
+  const queryString = buildQueryString(params);
+  const url = `${config.api.baseUrl}/opportunities/${queryString ? `?${queryString}` : ''}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch opportunities');
+  }
+
+  return response.json();
+};
+
+/**
+ * Normalize the API response for opportunities to a flat, UI-friendly schema.
+ * @param {Object} apiResponse - The raw API response (with .results array)
+ * @returns {Array} - Array of normalized opportunity objects
+ */
+export function normalizeOpportunitiesResponse(apiResponse) {
+  if (!apiResponse || !Array.isArray(apiResponse.results)) return [];
+  return apiResponse.results.map((opp) => ({
+    id: opp.ghl_id || opp.id,
+    name: opp.name || '',
+    value: typeof opp.opp_value === 'string' ? parseFloat(opp.opp_value) : (opp.opp_value ?? 0),
+    assignedTo: opp.assigned_to || '-',
+    pipeline: opp.pipeline?.name || '-',
+    contact: opp.contact
+      ? `${opp.contact.first_name || ''} ${opp.contact.last_name || ''}`.trim() || opp.contact.email || '-'
+      : '-',
+    contactEmail: opp.contact?.email || '-',
+    contactPhone: opp.contact?.phone || '-',
+    country: opp.contact?.country || '-',
+    location: opp.pipeline?.location || opp.contact?.location_id || '-',
+    stage: opp.stage?.name || '-',
+    status: opp.status || '-',
+    createdDate: opp.created_at ? new Date(opp.created_at).toLocaleDateString() : '-',
+    lastActivity: opp.updated_at ? new Date(opp.updated_at).toLocaleDateString() : '-',
+    source: opp.contact?.custom_fields?.lead_source || '-',
+    raw: opp, // keep original for debugging if needed
+  }));
+}
+
 export const generateDummyData = (filters) => {
   const salesMetrics = {
     totalLeads: 1045,
