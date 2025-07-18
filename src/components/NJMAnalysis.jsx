@@ -3,9 +3,25 @@ import { Target, Phone, BarChart3, TrendingUp } from 'lucide-react';
 import ClickableMetricCard from './ClickableMetricCard';
 import LeadSourcesChart from './charts/LeadSourcesChart';
 
+const LEAD_SOURCE_COLORS = [
+  '#0D9488', '#7C3AED', '#FBBF24', '#14B8A6', '#F87171', '#A21CAF', '#0EA5E9',
+  '#F43F5E', '#F59E42', '#8B5CF6', '#F59E0B', '#10B981', '#6366F1', '#F472B6',
+  '#25D366', '#111827', '#EC4899', '#3B82F6'
+];
+
+function assignColorsToLeadSources(leadSources) {
+  if (!Array.isArray(leadSources) || leadSources.length > LEAD_SOURCE_COLORS.length) {
+    // If more than 18, do not assign colors
+    return leadSources;
+  }
+  return leadSources.map((source, idx) => ({
+    ...source,
+    color: LEAD_SOURCE_COLORS[idx]
+  }));
+}
 const NJMAnalysis = ({ salesMetrics, openModal }) => {
   if (!salesMetrics) return null;
-
+  
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
       <div className="flex items-center gap-2 mb-6">
@@ -17,39 +33,8 @@ const NJMAnalysis = ({ salesMetrics, openModal }) => {
         {/* LeadSourcesChart on the left, spanning two columns on large screens */}
         <div className="col-span-1 lg:col-span-2 order-1">
           <LeadSourcesChart
-            leadSources={[
-              {
-                name: 'Facebook',
-                value: Math.round(salesMetrics.totalNJMs * 0.35),
-                percentage: 35,
-                color: '#1877F2',
-              },
-              {
-                name: 'Instagram',
-                value: Math.round(salesMetrics.totalNJMs * 0.25),
-                percentage: 25,
-                color: '#E1306C',
-              },
-              {
-                name: 'Google Ads',
-                value: Math.round(salesMetrics.totalNJMs * 0.19),
-                percentage: 19,
-                color: '#4285F4',
-              },
-              {
-                name: 'Outreach',
-                value: Math.round(salesMetrics.totalNJMs * 0.12),
-                percentage: 12,
-                color: '#10B981',
-              },
-              {
-                name: 'Referral',
-                value: Math.round(salesMetrics.totalNJMs * 0.09),
-                percentage: 9,
-                color: '#F59E42',
-              },
-            ]}
-            openModal={openModal}
+            leadSources={assignColorsToLeadSources(salesMetrics.leadSourceSaleBreakdown)}
+            openModal={(metricType, title, count, data) => openModal(metricType, title, count, 1, { lead_source: data?.name })}
           />
         </div>
         {/* Right column: stack Contacted and Paid Media cards vertically */}

@@ -143,7 +143,7 @@ export function normalizeOpportunitiesResponse(apiResponse, countries = []) {
     country: opp.contact?.country ? (countryMap[opp.contact.country] || opp.contact.country) : '-',
     location: opp.pipeline?.location || opp.contact?.location_id || '-',
     stage: opp.stage?.name || '-',
-    status: opp.status || '-',
+    status: opp.status_display || '-',
     createdDate: opp.created_at ? new Date(opp.created_at).toLocaleDateString() : '-',
     lastActivity: opp.updated_at ? new Date(opp.updated_at).toLocaleDateString() : '-',
     source: opp.contact?.custom_fields?.lead_source || '-',
@@ -234,8 +234,9 @@ export const generateDashboardData = async (filters) => {
     leadToAppointmentRatio: (totalLeads && totalAppointments) ? Number(((totalAppointments / totalLeads) * 100).toFixed(2)) : null,
     appointmentToSaleRatio: (totalAppointments && totalNJMs) ? Number(((totalAppointments / totalNJMs) * 100).toFixed(2)) : null,
     leadSourceBreakdown: sm.leadSourceBreakdown ?? [],
+    leadSourceSaleBreakdown: apiResponse.leadSourceSaleBreakdown ?? [],
     appointmentStatus: apiResponse.appointment_stats ?? [],
-    trend: apiResponse.trend ?? { daily: [], weekly: [], monthly: [] }
+    trend: apiResponse.trend ?? { daily: [], weekly: [], monthly: [] },
   };
 
   // Calculate trend sums

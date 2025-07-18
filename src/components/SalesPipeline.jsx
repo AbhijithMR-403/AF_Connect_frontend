@@ -61,10 +61,12 @@ const SalesPipeline = () => {
     return params;
   };
 
-  const openModal = async (metricType, title, count, page = 1) => {
+  const openModal = async (metricType, title, count, page = 1, extraParams = {}) => {
     setModalData((prev) => ({ ...prev, isOpen: true, title, loading: true, error: null, opportunities: [], totalCount: count, metricType }));
     try {
       const params = buildOpportunityParams(metricType);
+      // Merge in any extra params (e.g., { lead_source: 'Whatsapp' })
+      Object.assign(params, extraParams);
       params.page = page;
       const data = await fetchOpportunities(params);
       const normalized = normalizeOpportunitiesResponse(data, countries);
@@ -378,6 +380,7 @@ const SalesPipeline = () => {
         <ChartSection
           leadSources={salesMetrics.leadSourceBreakdown}
           appointmentStatus={salesMetrics.appointmentStatus}
+          openModal={openModal}
         />
       </div>
 

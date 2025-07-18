@@ -57,6 +57,13 @@ const metricTypeConfigs = {
       // 'Google'
     ],
   },
+  'njm-lead-source': {
+    pipeline_name: 'AFC Sales Pipeline',
+    stage_name: 'Sale',
+  },
+  'lead-source': {
+    pipeline_name: 'AFC Sales Pipeline',
+  },
   // Add more metric types here as needed
 };
 

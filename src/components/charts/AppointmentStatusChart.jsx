@@ -1,9 +1,24 @@
 import React from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 
-const AppointmentStatusChart = ({ appointmentStatus, openModal, PieTooltip }) => {
+const AppointmentStatusChart = ({ appointmentStatus, openModal }) => {
   const handlePieClick = (data) => {
     openModal('appointment-status', `${data.status} Appointments - GHL Opportunities`, data.count, data);
+  };
+
+  // Define PieTooltip internally
+  const PieTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white dark:bg-gray-800 p-4 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg backdrop-blur-sm">
+          <p className="font-semibold text-gray-900 dark:text-white">{`${data.status || data.name}: ${data.count || data.value}`}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{`${data.percentage}%`}</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Click to view opportunities</p>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (

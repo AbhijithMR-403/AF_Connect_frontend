@@ -18,7 +18,7 @@ const LeadSourcesChart = ({ leadSources, openModal }) => {
   };
 
   const handleBarClick = (data) => {
-    openModal('lead-source', `${data.name} Leads - GHL Opportunities`, data.value, data);
+    openModal('njm-lead-source', `${data.name} Leads - GHL Opportunities`, data.value, data);
   };
 
   return (
