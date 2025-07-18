@@ -46,61 +46,12 @@ const TrendGraphs = () => {
     );
   }
 
-  // Generate mock trend data based on the selected view
-  const generateTrendData = (view) => {
-    const baseLeads = salesMetrics.totalLeads;
-    const baseAppointments = salesMetrics.totalAppointments;
-    const baseNJMs = salesMetrics.totalNJMs;
-
-    switch (view) {
-      case 'daily':
-        return Array.from({ length: 7 }, (_, i) => {
-          const day = new Date();
-          day.setDate(day.getDate() - (6 - i));
-          const dayName = day.toLocaleDateString('en-US', { weekday: 'short' });
-          
-          return {
-            period: dayName,
-            leads: Math.floor(baseLeads / 30 + Math.random() * 50 - 25),
-            appointments: Math.floor(baseAppointments / 30 + Math.random() * 30 - 15),
-            njms: Math.floor(baseNJMs / 30 + Math.random() * 20 - 10),
-          };
-        });
-
-      case 'weekly':
-        return Array.from({ length: 8 }, (_, i) => {
-          const weekStart = new Date();
-          weekStart.setDate(weekStart.getDate() - (7 - i) * 7);
-          const weekLabel = `W${i + 1}`;
-          
-          return {
-            period: weekLabel,
-            leads: Math.floor(baseLeads / 4 + Math.random() * 200 - 100),
-            appointments: Math.floor(baseAppointments / 4 + Math.random() * 120 - 60),
-            njms: Math.floor(baseNJMs / 4 + Math.random() * 80 - 40),
-          };
-        });
-
-      case 'monthly':
-        return Array.from({ length: 6 }, (_, i) => {
-          const month = new Date();
-          month.setMonth(month.getMonth() - (5 - i));
-          const monthName = month.toLocaleDateString('en-US', { month: 'short' });
-          
-          return {
-            period: monthName,
-            leads: Math.floor(baseLeads + Math.random() * 400 - 200),
-            appointments: Math.floor(baseAppointments + Math.random() * 240 - 120),
-            njms: Math.floor(baseNJMs + Math.random() * 160 - 80),
-          };
-        });
-
-      default:
-        return [];
-    }
-  };
-
-  const trendData = generateTrendData(activeView);
+  console.log('opportunity_dash', salesMetrics);
+  // Use trend data from opportunity_dash if available
+  const trendData = salesMetrics && salesMetrics.trend && salesMetrics.trend[activeView]
+    ? salesMetrics.trend[activeView]
+    : [];
+  console.log('trendData', salesMetrics);
   
   // Calculate current period totals and changes
   const currentPeriod = trendData[trendData.length - 1];

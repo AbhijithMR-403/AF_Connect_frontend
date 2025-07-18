@@ -9,7 +9,7 @@ import metricTypeConfigs from '../config/metricTypes';
 const PAGE_SIZE = 10;
 
 const OnboardingPipeline = () => {
-  const { onboardingMetrics, salesMetrics } = useAppSelector((state) => state.dashboard);
+  const { onboardingMetrics, salesMetrics, countries } = useAppSelector((state) => state.dashboard);
   const [modalData, setModalData] = useState({
     isOpen: false,
     title: '',
@@ -57,7 +57,7 @@ const OnboardingPipeline = () => {
       ));
       setModalTabs(tabTypes.map((tab, idx) => ({
         label: tab.label,
-        data: normalizeOpportunitiesResponse(results[idx]),
+        data: normalizeOpportunitiesResponse(results[idx], countries),
         totalCount: results[idx].count,
         metricType: tab.metricType,
       })));

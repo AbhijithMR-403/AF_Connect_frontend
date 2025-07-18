@@ -13,7 +13,7 @@ import metricTypeConfigs from '../config/metricTypes';
 const PAGE_SIZE = 10;
 
 const SalesPipeline = () => {
-  const { salesMetrics, filters } = useAppSelector((state) => state.dashboard);
+  const { salesMetrics, filters, countries } = useAppSelector((state) => state.dashboard);
   const [modalData, setModalData] = useState({
     isOpen: false,
     title: '',
@@ -67,7 +67,7 @@ const SalesPipeline = () => {
       const params = buildOpportunityParams(metricType);
       params.page = page;
       const data = await fetchOpportunities(params);
-      const normalized = normalizeOpportunitiesResponse(data);
+      const normalized = normalizeOpportunitiesResponse(data, countries);
       setModalData((prev) => ({ ...prev, loading: false, opportunities: normalized, totalCount: data.count, metricType }));
       setCurrentPage(page);
     } catch (error) {
@@ -89,8 +89,8 @@ const SalesPipeline = () => {
           title,
           loading: false,
           tabs: [
-            { label: 'Online Leads', data: normalizeOpportunitiesResponse(online), totalCount: online.count, metricType: 'online-leads' },
-            { label: 'Offline Leads', data: normalizeOpportunitiesResponse(offline), totalCount: offline.count, metricType: 'offline-leads' },
+            { label: 'Online Leads', data: normalizeOpportunitiesResponse(online, countries), totalCount: online.count, metricType: 'online-leads' },
+            { label: 'Offline Leads', data: normalizeOpportunitiesResponse(offline, countries), totalCount: offline.count, metricType: 'offline-leads' },
           ],
           activeTab: tabIdx,
         });
@@ -110,8 +110,8 @@ const SalesPipeline = () => {
           title,
           loading: false,
           tabs: [
-            { label: 'NJMs', data: normalizeOpportunitiesResponse(njms), totalCount: njms.count, metricType: 'total-njms' },
-            { label: 'Leads', data: normalizeOpportunitiesResponse(leads), totalCount: leads.count, metricType: 'total-leads' },
+            { label: 'NJMs', data: normalizeOpportunitiesResponse(njms, countries), totalCount: njms.count, metricType: 'total-njms' },
+            { label: 'Leads', data: normalizeOpportunitiesResponse(leads, countries), totalCount: leads.count, metricType: 'total-leads' },
           ],
           activeTab: tabIdx,
         });
@@ -131,8 +131,8 @@ const SalesPipeline = () => {
           title,
           loading: false,
           tabs: [
-            { label: 'Appointments', data: normalizeOpportunitiesResponse(appointments), totalCount: appointments.count, metricType: 'total-appointments' },
-            { label: 'Total Leads', data: normalizeOpportunitiesResponse(leads), totalCount: leads.count, metricType: 'total-leads' },
+            { label: 'Appointments', data: normalizeOpportunitiesResponse(appointments, countries), totalCount: appointments.count, metricType: 'total-appointments' },
+            { label: 'Total Leads', data: normalizeOpportunitiesResponse(leads, countries), totalCount: leads.count, metricType: 'total-leads' },
           ],
           activeTab: tabIdx,
         });
@@ -152,8 +152,8 @@ const SalesPipeline = () => {
           title,
           loading: false,
           tabs: [
-            { label: 'NJMs', data: normalizeOpportunitiesResponse(njms), totalCount: njms.count, metricType: 'total-njms' },
-            { label: 'Appointments', data: normalizeOpportunitiesResponse(appointments), totalCount: appointments.count, metricType: 'total-appointments' },
+            { label: 'NJMs', data: normalizeOpportunitiesResponse(njms, countries), totalCount: njms.count, metricType: 'total-njms' },
+            { label: 'Appointments', data: normalizeOpportunitiesResponse(appointments, countries), totalCount: appointments.count, metricType: 'total-appointments' },
           ],
           activeTab: tabIdx,
         });
@@ -173,8 +173,8 @@ const SalesPipeline = () => {
           title,
           loading: false,
           tabs: [
-            { label: 'Agreements', data: normalizeOpportunitiesResponse(agreements), totalCount: agreements.count, metricType: 'membership-agreements' },
-            { label: 'NJMs', data: normalizeOpportunitiesResponse(njms), totalCount: njms.count, metricType: 'total-njms' },
+            { label: 'Agreements', data: normalizeOpportunitiesResponse(agreements, countries), totalCount: agreements.count, metricType: 'membership-agreements' },
+            { label: 'NJMs', data: normalizeOpportunitiesResponse(njms, countries), totalCount: njms.count, metricType: 'total-njms' },
           ],
           activeTab: tabIdx,
         });

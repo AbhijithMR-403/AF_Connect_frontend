@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, X, Check, Calendar } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../hooks';
-import { updateFilters, loadUsers, loadCountries } from '../store/slices/dashboardSlice';
+import { updateFilters, loadUsers, loadClubsAndCountries, loadDashboardData } from '../store/slices/dashboardSlice';
 
 const FilterBar = () => {
   const dispatch = useAppDispatch();
@@ -22,11 +22,18 @@ const FilterBar = () => {
     isOpen: false,
   });
 
-  // Fetch users and countries on component mount
+  // Fetch users and both clubs and countries on component mount
   useEffect(() => {
     dispatch(loadUsers());
-    dispatch(loadCountries());
+    dispatch(loadClubsAndCountries());
   }, [dispatch]);
+
+  // Call generateDashboardData API whenever filters change
+  useEffect(() => {
+    if (filters) {
+      dispatch(loadDashboardData(filters));
+    }
+  }, [filters, dispatch]);
 
   const toggleDropdown = (filterType) => {
     setDropdownStates(prev => ({

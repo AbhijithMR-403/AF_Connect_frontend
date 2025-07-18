@@ -1,13 +1,50 @@
 import { config } from '../config/env.js';
 
 export const fetchDashboardData = async (filters) => {
-  // Simulate API call
-  const response = await fetch(`${config.api.baseUrl}/api/dashboard`, {
-    method: 'POST',
+  // Build query parameters from filters
+  const buildQueryString = (paramsObj) => {
+    const esc = encodeURIComponent;
+    return Object.entries(paramsObj)
+      .flatMap(([key, value]) => {
+        if (Array.isArray(value)) {
+          return value.map(v => `${esc(key)}=${esc(v)}`);
+        } else if (value !== undefined && value !== null && value !== 'all') {
+          return `${esc(key)}=${esc(value)}`;
+        } else {
+          return [];
+        }
+      })
+      .join('&');
+  };
+
+  // Convert filters to API query parameters
+  const apiParams = {};
+  
+  if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
+    apiParams.assigned_to = filters.assignedUser;
+  }
+  if (filters.country && Array.isArray(filters.country) && !filters.country.includes('all')) {
+    apiParams.country = filters.country;
+  }
+  if (filters.club && Array.isArray(filters.club) && !filters.club.includes('all')) {
+    apiParams.location = filters.club;
+  }
+  if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
+    apiParams.lead_source = filters.leadSource;
+  }
+  if (filters.customStartDate && filters.customEndDate && filters.dateRange !== 'all') {
+    apiParams.created_at_min = filters.customStartDate;
+    apiParams.created_at_max = filters.customEndDate;
+  }
+
+  const queryString = buildQueryString(apiParams);
+  const url = `${config.api.baseUrl}/opportunity_dash/${queryString ? `?${queryString}` : ''}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(filters),
   });
 
   if (!response.ok) {
@@ -80,10 +117,18 @@ export const fetchOpportunities = async (params = {}) => {
 /**
  * Normalize the API response for opportunities to a flat, UI-friendly schema.
  * @param {Object} apiResponse - The raw API response (with .results array)
+ * @param {Array} countries - Array of country objects with id and name properties
  * @returns {Array} - Array of normalized opportunity objects
  */
-export function normalizeOpportunitiesResponse(apiResponse) {
+export function normalizeOpportunitiesResponse(apiResponse, countries = []) {
   if (!apiResponse || !Array.isArray(apiResponse.results)) return [];
+  
+  // Create a map for quick country ID to name lookup
+  const countryMap = {};
+  countries.forEach(country => {
+    countryMap[country.id] = country.name;
+  });
+  
   return apiResponse.results.map((opp) => ({
     id: opp.ghl_id || opp.id,
     name: opp.name || '',
@@ -95,7 +140,7 @@ export function normalizeOpportunitiesResponse(apiResponse) {
       : '-',
     contactEmail: opp.contact?.email || '-',
     contactPhone: opp.contact?.phone || '-',
-    country: opp.contact?.country || '-',
+    country: opp.contact?.country ? (countryMap[opp.contact.country] || opp.contact.country) : '-',
     location: opp.pipeline?.location || opp.contact?.location_id || '-',
     stage: opp.stage?.name || '-',
     status: opp.status || '-',
@@ -107,10 +152,10 @@ export function normalizeOpportunitiesResponse(apiResponse) {
 }
 
 /**
- * Fetch clubs (locations) from the API and normalize to { id, name, countryDisplay }
- * @returns {Promise<Array>} - Array of club objects
+ * Fetch both clubs and unique countries from the locations API in a single call.
+ * @returns {Promise<{ clubs: Array, countries: Array }>} - Object with clubs and countries arrays
  */
-export const fetchClubs = async () => {
+export const fetchClubsAndCountries = async () => {
   const response = await fetch(`${config.api.baseUrl}/locations/`, {
     method: 'GET',
     headers: {
@@ -119,38 +164,19 @@ export const fetchClubs = async () => {
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch clubs');
+    throw new Error('Failed to fetch locations for clubs and countries');
   }
 
   const data = await response.json();
-  // Normalize to { id, name, countryDisplay }
-  return Array.isArray(data)
+  // Clubs: { id, name, countryDisplay }
+  const clubs = Array.isArray(data)
     ? data.map(loc => ({
         id: loc.id,
         name: loc.name,
         countryDisplay: loc.country_display,
       }))
     : [];
-};
-
-/**
- * Fetch unique countries from the locations API.
- * @returns {Promise<Array>} - Array of country objects: { id, name }
- */
-export const fetchCountries = async () => {
-  const response = await fetch(`${config.api.baseUrl}/locations/`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch locations for countries');
-  }
-
-  const data = await response.json();
-  // Extract unique countries
+  // Countries: unique { id, name }
   const countryMap = {};
   if (Array.isArray(data)) {
     data.forEach(loc => {
@@ -159,11 +185,19 @@ export const fetchCountries = async () => {
       }
     });
   }
-  return Object.entries(countryMap).map(([id, name]) => ({ id, name }));
+  const countries = Object.entries(countryMap).map(([id, name]) => ({ id, name }));
+  return { clubs, countries };
 };
 
-export const generateDummyData = (filters) => {
-  const salesMetrics = {
+export const generateDashboardData = async (filters) => {
+  console.log('generateDashboardData called with filters:', filters);
+  const apiResponse = await fetchDashboardData(filters);
+  
+  // Debug: Log the API response to see what we're getting
+  console.log('API Response from /opportunity_dash/:', apiResponse);
+
+  // Dummy values for fallback
+  const dummySalesMetrics = {
     totalLeads: 1045,
     totalAppointments: 708,
     totalNJMs: 409,
@@ -171,12 +205,6 @@ export const generateDummyData = (filters) => {
     leadToSaleRatio: 39.1,
     leadToAppointmentRatio: 67.8,
     appointmentToSaleRatio: 57.8,
-    percentageChanges: {
-      leads: 12.5,
-      appointments: 8.3,
-      njms: 15.2,
-      memberships: 18.7,
-    },
     leadSourceBreakdown: [
       { name: 'Facebook', value: 1250, percentage: 20, color: '#3B82F6' },
       { name: 'Instagram', value: 890, percentage: 14, color: '#EC4899' },
@@ -205,34 +233,113 @@ export const generateDummyData = (filters) => {
     ],
   };
 
-  const onboardingMetrics = {
+  const dummyOnboardingMetrics = {
     assessmentUptake: 85.4,
     afResults: 72.1,
     conversionRate: 84.5,
     appAdoptionRate: 68.9,
   };
 
-  const defaulterMetrics = {
+  const dummyDefaulterMetrics = {
     totalDefaulters: 89,
-    totalDefaulters2Month: 45, // 2-month defaulters
-    totalDefaulters3Month: 22, // 3-month defaulters
+    totalDefaulters2Month: 45,
+    totalDefaulters3Month: 22,
     communicationsSent: 234,
     ptpConversion: 67.8,
     paymentRecoveryRate: 45.2,
-    paid: 30, // Paid
-    totalPTP: 50, // Total PTP
-    noResponse: 15, // No Response
-    cancelledMembership: 8, // Cancelled Membership
+    paid: 30,
+    totalPTP: 50,
+    noResponse: 15,
+    cancelledMembership: 8,
   };
 
-  const clubs = [
-    { id: 'club-1', name: 'Manila Central', countryId: 'ph' },
-    { id: 'club-2', name: 'Makati Premium', countryId: 'ph' },
-    { id: 'club-3', name: 'Jakarta Elite', countryId: 'id' },
-    { id: 'club-4', name: 'Kuala Lumpur City', countryId: 'my' },
-    { id: 'club-5', name: 'Singapore Marina', countryId: 'sg' },
-    { id: 'club-6', name: 'Bangkok Central', countryId: 'th' },
-  ];
+  // Dummy trend data for fallback
+  const dummyTrend = {
+    daily: [
+      { period: 'Sat', leads: 3, appointments: 1, njms: 1 },
+      { period: 'Sun', leads: 11, appointments: 1, njms: 1 },
+      { period: 'Mon', leads: 1, appointments: 5, njms: 2 },
+      { period: 'Tue', leads: 9, appointments: 5, njms: 1 },
+      { period: 'Wed', leads: 31, appointments: 8, njms: 1 },
+    ],
+    weekly: [
+      { period: 'W1', leads: 1, appointments: 0, njms: 2 },
+      { period: 'W2', leads: 2, appointments: 0, njms: 8 },
+      { period: 'W3', leads: 0, appointments: 0, njms: 2 },
+      { period: 'W4', leads: 0, appointments: 0, njms: 10 },
+      { period: 'W5', leads: 2, appointments: 0, njms: 13 },
+      { period: 'W6', leads: 4, appointments: 0, njms: 16 },
+      { period: 'W7', leads: 1, appointments: 0, njms: 10 },
+      { period: 'W8', leads: 24, appointments: 0, njms: 9 },
+      { period: 'W9', leads: 3, appointments: 0, njms: 14 },
+      { period: 'W10', leads: 4, appointments: 0, njms: 7 },
+      { period: 'W11', leads: 4, appointments: 0, njms: 3 },
+      { period: 'W12', leads: 18, appointments: 0, njms: 9 },
+      { period: 'W13', leads: 15, appointments: 0, njms: 5 },
+      { period: 'W14', leads: 3, appointments: 0, njms: 5 },
+      { period: 'W15', leads: 16, appointments: 1, njms: 8 },
+      { period: 'W16', leads: 15, appointments: 25, njms: 10 },
+      { period: 'W17', leads: 44, appointments: 17, njms: 8 },
+      { period: 'W18', leads: 41, appointments: 18, njms: 4 },
+    ],
+    monthly: [
+      { period: 'Oct', leads: 6, appointments: 0, njms: 1 },
+      { period: 'Nov', leads: 2, appointments: 0, njms: 2 },
+      { period: 'Dec', leads: 22, appointments: 0, njms: 0 },
+      { period: 'Jan', leads: 2070, appointments: 1, njms: 758 },
+      { period: 'Feb', leads: 40, appointments: 0, njms: 21 },
+      { period: 'Mar', leads: 6, appointments: 0, njms: 29 },
+      { period: 'Apr', leads: 7, appointments: 0, njms: 48 },
+      { period: 'May', leads: 35, appointments: 0, njms: 36 },
+      { period: 'Jun', leads: 55, appointments: 2, njms: 28 },
+      { period: 'Jul', leads: 97, appointments: 59, njms: 21 },
+    ],
+  };
+
+  const sm = apiResponse.sales_metrics || {};
+  const totalLeads = sm.total_leads ?? dummySalesMetrics.totalLeads;
+  const totalAppointments = sm.total_appointments ?? dummySalesMetrics.totalAppointments;
+  const totalCount = sm.total_count ?? dummySalesMetrics.membershipAgreements;
+
+  const salesMetrics = {
+    totalLeads,
+    totalAppointments,
+    totalNJMs: sm.total_njms ?? dummySalesMetrics.totalNJMs,
+    membershipAgreements: totalCount,
+    leadToSaleRatio: totalLeads ? (totalCount / totalLeads) * 100 : dummySalesMetrics.leadToSaleRatio,
+    leadToAppointmentRatio: totalLeads ? (totalAppointments / totalLeads) * 100 : dummySalesMetrics.leadToAppointmentRatio,
+    appointmentToSaleRatio: totalAppointments ? (totalCount / totalAppointments) * 100 : dummySalesMetrics.appointmentToSaleRatio,
+    leadSourceBreakdown: sm.leadSourceBreakdown ?? dummySalesMetrics.leadSourceBreakdown,
+    appointmentStatus: sm.appointment_status ?? dummySalesMetrics.appointmentStatus,
+    trend: apiResponse.trend ?? dummyTrend
+  };
+
+  const om = apiResponse.member_onboarding_metrics || {};
+  const onboardingMetrics = {
+    assessmentUptake: om.assessment_uptake ?? dummyOnboardingMetrics.assessmentUptake,
+    afResults: om.af_results ?? dummyOnboardingMetrics.afResults,
+    conversionRate: om.conversion_rate ?? dummyOnboardingMetrics.conversionRate,
+    appAdoptionRate: om.app_adoption_rate ?? dummyOnboardingMetrics.appAdoptionRate,
+  };
+
+  const dm = apiResponse.defaulter_metrics || {};
+  const defaulterMetrics = {
+    totalDefaulters: dm.d1 ?? dummyDefaulterMetrics.totalDefaulters,
+    totalDefaulters2Month: dm.d2 ?? dummyDefaulterMetrics.totalDefaulters2Month,
+    totalDefaulters3Month: dm.d3 ?? dummyDefaulterMetrics.totalDefaulters3Month,
+    communicationsSent: dm.communication_sent ?? dummyDefaulterMetrics.communicationsSent,
+    ptpConversion: dm.ptp_conversion ?? dummyDefaulterMetrics.ptpConversion,
+    paymentRecoveryRate: dm.payment_recovery ?? dummyDefaulterMetrics.paymentRecoveryRate,
+    paid: dm.paid ?? dummyDefaulterMetrics.paid,
+    totalPTP: dm.ptp ?? dummyDefaulterMetrics.totalPTP,
+    noResponse: dm.no_res ?? dummyDefaulterMetrics.noResponse,
+    cancelledMembership: dm.cancelled_member ?? dummyDefaulterMetrics.cancelledMembership,
+  };
+
+  // Extract trend from API response or use dummyTrend
+
+  // Clubs: fetch separately if needed
+  const clubs = [];
 
   return {
     salesMetrics,

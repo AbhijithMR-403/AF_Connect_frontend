@@ -31,7 +31,7 @@ const metricTypeKeys = [
 ];
 
 const DefaulterPipeline = () => {
-  const { defaulterMetrics, filters } = useAppSelector((state) => state.dashboard);
+  const { defaulterMetrics, filters, countries } = useAppSelector((state) => state.dashboard);
   const [modalData, setModalData] = useState({
     isOpen: false,
     title: '',
@@ -186,7 +186,7 @@ const DefaulterPipeline = () => {
       const params = buildOpportunityParams(metricTypeKey);
       params.page = page;
       const data = await fetchOpportunities(params);
-      const normalized = normalizeOpportunitiesResponse(data);
+      const normalized = normalizeOpportunitiesResponse(data, countries);
       setModalData((prev) => ({ ...prev, loading: false, opportunities: normalized, totalCount: data.count, metricType: metricTypeKey }));
       setCurrentPage(page);
     } catch (error) {

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchDashboardData, generateDummyData, fetchUsers, fetchClubs, fetchCountries } from '../../services/api';
+import { fetchDashboardData, generateDashboardData, fetchUsers, fetchClubsAndCountries } from '../../services/api';
 
 const initialState = {
   filters: {
@@ -33,12 +33,12 @@ export const loadDashboardData = createAsyncThunk(
   'dashboard/loadData',
   async (filters, { rejectWithValue }) => {
     try {
-      const data = await fetchDashboardData(filters);
-      return data;
+      // Always use the mapping function
+      return await generateDashboardData(filters);
     } catch (error) {
       console.warn('API failed, using dummy data:', error);
       // Fallback to dummy data if API fails
-      return generateDummyData(filters);
+      return generateDashboardData(filters);
     }
   }
 );
@@ -56,25 +56,12 @@ export const loadUsers = createAsyncThunk(
   }
 );
 
-// Async thunk for fetching clubs
-export const loadClubs = createAsyncThunk(
-  'dashboard/loadClubs',
+// Async thunk for fetching both clubs and countries
+export const loadClubsAndCountries = createAsyncThunk(
+  'dashboard/loadClubsAndCountries',
   async (_, { rejectWithValue }) => {
     try {
-      const data = await fetchClubs();
-      return data;
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
-
-// Async thunk for fetching countries
-export const loadCountries = createAsyncThunk(
-  'dashboard/loadCountries',
-  async (_, { rejectWithValue }) => {
-    try {
-      const data = await fetchCountries();
+      const data = await fetchClubsAndCountries();
       return data;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -123,28 +110,22 @@ const dashboardSlice = createSlice({
         state.usersLoading = false;
         state.usersError = action.payload || 'Failed to load users';
       })
-      .addCase(loadClubs.pending, (state) => {
+      .addCase(loadClubsAndCountries.pending, (state) => {
         state.clubsLoading = true;
-        state.clubsError = null;
-      })
-      .addCase(loadClubs.fulfilled, (state, action) => {
-        state.clubsLoading = false;
-        state.clubs = action.payload;
-      })
-      .addCase(loadClubs.rejected, (state, action) => {
-        state.clubsLoading = false;
-        state.clubsError = action.payload || 'Failed to load clubs';
-      })
-      .addCase(loadCountries.pending, (state) => {
         state.countriesLoading = true;
+        state.clubsError = null;
         state.countriesError = null;
       })
-      .addCase(loadCountries.fulfilled, (state, action) => {
+      .addCase(loadClubsAndCountries.fulfilled, (state, action) => {
+        state.clubsLoading = false;
         state.countriesLoading = false;
-        state.countries = action.payload;
+        state.clubs = action.payload.clubs;
+        state.countries = action.payload.countries;
       })
-      .addCase(loadCountries.rejected, (state, action) => {
+      .addCase(loadClubsAndCountries.rejected, (state, action) => {
+        state.clubsLoading = false;
         state.countriesLoading = false;
+        state.clubsError = action.payload || 'Failed to load clubs';
         state.countriesError = action.payload || 'Failed to load countries';
       });
   },
