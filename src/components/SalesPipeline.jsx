@@ -439,9 +439,9 @@ const SalesPipeline = () => {
                 {salesMetrics.appointmentToSaleRatio}%
               </div>
               <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">Appointment to Sale Ratio</div>
-              <div className="text-xs text-gray-600 dark:text-gray-400">NJM / Appointments</div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">Appointments / NJM</div>
               <div className="mt-3 text-xs text-purple-700 dark:text-purple-300 bg-purple-200 dark:bg-purple-800 px-2 py-1 rounded-full inline-block">
-                {salesMetrics.totalNJMs} / {salesMetrics.totalAppointments}
+                {salesMetrics.totalAppointments} / {salesMetrics.totalNJMs}
               </div>
               <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
                 Click to view opportunities

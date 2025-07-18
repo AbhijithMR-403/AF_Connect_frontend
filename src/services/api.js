@@ -152,6 +152,32 @@ export function normalizeOpportunitiesResponse(apiResponse, countries = []) {
 }
 
 /**
+ * Calculate the sum of leads, appointments, and njms for each period in the trend object.
+ * @param {Object} trend - The trend object with daily, weekly, and monthly arrays.
+ * @returns {Object} - An object with sums for each period: { daily: {leads, appointments, njms}, weekly: {...}, monthly: {...} }
+ */
+export function sumTrend(trend) {
+  // Helper to sum an array of objects for given keys
+  const sumArray = (arr = []) => {
+    return arr.reduce(
+      (acc, curr) => {
+        acc.leads += curr.leads || 0;
+        acc.appointments += curr.appointments || 0;
+        acc.njms += curr.njms || 0;
+        return acc;
+      },
+      { leads: 0, appointments: 0, njms: 0 }
+    );
+  };
+
+  return {
+    daily: sumArray(trend.daily),
+    weekly: sumArray(trend.weekly),
+    monthly: sumArray(trend.monthly),
+  };
+}
+
+/**
  * Fetch both clubs and unique countries from the locations API in a single call.
  * @returns {Promise<{ clubs: Array, countries: Array }>} - Object with clubs and countries arrays
  */
@@ -190,153 +216,52 @@ export const fetchClubsAndCountries = async () => {
 };
 
 export const generateDashboardData = async (filters) => {
-  console.log('generateDashboardData called with filters:', filters);
   const apiResponse = await fetchDashboardData(filters);
   
   // Debug: Log the API response to see what we're getting
-  console.log('API Response from /opportunity_dash/:', apiResponse);
-
-  // Dummy values for fallback
-  const dummySalesMetrics = {
-    totalLeads: 1045,
-    totalAppointments: 708,
-    totalNJMs: 409,
-    membershipAgreements: 377,
-    leadToSaleRatio: 39.1,
-    leadToAppointmentRatio: 67.8,
-    appointmentToSaleRatio: 57.8,
-    leadSourceBreakdown: [
-      { name: 'Facebook', value: 1250, percentage: 20, color: '#3B82F6' },
-      { name: 'Instagram', value: 890, percentage: 14, color: '#EC4899' },
-      { name: 'Tiktok', value: 600, percentage: 10, color: '#111827' },
-      { name: 'Whatsapp', value: 500, percentage: 8, color: '#25D366' },
-      { name: 'Google', value: 675, percentage: 11, color: '#10B981' },
-      { name: 'Email', value: 400, percentage: 6, color: '#6366F1' },
-      { name: 'SMS', value: 350, percentage: 5, color: '#F472B6' },
-      { name: 'Walk-in', value: 300, percentage: 4, color: '#F59E42' },
-      { name: 'Outreach', value: 445, percentage: 7, color: '#8B5CF6' },
-      { name: 'Referral', value: 301, percentage: 4, color: '#F59E0B' },
-      { name: 'POS Referral', value: 200, percentage: 3, color: '#A21CAF' },
-      { name: 'Corporate', value: 180, percentage: 2.5, color: '#0EA5E9' },
-      { name: 'Existing Member', value: 160, percentage: 2, color: '#F43F5E' },
-      { name: 'Ex-member', value: 120, percentage: 1.5, color: '#FBBF24' },
-      { name: 'Bulk Import', value: 100, percentage: 1, color: '#14B8A6' },
-      { name: 'Flyers', value: 80, percentage: 0.8, color: '#F87171' },
-      { name: 'Website', value: 60, percentage: 0.5, color: '#0D9488' },
-      { name: 'Retail Partner', value: 40, percentage: 0.2, color: '#7C3AED' },
-    ],
-    appointmentStatus: [
-      { status: 'Show', count: 1456, percentage: 65, color: '#10B981' },
-      { status: 'No Show', count: 534, percentage: 24, color: '#EF4444' },
-      { status: 'Cancelled', count: 156, percentage: 7, color: '#F59E0B' },
-      { status: 'Rescheduled', count: 89, percentage: 4, color: '#3B82F6' },
-    ],
-  };
-
-  const dummyOnboardingMetrics = {
-    assessmentUptake: 85.4,
-    afResults: 72.1,
-    conversionRate: 84.5,
-    appAdoptionRate: 68.9,
-  };
-
-  const dummyDefaulterMetrics = {
-    totalDefaulters: 89,
-    totalDefaulters2Month: 45,
-    totalDefaulters3Month: 22,
-    communicationsSent: 234,
-    ptpConversion: 67.8,
-    paymentRecoveryRate: 45.2,
-    paid: 30,
-    totalPTP: 50,
-    noResponse: 15,
-    cancelledMembership: 8,
-  };
-
-  // Dummy trend data for fallback
-  const dummyTrend = {
-    daily: [
-      { period: 'Sat', leads: 3, appointments: 1, njms: 1 },
-      { period: 'Sun', leads: 11, appointments: 1, njms: 1 },
-      { period: 'Mon', leads: 1, appointments: 5, njms: 2 },
-      { period: 'Tue', leads: 9, appointments: 5, njms: 1 },
-      { period: 'Wed', leads: 31, appointments: 8, njms: 1 },
-    ],
-    weekly: [
-      { period: 'W1', leads: 1, appointments: 0, njms: 2 },
-      { period: 'W2', leads: 2, appointments: 0, njms: 8 },
-      { period: 'W3', leads: 0, appointments: 0, njms: 2 },
-      { period: 'W4', leads: 0, appointments: 0, njms: 10 },
-      { period: 'W5', leads: 2, appointments: 0, njms: 13 },
-      { period: 'W6', leads: 4, appointments: 0, njms: 16 },
-      { period: 'W7', leads: 1, appointments: 0, njms: 10 },
-      { period: 'W8', leads: 24, appointments: 0, njms: 9 },
-      { period: 'W9', leads: 3, appointments: 0, njms: 14 },
-      { period: 'W10', leads: 4, appointments: 0, njms: 7 },
-      { period: 'W11', leads: 4, appointments: 0, njms: 3 },
-      { period: 'W12', leads: 18, appointments: 0, njms: 9 },
-      { period: 'W13', leads: 15, appointments: 0, njms: 5 },
-      { period: 'W14', leads: 3, appointments: 0, njms: 5 },
-      { period: 'W15', leads: 16, appointments: 1, njms: 8 },
-      { period: 'W16', leads: 15, appointments: 25, njms: 10 },
-      { period: 'W17', leads: 44, appointments: 17, njms: 8 },
-      { period: 'W18', leads: 41, appointments: 18, njms: 4 },
-    ],
-    monthly: [
-      { period: 'Oct', leads: 6, appointments: 0, njms: 1 },
-      { period: 'Nov', leads: 2, appointments: 0, njms: 2 },
-      { period: 'Dec', leads: 22, appointments: 0, njms: 0 },
-      { period: 'Jan', leads: 2070, appointments: 1, njms: 758 },
-      { period: 'Feb', leads: 40, appointments: 0, njms: 21 },
-      { period: 'Mar', leads: 6, appointments: 0, njms: 29 },
-      { period: 'Apr', leads: 7, appointments: 0, njms: 48 },
-      { period: 'May', leads: 35, appointments: 0, njms: 36 },
-      { period: 'Jun', leads: 55, appointments: 2, njms: 28 },
-      { period: 'Jul', leads: 97, appointments: 59, njms: 21 },
-    ],
-  };
 
   const sm = apiResponse.sales_metrics || {};
-  const totalLeads = sm.total_leads ?? dummySalesMetrics.totalLeads;
-  const totalAppointments = sm.total_appointments ?? dummySalesMetrics.totalAppointments;
-  const totalCount = sm.total_count ?? dummySalesMetrics.membershipAgreements;
-
+  const totalLeads = sm.total_leads ?? null;
+  const totalAppointments = sm.total_appointments ?? null;
+  const totalCount = sm.total_count ?? null;
+  const totalNJMs = sm.total_njms ?? null;
   const salesMetrics = {
     totalLeads,
     totalAppointments,
-    totalNJMs: sm.total_njms ?? dummySalesMetrics.totalNJMs,
+    totalNJMs,
     membershipAgreements: totalCount,
-    leadToSaleRatio: totalLeads ? (totalCount / totalLeads) * 100 : dummySalesMetrics.leadToSaleRatio,
-    leadToAppointmentRatio: totalLeads ? (totalAppointments / totalLeads) * 100 : dummySalesMetrics.leadToAppointmentRatio,
-    appointmentToSaleRatio: totalAppointments ? (totalCount / totalAppointments) * 100 : dummySalesMetrics.appointmentToSaleRatio,
-    leadSourceBreakdown: sm.leadSourceBreakdown ?? dummySalesMetrics.leadSourceBreakdown,
-    appointmentStatus: sm.appointment_status ?? dummySalesMetrics.appointmentStatus,
-    trend: apiResponse.trend ?? dummyTrend
+    leadToSaleRatio: (totalLeads && totalNJMs) ? Number(((totalNJMs / totalLeads) * 100).toFixed(2)) : null,
+    leadToAppointmentRatio: (totalLeads && totalAppointments) ? Number(((totalAppointments / totalLeads) * 100).toFixed(2)) : null,
+    appointmentToSaleRatio: (totalAppointments && totalNJMs) ? Number(((totalAppointments / totalNJMs) * 100).toFixed(2)) : null,
+    leadSourceBreakdown: sm.leadSourceBreakdown ?? [],
+    appointmentStatus: apiResponse.appointment_stats ?? [],
+    trend: apiResponse.trend ?? { daily: [], weekly: [], monthly: [] }
   };
+
+  // Calculate trend sums
+  const trendSums = sumTrend(salesMetrics.trend);
 
   const om = apiResponse.member_onboarding_metrics || {};
   const onboardingMetrics = {
-    assessmentUptake: om.assessment_uptake ?? dummyOnboardingMetrics.assessmentUptake,
-    afResults: om.af_results ?? dummyOnboardingMetrics.afResults,
-    conversionRate: om.conversion_rate ?? dummyOnboardingMetrics.conversionRate,
-    appAdoptionRate: om.app_adoption_rate ?? dummyOnboardingMetrics.appAdoptionRate,
+    assessmentUptake: om.assessment_uptake ?? null,
+    afResults: om.af_results ?? null,
+    conversionRate: om.conversion_rate ?? null,
+    appAdoptionRate: om.app_adoption_rate ?? null,
   };
 
   const dm = apiResponse.defaulter_metrics || {};
   const defaulterMetrics = {
-    totalDefaulters: dm.d1 ?? dummyDefaulterMetrics.totalDefaulters,
-    totalDefaulters2Month: dm.d2 ?? dummyDefaulterMetrics.totalDefaulters2Month,
-    totalDefaulters3Month: dm.d3 ?? dummyDefaulterMetrics.totalDefaulters3Month,
-    communicationsSent: dm.communication_sent ?? dummyDefaulterMetrics.communicationsSent,
-    ptpConversion: dm.ptp_conversion ?? dummyDefaulterMetrics.ptpConversion,
-    paymentRecoveryRate: dm.payment_recovery ?? dummyDefaulterMetrics.paymentRecoveryRate,
-    paid: dm.paid ?? dummyDefaulterMetrics.paid,
-    totalPTP: dm.ptp ?? dummyDefaulterMetrics.totalPTP,
-    noResponse: dm.no_res ?? dummyDefaulterMetrics.noResponse,
-    cancelledMembership: dm.cancelled_member ?? dummyDefaulterMetrics.cancelledMembership,
+    totalDefaulters: dm.d1 ?? null,
+    totalDefaulters2Month: dm.d2 ?? null,
+    totalDefaulters3Month: dm.d3 ?? null,
+    communicationsSent: dm.communication_sent ?? null,
+    ptpConversion: dm.ptp_conversion ?? null,
+    paymentRecoveryRate: dm.payment_recovery ?? null,
+    paid: dm.paid ?? null,
+    totalPTP: dm.ptp ?? null,
+    noResponse: dm.no_res ?? null,
+    cancelledMembership: dm.cancelled_member ?? null,
   };
-
-  // Extract trend from API response or use dummyTrend
 
   // Clubs: fetch separately if needed
   const clubs = [];
@@ -346,5 +271,6 @@ export const generateDashboardData = async (filters) => {
     onboardingMetrics,
     defaulterMetrics,
     clubs,
+    trendSums, // Add this line
   };
 };

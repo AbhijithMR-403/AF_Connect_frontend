@@ -6,7 +6,7 @@ const initialState = {
     country: ['all'],
     club: ['all'],
     assignedUser: ['all'],
-    dateRange: 'last-30-days',
+    dateRange: 'all',
     leadSource: ['all'],
     customStartDate: null,
     customEndDate: null,
@@ -26,6 +26,7 @@ const initialState = {
   loading: false,
   error: null,
   lastUpdated: null,
+  trendSums: null, // Add this line
 };
 
 // Async thunk for fetching dashboard data
@@ -93,6 +94,7 @@ const dashboardSlice = createSlice({
         state.defaulterMetrics = action.payload.defaulterMetrics;
         // Do not update clubs here; clubs are loaded separately
         state.lastUpdated = new Date().toISOString();
+        state.trendSums = action.payload.trendSums; // Add this line
       })
       .addCase(loadDashboardData.rejected, (state, action) => {
         state.loading = false;

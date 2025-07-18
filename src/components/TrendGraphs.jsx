@@ -46,12 +46,10 @@ const TrendGraphs = () => {
     );
   }
 
-  console.log('opportunity_dash', salesMetrics);
   // Use trend data from opportunity_dash if available
   const trendData = salesMetrics && salesMetrics.trend && salesMetrics.trend[activeView]
     ? salesMetrics.trend[activeView]
     : [];
-  console.log('trendData', salesMetrics);
   
   // Calculate current period totals and changes
   const currentPeriod = trendData[trendData.length - 1];
