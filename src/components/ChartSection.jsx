@@ -25,6 +25,7 @@ function assignColorsToLeadSources(leadSources) {
 }
 
 const ChartSection = ({ leadSources, appointmentStatus, openModal }) => {
+
   const { salesMetrics } = useAppSelector((state) => state.dashboard);
 
   // Remove all modal state and logic
@@ -40,9 +41,10 @@ const ChartSection = ({ leadSources, appointmentStatus, openModal }) => {
           openModal={(metricType, title, count, data) => openModal("lead-source", title, count, 1, { lead_source: data?.name })}
         />
         {/* Appointment Status */}
+        
         <AppointmentStatusChart 
           appointmentStatus={appointmentStatus}
-          openModal={openModal}
+          openModal={(metricType, title, count, data) => openModal("appointment-status", title, count, 1, { appointment_status: data?.status?.toLowerCase() })}
         />
       </div>
     </>

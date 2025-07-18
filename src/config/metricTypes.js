@@ -64,6 +64,9 @@ const metricTypeConfigs = {
   'lead-source': {
     pipeline_name: 'AFC Sales Pipeline',
   },
+  'appointment-status': {
+    pipeline_name: 'AFC Sales Pipeline',
+  },
   // Add more metric types here as needed
 };
 

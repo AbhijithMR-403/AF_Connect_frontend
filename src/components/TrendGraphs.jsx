@@ -267,7 +267,6 @@ const TrendGraphs = () => {
               radius={[4, 4, 0, 0]}
               maxBarSize={60}
               cursor="pointer"
-              onClick={(data) => handleBarClick(data, 'leads')}
             />
             <Bar 
               dataKey="appointments" 
@@ -276,7 +275,6 @@ const TrendGraphs = () => {
               radius={[4, 4, 0, 0]}
               maxBarSize={60}
               cursor="pointer"
-              onClick={(data) => handleBarClick(data, 'appointments')}
             />
             <Bar 
               dataKey="njms" 
@@ -285,7 +283,6 @@ const TrendGraphs = () => {
               radius={[4, 4, 0, 0]}
               maxBarSize={60}
               cursor="pointer"
-              onClick={(data) => handleBarClick(data, 'njms')}
             />
           </BarChart>
         </ResponsiveContainer>

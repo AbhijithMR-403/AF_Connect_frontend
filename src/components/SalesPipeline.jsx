@@ -367,7 +367,7 @@ const SalesPipeline = () => {
         </div>
 
         {/* Trend Graphs Section */}
-        <TrendGraphs />
+        <TrendGraphs openModal={openModal}/>
       </div>
 
       {/* Charts Section */}

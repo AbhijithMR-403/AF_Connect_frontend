@@ -106,7 +106,7 @@ const OpportunityModal = ({
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
+    switch ((status || '').toLowerCase()) {
       case 'hot':
         return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
       case 'warm':

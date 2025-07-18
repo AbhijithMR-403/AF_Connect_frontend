@@ -4,8 +4,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 const AppointmentStatusChart = ({ appointmentStatus, openModal }) => {
   const handlePieClick = (data) => {
     openModal('appointment-status', `${data.status} Appointments - GHL Opportunities`, data.count, data);
-  };
-
+  };  
   // Define PieTooltip internally
   const PieTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
