@@ -146,7 +146,7 @@ const RegionalView = () => {
             <Globe className="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">🌍 Regional View</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white"> Regional View </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400">Country performance leaderboards and comparisons</p>
           </div>
         </div>

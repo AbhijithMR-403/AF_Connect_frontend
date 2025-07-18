@@ -3,9 +3,9 @@ import { Globe } from 'lucide-react';
 import { useAppSelector } from '../hooks';
 
 const RegionalView = () => {
-  const { salesMetrics, countries } = useAppSelector((state) => state.dashboard);
+  const { locations, countries } = useAppSelector((state) => state.dashboard);
 
-  if (!salesMetrics) {
+  if (!locations || locations.length === 0) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-8">
         <div className="flex items-center justify-center">
@@ -15,41 +15,8 @@ const RegionalView = () => {
     );
   }
 
-  // Generate country performance data
-  const generateCountryData = () => {
-    return countries.map((country, index) => {
-      const baseMultiplier = 1 + (Math.random() * 0.4 - 0.2); // ±20% variation
-      const countryMultiplier = country.clubCount / 20; // Scale by club count
-      
-      const totalLeads = Math.floor(salesMetrics.totalLeads * countryMultiplier * baseMultiplier / 6);
-      const appointments = Math.floor(salesMetrics.totalAppointments * countryMultiplier * baseMultiplier / 6);
-      const appointmentShowed = Math.floor(appointments * 0.65);
-      const njms = Math.floor(salesMetrics.totalNJMs * countryMultiplier * baseMultiplier / 6);
-      
-      return {
-        id: country.id,
-        name: country.name,
-        flag: country.flag,
-        clubCount: country.clubCount,
-        totalLeads,
-        appointments,
-        appointmentShowed,
-        njms,
-        leadToSale: totalLeads > 0 ? ((njms / totalLeads) * 100) : 0,
-        appointmentToSale: appointmentShowed > 0 ? ((njms / appointmentShowed) * 100) : 0,
-        color: [
-          '#3B82F6', // Blue
-          '#10B981', // Green  
-          '#F59E0B', // Yellow
-          '#EF4444', // Red
-          '#8B5CF6', // Purple
-          '#06B6D4'  // Cyan
-        ][index % 6]
-      };
-    });
-  };
-
-  const countryData = generateCountryData();
+  // Use locations from API
+  const locationData = locations;
 
   return (
     <div className="space-y-6">
@@ -91,17 +58,14 @@ const RegionalView = () => {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {countryData.map((country) => (
-                <tr key={country.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                  <td className="px-4 py-3 whitespace-nowrap font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                    <span className="text-lg">{country.flag}</span>
-                    <span>{country.name}</span>
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-300">{country.name}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-blue-600 dark:text-blue-400 font-medium">{country.totalLeads.toLocaleString()}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-green-600 dark:text-green-400 font-medium">{country.appointmentShowed.toLocaleString()}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-orange-600 dark:text-orange-400 font-medium">{country.leadToSale.toFixed(1)}%</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-red-600 dark:text-red-400 font-medium">{country.appointmentToSale.toFixed(1)}%</td>
+              {locationData.map((loc, idx) => (
+                <tr key={loc.club + '-' + idx} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <td className="px-4 py-3 whitespace-nowrap font-semibold text-gray-900 dark:text-white">{loc.club}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-300">{loc.country}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-blue-600 dark:text-blue-400 font-medium">{loc.total_leads?.toLocaleString?.() ?? '-'}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-green-600 dark:text-green-400 font-medium">{loc.appointment_showed?.toLocaleString?.() ?? '-'}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-orange-600 dark:text-orange-400 font-medium">{typeof loc.lead_to_sale === 'number' ? loc.lead_to_sale.toFixed(2) + '%' : '-'}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-red-600 dark:text-red-400 font-medium">{typeof loc.appointment_to_sale === 'number' ? loc.appointment_to_sale.toFixed(2) + '%' : '-'}</td>
                 </tr>
               ))}
             </tbody>
@@ -117,7 +81,7 @@ const RegionalView = () => {
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-900 dark:text-white">
-              {countries.reduce((sum, country) => sum + country.clubCount, 0)}
+              {locationData.length}
             </div>
             <div className="text-xs text-gray-600 dark:text-gray-400">Total Clubs</div>
           </div>

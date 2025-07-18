@@ -5,7 +5,7 @@ import { updateFilters, loadUsers, loadClubsAndCountries, loadDashboardData } fr
 
 const FilterBar = () => {
   const dispatch = useAppDispatch();
-  const { filters, countries, clubs, users, usersLoading, usersError, clubsLoading, clubsError } = useAppSelector((state) => state.dashboard);
+  const { filters, countries, clubs, users, usersLoading, usersError, clubsLoading, clubsError, validLeadSources } = useAppSelector((state) => state.dashboard);
   
   // State for dropdown visibility
   const [dropdownStates, setDropdownStates] = useState({
@@ -332,24 +332,9 @@ const FilterBar = () => {
 
   const leadSourceOptions = [
     { value: 'all', label: 'All Sources' },
-    { value: 'Facebook', label: 'Facebook' },
-    { value: 'Instagram', label: 'Instagram' },
-    { value: 'Tiktok', label: 'Tiktok' },
-    { value: 'Whatsapp', label: 'Whatsapp' },
-    { value: 'Google', label: 'Google' },
-    { value: 'Email', label: 'Email' },
-    { value: 'SMS', label: 'SMS' },
-    { value: 'Walk-in', label: 'Walk-in' },
-    { value: 'Outreach', label: 'Outreach' },
-    { value: 'Referral', label: 'Referral' },
-    { value: 'POS Referral', label: 'POS Referral' },
-    { value: 'Corporate', label: 'Corporate' },
-    { value: 'Existing Member', label: 'Existing Member' },
-    { value: 'Ex-member', label: 'Ex-member' },
-    { value: 'Bulk Import', label: 'Bulk Import' },
-    { value: 'Flyers', label: 'Flyers' },
-    { value: 'Website', label: 'Website' },
-    { value: 'Retail Partner', label: 'Retail Partner' },
+    ...(Array.isArray(validLeadSources) && validLeadSources.length > 0
+      ? validLeadSources.map(src => ({ value: src, label: src }))
+      : []),
   ];
 
   return (

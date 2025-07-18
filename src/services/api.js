@@ -264,6 +264,16 @@ export const generateDashboardData = async (filters) => {
     cancelledMembership: dm.cancelled_member ?? null,
   };
 
+  // Extract valid_lead_sources from API response (if present)
+  const validLeadSources = Array.isArray(apiResponse.valid_lead_sources)
+    ? apiResponse.valid_lead_sources.map(src => src.value)
+    : [];
+
+  // Extract locations from API response (if present)
+  const locations = Array.isArray(apiResponse.locations)
+    ? apiResponse.locations
+    : [];
+
   // Clubs: fetch separately if needed
   const clubs = [];
 
@@ -273,5 +283,7 @@ export const generateDashboardData = async (filters) => {
     defaulterMetrics,
     clubs,
     trendSums, // Add this line
+    validLeadSources, // Add this line
+    locations, // Add this line
   };
 };

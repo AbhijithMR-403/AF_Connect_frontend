@@ -7,6 +7,7 @@ const metricTypeConfigs = {
     pipeline_name: 'AFC Sales Pipeline',
     stage_name: 'Appointment Booked',
   },
+  
   'leads-without-tags': {
     pipeline_name: 'AFC Sales Pipeline',
     contact_tags: 6,
@@ -66,6 +67,10 @@ const metricTypeConfigs = {
   },
   'appointment-status': {
     pipeline_name: 'AFC Sales Pipeline',
+  },
+  'shown-appointments': {
+    pipeline_name: 'AFC Sales Pipeline',
+    appointment_status: 'showed',
   },
   // Add more metric types here as needed
 };

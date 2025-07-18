@@ -27,6 +27,8 @@ const initialState = {
   error: null,
   lastUpdated: null,
   trendSums: null, // Add this line
+  validLeadSources: [], // Add this line
+  locations: [], // Add this line
 };
 
 // Async thunk for fetching dashboard data
@@ -95,6 +97,8 @@ const dashboardSlice = createSlice({
         // Do not update clubs here; clubs are loaded separately
         state.lastUpdated = new Date().toISOString();
         state.trendSums = action.payload.trendSums; // Add this line
+        state.validLeadSources = action.payload.validLeadSources || [];
+        state.locations = action.payload.locations || [];
       })
       .addCase(loadDashboardData.rejected, (state, action) => {
         state.loading = false;

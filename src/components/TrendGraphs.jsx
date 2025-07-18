@@ -6,7 +6,7 @@ import OpportunityModal from './OpportunityModal';
 import { generateOpportunitiesForMetric } from '../utils/mockOpportunityData';
 
 const TrendGraphs = () => {
-  const { salesMetrics } = useAppSelector((state) => state.dashboard);
+  const { salesMetrics, trendSums } = useAppSelector((state) => state.dashboard);
   const [activeView, setActiveView] = useState('weekly');
   const [modalData, setModalData] = useState({
     isOpen: false,
@@ -80,7 +80,7 @@ const TrendGraphs = () => {
               {entry.name}: {entry.value.toLocaleString()}
             </p>
           ))}
-          <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Click to view opportunities</p>
+          {/* <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Click to view opportunities</p> */}
         </div>
       );
     }
@@ -110,6 +110,28 @@ const TrendGraphs = () => {
     }
   };
 
+  // Helper to get the correct trend data slice for modal
+  const getTrendReportData = (metric) => {
+    if (!salesMetrics || !salesMetrics.trend) return [];
+    const data = salesMetrics.trend[activeView] || [];
+    if (activeView === 'daily') return data.slice(-7).map(d => ({ period: d.period, value: d[metric] }));
+    if (activeView === 'weekly') return data.slice(-8).map(d => ({ period: d.period, value: d[metric] }));
+    if (activeView === 'monthly') return data.slice(-12).map(d => ({ period: d.period, value: d[metric] }));
+    return [];
+  };
+
+  // New modal state for trend report
+  const [trendReport, setTrendReport] = useState({ isOpen: false, metric: '', data: [] });
+
+  const openTrendReport = (metric, label) => {
+    setTrendReport({
+      isOpen: true,
+      metric: label,
+      data: getTrendReportData(metric),
+    });
+  };
+
+  const closeTrendReport = () => setTrendReport({ isOpen: false, metric: '', data: [] });
 
   const formatChange = (change) => {
     const prefix = change > 0 ? '+' : '';
@@ -156,14 +178,14 @@ const TrendGraphs = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {/* Leads Summary */}
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 rounded-lg p-4 border border-blue-200 dark:border-blue-700 cursor-pointer" onClick={() => openTrendReport('leads', 'Leads')}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Leads</span>
             <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-blue-900 dark:text-blue-100">
-              {currentPeriod?.leads?.toLocaleString() || '0'}
+              {trendSums?.[activeView]?.leads?.toLocaleString() || '0'}
             </span>
           </div>
           <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
@@ -172,14 +194,14 @@ const TrendGraphs = () => {
         </div>
 
         {/* Appointments Summary */}
-        <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 rounded-lg p-4 border border-green-200 dark:border-green-700">
+        <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 rounded-lg p-4 border border-green-200 dark:border-green-700 cursor-pointer" onClick={() => openTrendReport('appointments', 'Appointments')}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-green-700 dark:text-green-300">Appointments</span>
             <Calendar className="w-4 h-4 text-green-600 dark:text-green-400" />
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-green-900 dark:text-green-100">
-              {currentPeriod?.appointments?.toLocaleString() || '0'}
+              {trendSums?.[activeView]?.appointments?.toLocaleString() || '0'}
             </span>
           </div>
           <p className="text-xs text-green-600 dark:text-green-400 mt-1">
@@ -188,14 +210,14 @@ const TrendGraphs = () => {
         </div>
 
         {/* NJMs Summary */}
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900 dark:to-purple-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900 dark:to-purple-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700 cursor-pointer" onClick={() => openTrendReport('njms', 'NJMs')}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-purple-700 dark:text-purple-300">NJMs</span>
             <TrendingUp className="w-4 h-4 text-purple-600 dark:text-purple-400" />
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-purple-900 dark:text-purple-100">
-              {currentPeriod?.njms?.toLocaleString() || '0'}
+              {trendSums?.[activeView]?.njms?.toLocaleString() || '0'}
             </span>
           </div>
           <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
@@ -266,7 +288,7 @@ const TrendGraphs = () => {
               fill="url(#leadsGradient)"
               radius={[4, 4, 0, 0]}
               maxBarSize={60}
-              cursor="pointer"
+              // cursor="pointer"
             />
             <Bar 
               dataKey="appointments" 
@@ -274,7 +296,7 @@ const TrendGraphs = () => {
               fill="url(#appointmentsGradient)"
               radius={[4, 4, 0, 0]}
               maxBarSize={60}
-              cursor="pointer"
+              // cursor="pointer"
             />
             <Bar 
               dataKey="njms" 
@@ -282,7 +304,7 @@ const TrendGraphs = () => {
               fill="url(#njmsGradient)"
               radius={[4, 4, 0, 0]}
               maxBarSize={60}
-              cursor="pointer"
+              // cursor="pointer"
             />
           </BarChart>
         </ResponsiveContainer>
@@ -298,6 +320,38 @@ const TrendGraphs = () => {
         opportunities={modalData.opportunities}
         totalCount={modalData.totalCount}
       />
+
+      {/* Trend Report Modal */}
+      {trendReport.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4" onClick={closeTrendReport}>
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-auto flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{trendReport.metric} Report ({activeView.charAt(0).toUpperCase() + activeView.slice(1)})</h2>
+              <button onClick={closeTrendReport} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0">
+                <span className="text-gray-500 dark:text-gray-300">✕</span>
+              </button>
+            </div>
+            <div className="p-4">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr>
+                    <th className="text-left py-2 px-3 text-gray-700 dark:text-gray-300">Period</th>
+                    <th className="text-right py-2 px-3 text-gray-700 dark:text-gray-300">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {trendReport.data.map((row, idx) => (
+                    <tr key={idx}>
+                      <td className="py-2 px-3 text-gray-900 dark:text-white">{row.period}</td>
+                      <td className="py-2 px-3 text-right text-gray-900 dark:text-white">{row.value?.toLocaleString() ?? 0}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
