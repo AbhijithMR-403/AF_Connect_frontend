@@ -1,7 +1,7 @@
 const metricTypeConfigs = {
   'total-njms': {
     pipeline_name: 'AFC Sales Pipeline',
-    stage_name: 'Sale',
+    status: 'won',
   },
   'total-appointments': {
     pipeline_name: 'AFC Sales Pipeline',
@@ -27,6 +27,7 @@ const metricTypeConfigs = {
   'contacted-njms': {
     pipeline_name: 'AFC Sales Pipeline',
     stage_name: 'Initiate Contact',
+    status: 'won',
   },
   'membership-agreements': {
     pipeline_name: 'Member Onboarding',
@@ -54,12 +55,14 @@ const metricTypeConfigs = {
   'defaulter-cancelled': { pipeline_name: 'Defaulter Pipeline', stage_name: 'Cancelled Membership' },
   'paid-media-njms': {
     pipeline_name: 'AFC Sales Pipeline',
+    status: 'won',
     lead_source: ['Facebook', 'Whatsapp', 'Instagram', 
-      // 'Google'
+      'Google'
     ],
   },
   'njm-lead-source': {
     pipeline_name: 'AFC Sales Pipeline',
+    status: 'won',
     stage_name: 'Sale',
   },
   'lead-source': {
