@@ -118,14 +118,14 @@ const DashboardHeader = () => {
             </div> */}
 
             {/* Refresh button */}
-            {/* <button
+            <button
               onClick={handleRefresh}
               disabled={loading}
               className="flex items-center justify-center gap-2 px-3 lg:px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 text-xs lg:text-sm font-medium"
             >
               <RefreshCw className={`w-4 h-4 flex-shrink-0 ${loading ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
-            </button> */}
+            </button>
           </div>
         </div>
       </div>

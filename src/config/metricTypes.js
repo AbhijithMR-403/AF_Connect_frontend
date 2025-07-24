@@ -1,6 +1,6 @@
 const metricTypeConfigs = {
   'total-njms': {
-    pipeline_name: 'AFC Sales Pipeline',
+    // pipeline_name: 'AFC Sales Pipeline',
     status: 'won',
   },
   'total-appointments': {
@@ -9,19 +9,17 @@ const metricTypeConfigs = {
   },
   
   'leads-without-tags': {
-    pipeline_name: 'AFC Sales Pipeline',
+    // pipeline_name: 'AFC Sales Pipeline',
     contact_tags: 6,
   },
   'total-leads': {
-    pipeline_name: 'AFC Sales Pipeline',
-    stage_name: ['Lead Generation', 'Qualified Leads'],
   },
   'online-leads': {
-    pipeline_name: 'AFC Sales Pipeline',
+    // pipeline_name: 'AFC Sales Pipeline',
     contact_tags: 2,
   },
   'offline-leads': {
-    pipeline_name: 'AFC Sales Pipeline',
+    // pipeline_name: 'AFC Sales Pipeline',
     contact_tags: 3,
   },
   'contacted-njms': {
@@ -72,7 +70,7 @@ const metricTypeConfigs = {
     pipeline_name: 'AFC Sales Pipeline',
   },
   'shown-appointments': {
-    pipeline_name: 'AFC Sales Pipeline',
+    // pipeline_name: 'AFC Sales Pipeline',
     appointment_status: 'showed',
   },
   // Add more metric types here as needed

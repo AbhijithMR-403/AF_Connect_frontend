@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import OpportunityModal from './OpportunityModal';
-import { generateOpportunitiesForMetric, generateTabbedOpportunities } from '../utils/mockOpportunityData';
 import { useAppSelector } from '../hooks';
 import LeadSourcesChart from './charts/LeadSourcesChart';
 import AppointmentStatusChart from './charts/AppointmentStatusChart';

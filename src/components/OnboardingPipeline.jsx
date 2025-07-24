@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { CheckCircle, Users, Smartphone, TrendingUp } from 'lucide-react';
 import { useAppSelector } from '../hooks';
 import OpportunityModal from './OpportunityModal';
-import { generateTabbedOpportunities } from '../utils/mockOpportunityData';
 import { fetchOpportunities, normalizeOpportunitiesResponse } from '../services/api';
 import metricTypeConfigs from '../config/metricTypes';
 

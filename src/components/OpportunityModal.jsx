@@ -289,7 +289,7 @@ const OpportunityModal = ({
                     </td>
                     <td className="px-3 sm:px-6 py-4">
                       <div className="flex items-center">
-                        <DollarSign className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-1 flex-shrink-0" />
+                        {/* <DollarSign className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-1 flex-shrink-0" /> */}
                         <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
                           {typeof opportunity.value === 'number' && !isNaN(opportunity.value)
                             ? `$${opportunity.value.toLocaleString()}`
@@ -421,7 +421,7 @@ const OpportunityModal = ({
         {/* Modal Footer */}
         <div className="flex flex-col sm:flex-row items-center justify-between p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 gap-3 flex-shrink-0">
           <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 text-center sm:text-left">
-            Total opportunities: {totalCount.toLocaleString()}
+            Total opportunities: {tabTotalCount}
           </div>
           <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
             <button

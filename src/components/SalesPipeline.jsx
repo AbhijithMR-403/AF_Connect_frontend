@@ -5,7 +5,6 @@ import ClickableMetricCard from './ClickableMetricCard';
 import ChartSection from './ChartSection';
 import TrendGraphs from './TrendGraphs';
 import OpportunityModal from './OpportunityModal';
-// import { generateOpportunitiesForMetric, generateTabbedOpportunities } from '../utils/mockOpportunityData';
 import NJMAnalysis from './NJMAnalysis';
 import { fetchOpportunities, normalizeOpportunitiesResponse } from '../services/api';
 import metricTypeConfigs from '../config/metricTypes';
@@ -77,7 +76,6 @@ const SalesPipeline = () => {
     }
   };
 
-  // TODO: Refactor openTabbedModal to use real API when backend supports tabbed/grouped data
   const openTabbedModal = async (metricType, title, tabIdx = 0, page = 1) => {
     if (metricType === 'online-vs-offline') {
       setModalData({ isOpen: true, title, loading: true, tabs: [], activeTab: tabIdx });
@@ -312,7 +310,7 @@ const SalesPipeline = () => {
                 <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Leads Without Source Tags</h3>
                 <div className="flex items-baseline gap-3">
                   <span className="text-2xl font-bold text-red-600 dark:text-red-400">
-                    {Math.round(salesMetrics.totalLeads * 0.08).toLocaleString()}
+                    {Math.round(salesMetrics.totalNoLeadSource).toLocaleString()}
                   </span>
                 </div>
                 <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -341,10 +339,10 @@ const SalesPipeline = () => {
                 <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Online vs Offline Leads</h3>
                 <div className="flex items-baseline gap-3">
                   <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                    {Math.round(salesMetrics.totalLeads * 0.75).toLocaleString()} Online
+                    {Math.round(salesMetrics.online).toLocaleString()} Online
                   </span>
                   <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
-                    {Math.round(salesMetrics.totalLeads * 0.25).toLocaleString()} Offline
+                    {Math.round(salesMetrics.offline).toLocaleString()} Offline
                   </span>
                 </div>
                 <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">

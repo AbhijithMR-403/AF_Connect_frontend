@@ -3,38 +3,34 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { TrendingUp, Calendar, BarChart3 } from 'lucide-react';
 import { useAppSelector } from '../hooks';
 import OpportunityModal from './OpportunityModal';
-import { generateOpportunitiesForMetric } from '../utils/mockOpportunityData';
+// import { generateOpportunitiesForMetric } from '../utils/mockOpportunityData';
 
 const TrendGraphs = () => {
   const { salesMetrics, trendSums } = useAppSelector((state) => state.dashboard);
   const [activeView, setActiveView] = useState('weekly');
-  const [modalData, setModalData] = useState({
-    isOpen: false,
-    title: '',
-    opportunities: [],
-    totalCount: 0,
-  });
 
-  const openModal = (metricType, title, count, period) => {
-    if (!salesMetrics) return;
-    
-    const opportunities = generateOpportunitiesForMetric(metricType, Math.min(count, 50), salesMetrics);
-    setModalData({
+  // Restore trendReport state and related functions
+  const [trendReport, setTrendReport] = useState({ isOpen: false, metric: '', data: [] });
+
+  // Helper to get the correct trend data slice for modal
+  const getTrendReportData = (metric) => {
+    if (!salesMetrics || !salesMetrics.trend) return [];
+    const data = salesMetrics.trend[activeView] || [];
+    if (activeView === 'daily') return data.slice(-7).map(d => ({ period: d.period, value: d[metric] }));
+    if (activeView === 'weekly') return data.slice(-8).map(d => ({ period: d.period, value: d[metric] }));
+    if (activeView === 'monthly') return data.slice(-12).map(d => ({ period: d.period, value: d[metric] }));
+    return [];
+  };
+
+  const openTrendReport = (metric, label) => {
+    setTrendReport({
       isOpen: true,
-      title: `${title} - ${period}`,
-      opportunities,
-      totalCount: count,
+      metric: label,
+      data: getTrendReportData(metric),
     });
   };
 
-  const closeModal = () => {
-    setModalData({
-      isOpen: false,
-      title: '',
-      opportunities: [],
-      totalCount: 0,
-    });
-  };
+  const closeTrendReport = () => setTrendReport({ isOpen: false, metric: '', data: [] });
 
   if (!salesMetrics) {
     return (
@@ -51,19 +47,7 @@ const TrendGraphs = () => {
     ? salesMetrics.trend[activeView]
     : [];
   
-  // Calculate current period totals and changes
-  const currentPeriod = trendData[trendData.length - 1];
-  const previousPeriod = trendData[trendData.length - 2];
   
-  const calculateChange = (current, previous) => {
-    if (!previous || previous === 0) return 0;
-    return ((current - previous) / previous * 100);
-  };
-
-  const leadsChange = calculateChange(currentPeriod?.leads, previousPeriod?.leads);
-  const appointmentsChange = calculateChange(currentPeriod?.appointments, previousPeriod?.appointments);
-  const njmsChange = calculateChange(currentPeriod?.njms, previousPeriod?.njms);
-
   const viewOptions = [
     { value: 'daily', label: 'Daily', period: 'Last 7 Days' },
     { value: 'weekly', label: 'Weekly', period: 'Last 8 Weeks' },
@@ -85,65 +69,6 @@ const TrendGraphs = () => {
       );
     }
     return null;
-  };
-
-  const handleBarClick = (data, dataKey) => {
-    const metricTypes = {
-      leads: 'total-leads',
-      appointments: 'total-appointments', 
-      njms: 'total-njms'
-    };
-    
-    const titles = {
-      leads: 'Leads',
-      appointments: 'Appointments',
-      njms: 'NJMs'
-    };
-    
-    const metricType = metricTypes[dataKey];
-    const title = titles[dataKey];
-    const count = data[dataKey];
-    const period = data.period;
-    
-    if (metricType && title && count) {
-      openModal(metricType, title, count, period);
-    }
-  };
-
-  // Helper to get the correct trend data slice for modal
-  const getTrendReportData = (metric) => {
-    if (!salesMetrics || !salesMetrics.trend) return [];
-    const data = salesMetrics.trend[activeView] || [];
-    if (activeView === 'daily') return data.slice(-7).map(d => ({ period: d.period, value: d[metric] }));
-    if (activeView === 'weekly') return data.slice(-8).map(d => ({ period: d.period, value: d[metric] }));
-    if (activeView === 'monthly') return data.slice(-12).map(d => ({ period: d.period, value: d[metric] }));
-    return [];
-  };
-
-  // New modal state for trend report
-  const [trendReport, setTrendReport] = useState({ isOpen: false, metric: '', data: [] });
-
-  const openTrendReport = (metric, label) => {
-    setTrendReport({
-      isOpen: true,
-      metric: label,
-      data: getTrendReportData(metric),
-    });
-  };
-
-  const closeTrendReport = () => setTrendReport({ isOpen: false, metric: '', data: [] });
-
-  const formatChange = (change) => {
-    const prefix = change > 0 ? '+' : '';
-    return `${prefix}${change.toFixed(1)}%`;
-  };
-
-  const getChangeColor = (change) => {
-    return change > 0 
-      ? 'text-green-600 dark:text-green-400' 
-      : change < 0 
-        ? 'text-red-600 dark:text-red-400' 
-        : 'text-gray-500 dark:text-gray-400';
   };
 
   return (
@@ -310,16 +235,6 @@ const TrendGraphs = () => {
         </ResponsiveContainer>
       </div>
 
-
-
-      {/* Opportunity Modal */}
-      <OpportunityModal
-        isOpen={modalData.isOpen}
-        onClose={closeModal}
-        title={modalData.title}
-        opportunities={modalData.opportunities}
-        totalCount={modalData.totalCount}
-      />
 
       {/* Trend Report Modal */}
       {trendReport.isOpen && (

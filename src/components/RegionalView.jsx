@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Globe } from 'lucide-react';
 import { useAppSelector } from '../hooks';
 
 const RegionalView = () => {
   const { locations, countries } = useAppSelector((state) => state.dashboard);
+
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState('');
+  const [sortDirection, setSortDirection] = useState('asc');
 
   if (!locations || locations.length === 0) {
     return (
@@ -17,6 +21,48 @@ const RegionalView = () => {
 
   // Use locations from API
   const locationData = locations;
+
+  // Columns config for sorting
+  const columns = [
+    { key: 'club', label: 'Club' },
+    { key: 'country', label: 'Country' },
+    { key: 'total_leads', label: 'Total Leads' },
+    { key: 'appointment_showed', label: 'Appointment Showed' },
+    { key: 'total_njms', label: 'Total NJMs' }, // Added column
+    { key: 'lead_to_sale', label: 'Lead:Sale (%)' },
+    { key: 'appointment_to_sale', label: 'Appointment:Sale (%)' },
+  ];
+
+  // Sorting logic
+  const sortedData = useMemo(() => {
+    if (!sortColumn) return locationData;
+    return [...locationData].sort((a, b) => {
+      const aValue = a[sortColumn];
+      const bValue = b[sortColumn];
+      // Numeric sort if both are numbers
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+      // String sort (case-insensitive)
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortDirection === 'asc'
+          ? aValue.localeCompare(bValue, undefined, { sensitivity: 'base' })
+          : bValue.localeCompare(aValue, undefined, { sensitivity: 'base' });
+      }
+      // Fallback
+      return 0;
+    });
+  }, [locationData, sortColumn, sortDirection]);
+
+  // Handle header click
+  const handleSort = (colKey) => {
+    if (sortColumn === colKey) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortColumn(colKey);
+      setSortDirection('asc');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -49,21 +95,30 @@ const RegionalView = () => {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Club</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Country</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total Leads</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Appointment Showed</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Lead:Sale (%)</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Appointment:Sale (%)</th>
+                {columns.map((col) => (
+                  <th
+                    key={col.key}
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer select-none"
+                    onClick={() => handleSort(col.key)}
+                  >
+                    {col.label}
+                    {sortColumn === col.key && (
+                      <span className="ml-1 inline-block align-middle">
+                        {sortDirection === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {locationData.map((loc, idx) => (
+              {sortedData.map((loc, idx) => (
                 <tr key={loc.club + '-' + idx} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   <td className="px-4 py-3 whitespace-nowrap font-semibold text-gray-900 dark:text-white">{loc.club}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-300">{loc.country}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-blue-600 dark:text-blue-400 font-medium">{loc.total_leads?.toLocaleString?.() ?? '-'}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-green-600 dark:text-green-400 font-medium">{loc.appointment_showed?.toLocaleString?.() ?? '-'}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-purple-600 dark:text-purple-400 font-medium">{loc.total_njms?.toLocaleString?.() ?? '-'}</td> {/* Total NJMs */}
                   <td className="px-4 py-3 whitespace-nowrap text-orange-600 dark:text-orange-400 font-medium">{typeof loc.lead_to_sale === 'number' ? loc.lead_to_sale.toFixed(2) + '%' : '-'}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-red-600 dark:text-red-400 font-medium">{typeof loc.appointment_to_sale === 'number' ? loc.appointment_to_sale.toFixed(2) + '%' : '-'}</td>
                 </tr>
