@@ -219,7 +219,7 @@ export const generateDashboardData = async (filters) => {
   const apiResponse = await fetchDashboardData(filters);
   
   // Debug: Log the API response to see what we're getting
-
+  const appointment_showed = apiResponse.total_showed_appointments ?? 0;
   const sm = apiResponse.sales_metrics || {};
   const totalLeads = sm.total_leads ?? null;
   const totalAppointments = sm.total_appointments ?? null;
@@ -236,6 +236,7 @@ export const generateDashboardData = async (filters) => {
     membershipAgreements: totalCount,
     online,
     offline,
+    appointment_showed,
     totalNoLeadSource,
     leadToSaleRatio: (totalLeads && totalNJMs) ? Number(((totalNJMs / totalLeads) * 100).toFixed(2)) : null,
     leadToAppointmentRatio: (totalLeads && totalAppointments) ? Number(((totalAppointments / totalLeads) * 100).toFixed(2)) : null,

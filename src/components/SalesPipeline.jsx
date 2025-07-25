@@ -372,7 +372,7 @@ const SalesPipeline = () => {
           </div>
           <ClickableMetricCard
             title="Total Shown Appointments"
-            value={Math.round(salesMetrics.totalAppointments * 0.65)}
+            value={Math.round(salesMetrics.appointment_showed)}
             icon={Eye}
             iconColor="text-emerald-600 dark:text-emerald-400"
             iconBgColor="bg-emerald-100 dark:bg-emerald-900"
@@ -469,7 +469,7 @@ const SalesPipeline = () => {
       </div>
 
       {/* Membership Agreements */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+      {/* <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
         <div className="flex items-center gap-2 mb-6">
           <FileText className="w-5 h-5 text-orange-600" />
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Membership Agreements</h3>
@@ -508,7 +508,7 @@ const SalesPipeline = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Opportunity Modal */}
       <OpportunityModal
