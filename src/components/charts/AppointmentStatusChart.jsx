@@ -35,7 +35,7 @@ const AppointmentStatusChart = ({ appointmentStatus, openModal }) => {
                 className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm"
                 style={{ backgroundColor: status.color }}
               ></div>
-              <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{status.status}</span>
+              <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{status.status_label}</span>
             </div>
             <div className="text-right flex-shrink-0 ml-2">
               <div className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
