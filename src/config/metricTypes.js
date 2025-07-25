@@ -10,20 +10,20 @@ const metricTypeConfigs = {
   
   'leads-without-tags': {
     // pipeline_name: 'AFC Sales Pipeline',
-    contact_tags: 6,
+    contact_tags: 5,
   },
   'total-leads': {
   },
   'online-leads': {
     // pipeline_name: 'AFC Sales Pipeline',
-    contact_tags: 2,
+    contact_tags: 3,
   },
   'offline-leads': {
     // pipeline_name: 'AFC Sales Pipeline',
-    contact_tags: 3,
+    contact_tags: 1,
   },
   'contacted-njms': {
-    pipeline_name: 'AFC Sales Pipeline',
+    // pipeline_name: 'AFC Sales Pipeline',
     stage_name: 'Initiate Contact',
     status: 'won',
   },
@@ -59,12 +59,12 @@ const metricTypeConfigs = {
     ],
   },
   'njm-lead-source': {
-    pipeline_name: 'AFC Sales Pipeline',
+    // pipeline_name: 'AFC Sales Pipeline',
     status: 'won',
-    stage_name: 'Sale',
+    // stage_name: 'Sale',
   },
   'lead-source': {
-    pipeline_name: 'AFC Sales Pipeline',
+    // pipeline_name: 'AFC Sales Pipeline',
   },
   'appointment-status': {
     pipeline_name: 'AFC Sales Pipeline',

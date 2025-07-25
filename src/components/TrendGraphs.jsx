@@ -17,7 +17,7 @@ const TrendGraphs = () => {
     if (!salesMetrics || !salesMetrics.trend) return [];
     const data = salesMetrics.trend[activeView] || [];
     if (activeView === 'daily') return data.slice(-7).map(d => ({ period: d.period, value: d[metric] }));
-    if (activeView === 'weekly') return data.slice(-8).map(d => ({ period: d.period, value: d[metric] }));
+    if (activeView === 'weekly') return data.slice(-9).map(d => ({ period: d.period, value: d[metric] }));
     if (activeView === 'monthly') return data.slice(-12).map(d => ({ period: d.period, value: d[metric] }));
     return [];
   };

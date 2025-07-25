@@ -118,7 +118,7 @@ const RegionalView = () => {
                   <td className="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-300">{loc.country}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-blue-600 dark:text-blue-400 font-medium">{loc.total_leads?.toLocaleString?.() ?? '-'}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-green-600 dark:text-green-400 font-medium">{loc.appointment_showed?.toLocaleString?.() ?? '-'}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-purple-600 dark:text-purple-400 font-medium">{loc.total_njms?.toLocaleString?.() ?? '-'}</td> {/* Total NJMs */}
+                  <td className="px-4 py-3 whitespace-nowrap text-purple-600 dark:text-purple-400 font-medium">{loc.total_njm?.toLocaleString?.() ?? '-'}</td> {/* Total NJMs */}
                   <td className="px-4 py-3 whitespace-nowrap text-orange-600 dark:text-orange-400 font-medium">{typeof loc.lead_to_sale === 'number' ? loc.lead_to_sale.toFixed(2) + '%' : '-'}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-red-600 dark:text-red-400 font-medium">{typeof loc.appointment_to_sale === 'number' ? loc.appointment_to_sale.toFixed(2) + '%' : '-'}</td>
                 </tr>

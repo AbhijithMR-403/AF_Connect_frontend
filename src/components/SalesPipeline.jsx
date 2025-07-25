@@ -302,7 +302,7 @@ const SalesPipeline = () => {
             onClick={() => openModal('total-appointments', 'Total Appointments - GHL Opportunities', salesMetrics.totalAppointments)}
           />
           <div 
-            onClick={() => openModal('leads-without-tags', 'Leads Without Source Tags - GHL Opportunities', Math.round(salesMetrics.totalLeads * 0.08))}
+            onClick={() => openModal('leads-without-tags', 'Leads Without Source Tags - GHL Opportunities', Math.round(salesMetrics.totalNoLeadSource))}
             className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg p-6 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group"
           >
             <div className="flex items-center justify-between">

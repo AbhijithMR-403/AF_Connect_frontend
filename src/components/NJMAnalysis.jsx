@@ -41,11 +41,12 @@ const NJMAnalysis = ({ salesMetrics, openModal }) => {
         <div className="order-2 flex flex-col gap-6">
           <ClickableMetricCard
             title="Contacted"
-            value={Math.round(salesMetrics.totalNJMs * 0.85)}
+            value={0}
+            // value={Math.round(salesMetrics.totalNJMs * 0.85)}
             icon={Phone}
             iconColor="text-blue-600 dark:text-blue-400"
             iconBgColor="bg-blue-100 dark:bg-blue-900"
-            onClick={() => openModal('contacted-njms', 'Contacted NJMs - GHL Opportunities', Math.round(salesMetrics.totalNJMs * 0.85))}
+            onClick={() => openModal('contacted-njms', 'Contacted NJMs - GHL Opportunities', Math.round(0))}
           />
           <div 
             onClick={() => openModal('paid-media-njms', 'NJM from Paid Media - GHL Opportunities', Math.round(salesMetrics.totalNJMs * 0.79))}
@@ -56,7 +57,8 @@ const NJMAnalysis = ({ salesMetrics, openModal }) => {
                 <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">NJM from Paid Media</h3>
                 <div className="flex items-baseline gap-3">
                   <span className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {Math.round(salesMetrics.totalNJMs * 0.79).toLocaleString()}
+                    0
+                    {/* {Math.round(salesMetrics.totalNJMs * 0.79).toLocaleString()} */}
                   </span>
                 </div>
                 <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Facebook + IG + Google Ads + Whatsapp</p>
