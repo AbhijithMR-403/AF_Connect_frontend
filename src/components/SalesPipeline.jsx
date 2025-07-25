@@ -69,7 +69,14 @@ const SalesPipeline = () => {
       params.page = page;
       const data = await fetchOpportunities(params);
       const normalized = normalizeOpportunitiesResponse(data, countries);
-      setModalData((prev) => ({ ...prev, loading: false, opportunities: normalized, totalCount: data.count, metricType }));
+      setModalData((prev) => ({
+        ...prev,
+        loading: false,
+        opportunities: normalized,
+        totalCount: data.count,
+        metricType,
+        queryParams: { ...params },
+      }));
       setCurrentPage(page);
     } catch (error) {
       setModalData((prev) => ({ ...prev, loading: false, error: error.message || 'Failed to fetch opportunities', metricType }));
@@ -80,17 +87,19 @@ const SalesPipeline = () => {
     if (metricType === 'online-vs-offline') {
       setModalData({ isOpen: true, title, loading: true, tabs: [], activeTab: tabIdx });
       try {
+        const onlineParams = { ...buildOpportunityParams('online-leads'), page: tabbedPages.online };
+        const offlineParams = { ...buildOpportunityParams('offline-leads'), page: tabbedPages.offline };
         const [online, offline] = await Promise.all([
-          fetchOpportunities({ ...buildOpportunityParams('online-leads'), page: tabbedPages.online }),
-          fetchOpportunities({ ...buildOpportunityParams('offline-leads'), page: tabbedPages.offline }),
+          fetchOpportunities(onlineParams),
+          fetchOpportunities(offlineParams),
         ]);
         setModalData({
           isOpen: true,
           title,
           loading: false,
           tabs: [
-            { label: 'Online Leads', data: normalizeOpportunitiesResponse(online, countries), totalCount: online.count, metricType: 'online-leads' },
-            { label: 'Offline Leads', data: normalizeOpportunitiesResponse(offline, countries), totalCount: offline.count, metricType: 'offline-leads' },
+            { label: 'Online Leads', data: normalizeOpportunitiesResponse(online, countries), totalCount: online.count, metricType: 'online-leads', queryParams: onlineParams },
+            { label: 'Offline Leads', data: normalizeOpportunitiesResponse(offline, countries), totalCount: offline.count, metricType: 'offline-leads', queryParams: offlineParams },
           ],
           activeTab: tabIdx,
         });
@@ -101,17 +110,19 @@ const SalesPipeline = () => {
     } else if (metricType === 'lead-to-sale') {
       setModalData({ isOpen: true, title, loading: true, tabs: [], activeTab: tabIdx });
       try {
+        const njmParams = { ...buildOpportunityParams('total-njms'), page: tabbedPages.njm || 1 };
+        const leadParams = { ...buildOpportunityParams('total-leads'), page: tabbedPages.lead || 1 };
         const [njms, leads] = await Promise.all([
-          fetchOpportunities({ ...buildOpportunityParams('total-njms'), page: tabbedPages.njm || 1 }),
-          fetchOpportunities({ ...buildOpportunityParams('total-leads'), page: tabbedPages.lead || 1 }),
+          fetchOpportunities(njmParams),
+          fetchOpportunities(leadParams),
         ]);
         setModalData({
           isOpen: true,
           title,
           loading: false,
           tabs: [
-            { label: 'NJMs', data: normalizeOpportunitiesResponse(njms, countries), totalCount: njms.count, metricType: 'total-njms' },
-            { label: 'Leads', data: normalizeOpportunitiesResponse(leads, countries), totalCount: leads.count, metricType: 'total-leads' },
+            { label: 'NJMs', data: normalizeOpportunitiesResponse(njms, countries), totalCount: njms.count, metricType: 'total-njms', queryParams: njmParams },
+            { label: 'Leads', data: normalizeOpportunitiesResponse(leads, countries), totalCount: leads.count, metricType: 'total-leads', queryParams: leadParams },
           ],
           activeTab: tabIdx,
         });
@@ -122,17 +133,19 @@ const SalesPipeline = () => {
     } else if (metricType === 'lead-to-appointment') {
       setModalData({ isOpen: true, title, loading: true, tabs: [], activeTab: tabIdx });
       try {
+        const appointmentParams = { ...buildOpportunityParams('total-appointments'), page: tabbedPages.appointment || 1 };
+        const leadParams = { ...buildOpportunityParams('total-leads'), page: tabbedPages.lead || 1 };
         const [appointments, leads] = await Promise.all([
-          fetchOpportunities({ ...buildOpportunityParams('total-appointments'), page: tabbedPages.appointment || 1 }),
-          fetchOpportunities({ ...buildOpportunityParams('total-leads'), page: tabbedPages.lead || 1 }),
+          fetchOpportunities(appointmentParams),
+          fetchOpportunities(leadParams),
         ]);
         setModalData({
           isOpen: true,
           title,
           loading: false,
           tabs: [
-            { label: 'Appointments', data: normalizeOpportunitiesResponse(appointments, countries), totalCount: appointments.count, metricType: 'total-appointments' },
-            { label: 'Total Leads', data: normalizeOpportunitiesResponse(leads, countries), totalCount: leads.count, metricType: 'total-leads' },
+            { label: 'Appointments', data: normalizeOpportunitiesResponse(appointments, countries), totalCount: appointments.count, metricType: 'total-appointments', queryParams: appointmentParams },
+            { label: 'Total Leads', data: normalizeOpportunitiesResponse(leads, countries), totalCount: leads.count, metricType: 'total-leads', queryParams: leadParams },
           ],
           activeTab: tabIdx,
         });
@@ -143,17 +156,19 @@ const SalesPipeline = () => {
     } else if (metricType === 'appointment-to-sale') {
       setModalData({ isOpen: true, title, loading: true, tabs: [], activeTab: tabIdx });
       try {
+        const njmParams = { ...buildOpportunityParams('total-njms'), page: tabbedPages.njm || 1 };
+        const appointmentParams = { ...buildOpportunityParams('total-appointments'), page: tabbedPages.appointment || 1 };
         const [njms, appointments] = await Promise.all([
-          fetchOpportunities({ ...buildOpportunityParams('total-njms'), page: tabbedPages.njm || 1 }),
-          fetchOpportunities({ ...buildOpportunityParams('total-appointments'), page: tabbedPages.appointment || 1 }),
+          fetchOpportunities(njmParams),
+          fetchOpportunities(appointmentParams),
         ]);
         setModalData({
           isOpen: true,
           title,
           loading: false,
           tabs: [
-            { label: 'NJMs', data: normalizeOpportunitiesResponse(njms, countries), totalCount: njms.count, metricType: 'total-njms' },
-            { label: 'Appointments', data: normalizeOpportunitiesResponse(appointments, countries), totalCount: appointments.count, metricType: 'total-appointments' },
+            { label: 'NJMs', data: normalizeOpportunitiesResponse(njms, countries), totalCount: njms.count, metricType: 'total-njms', queryParams: njmParams },
+            { label: 'Appointments', data: normalizeOpportunitiesResponse(appointments, countries), totalCount: appointments.count, metricType: 'total-appointments', queryParams: appointmentParams },
           ],
           activeTab: tabIdx,
         });
@@ -164,17 +179,19 @@ const SalesPipeline = () => {
     } else if (metricType === 'agreement-vs-njm') {
       setModalData({ isOpen: true, title, loading: true, tabs: [], activeTab: tabIdx });
       try {
+        const agreementParams = { ...buildOpportunityParams('membership-agreements'), page: tabbedPages.agreement || 1 };
+        const njmParams = { ...buildOpportunityParams('total-njms'), page: tabbedPages.njm || 1 };
         const [agreements, njms] = await Promise.all([
-          fetchOpportunities({ ...buildOpportunityParams('membership-agreements'), page: tabbedPages.agreement || 1 }),
-          fetchOpportunities({ ...buildOpportunityParams('total-njms'), page: tabbedPages.njm || 1 }),
+          fetchOpportunities(agreementParams),
+          fetchOpportunities(njmParams),
         ]);
         setModalData({
           isOpen: true,
           title,
           loading: false,
           tabs: [
-            { label: 'Agreements', data: normalizeOpportunitiesResponse(agreements, countries), totalCount: agreements.count, metricType: 'membership-agreements' },
-            { label: 'NJMs', data: normalizeOpportunitiesResponse(njms, countries), totalCount: njms.count, metricType: 'total-njms' },
+            { label: 'Agreements', data: normalizeOpportunitiesResponse(agreements, countries), totalCount: agreements.count, metricType: 'membership-agreements', queryParams: agreementParams },
+            { label: 'NJMs', data: normalizeOpportunitiesResponse(njms, countries), totalCount: njms.count, metricType: 'total-njms', queryParams: njmParams },
           ],
           activeTab: tabIdx,
         });
@@ -183,7 +200,6 @@ const SalesPipeline = () => {
         setModalData((prev) => ({ ...prev, loading: false, error: error.message }));
       }
     } else {
-      // Placeholder for future implementation for other tabbed modals
       setModalData({
         isOpen: true,
         title,
@@ -511,6 +527,7 @@ const SalesPipeline = () => {
         onTabChange={handleTabChange}
         onTabPageChange={handleTabPageChange}
         tabbedPages={tabbedPages}
+        queryParams={modalData.queryParams}
       />
     </div>
   );

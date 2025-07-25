@@ -294,3 +294,49 @@ export const generateDashboardData = async (filters) => {
     locations, // Add this line
   };
 };
+
+/**
+ * Export opportunities as CSV from the API with query parameters.
+ * @param {Object} params - Query parameters as key-value pairs. Arrays will be repeated as multiple params.
+ * @returns {Promise<{blob: Blob, filename: string}>} - The CSV blob and filename (if available)
+ */
+export const exportOpportunitiesCsv = async (params = {}) => {
+  const buildQueryString = (paramsObj) => {
+    const esc = encodeURIComponent;
+    return Object.entries(paramsObj)
+      .flatMap(([key, value]) => {
+        if (Array.isArray(value)) {
+          return value.map(v => `${esc(key)}=${esc(v)}`);
+        } else if (value !== undefined && value !== null) {
+          return `${esc(key)}=${esc(value)}`;
+        } else {
+          return [];
+        }
+      })
+      .join('&');
+  };
+
+  const queryString = buildQueryString(params);
+  const url = `${config.api.baseUrl}/opportunities/export-csv/${queryString ? `?${queryString}` : ''}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to export opportunities CSV');
+  }
+
+  const blob = await response.blob();
+  // Try to extract filename from Content-Disposition header
+  let filename = 'opportunities.csv';
+  const disposition = response.headers.get('Content-Disposition');
+  if (disposition && disposition.includes('filename=')) {
+    const match = disposition.match(/filename="?([^";]+)"?/);
+    if (match && match[1]) filename = match[1];
+  }
+  return { blob, filename };
+};

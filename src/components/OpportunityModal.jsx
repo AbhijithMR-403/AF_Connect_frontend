@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, ExternalLink, Calendar, User, DollarSign, Tag, ChevronLeft, ChevronRight, MapPin, Globe } from 'lucide-react';
+import { exportOpportunitiesCsv } from '../services/api';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -19,7 +20,10 @@ const OpportunityModal = ({
   onTabChange,
   onTabPageChange,
   tabbedPages = { online: 1, offline: 1 },
+  queryParams,
 }) => {
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState(null);
 
   if (!isOpen) return null;
 
@@ -143,6 +147,35 @@ const OpportunityModal = ({
         return 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200';
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+    }
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    setExportError(null);
+    try {
+      let params = {};
+      if (isTabbed && tab && tab.queryParams) {
+        params = { ...tab.queryParams };
+      } else if (!isTabbed && queryParams) {
+        params = { ...queryParams };
+      } else {
+        params = { page: isTabbed ? tabPage : currentPage };
+      }
+      const { blob, filename } = await exportOpportunitiesCsv(params);
+      // Trigger download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename || 'opportunities.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setExportError(err.message || 'Failed to export CSV');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -430,10 +463,17 @@ const OpportunityModal = ({
             >
               Close
             </button>
-            <button className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-500 transition-colors">
-              Export Data
+            <button
+              disabled={exporting}
+              onClick={handleExport}
+              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-500 transition-colors"
+            >
+              {exporting ? 'Exporting...' : 'Export Data'}
             </button>
           </div>
+          {exportError && (
+            <div className="text-xs text-red-600 mt-2 w-full text-right">{exportError}</div>
+          )}
         </div>
       </div>
     </div>
