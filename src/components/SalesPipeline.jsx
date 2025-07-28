@@ -371,7 +371,7 @@ const SalesPipeline = () => {
             </div>
           </div>
           <ClickableMetricCard
-            title="Total Shown Appointments"
+            title="Total Shown Appointments' Opportunities"
             value={Math.round(salesMetrics.appointment_showed)}
             icon={Eye}
             iconColor="text-emerald-600 dark:text-emerald-400"

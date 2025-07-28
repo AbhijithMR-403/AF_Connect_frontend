@@ -219,7 +219,7 @@ export const generateDashboardData = async (filters) => {
   const apiResponse = await fetchDashboardData(filters);
   
   // Debug: Log the API response to see what we're getting
-  const appointment_showed = apiResponse.total_showed_appointments ?? 0;
+  const appointment_showed = apiResponse.opportunities_with_shown_appointments ?? 0;
   const sm = apiResponse.sales_metrics || {};
   const totalLeads = sm.total_leads ?? null;
   const totalAppointments = sm.total_appointments ?? null;
