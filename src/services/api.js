@@ -229,6 +229,8 @@ export const generateDashboardData = async (filters) => {
   const online = sm.online_v_offline?.online ?? null;
   const offline = sm.online_v_offline?.offline ?? null;
   const totalNoLeadSource = sm.total_no_lead_source ?? null;
+  const totalContacted = sm.total_contacted ?? null;
+  const totalPaidMedia = sm.total_paid_media ?? null;
   const salesMetrics = {
     totalLeads,
     totalAppointments,
@@ -238,6 +240,8 @@ export const generateDashboardData = async (filters) => {
     offline,
     appointment_showed,
     totalNoLeadSource,
+    totalContacted,
+    totalPaidMedia,
     leadToSaleRatio: (totalLeads && totalNJMs) ? Number(((totalNJMs / totalLeads) * 100).toFixed(2)) : null,
     leadToAppointmentRatio: (totalLeads && totalAppointments) ? Number(((totalAppointments / totalLeads) * 100).toFixed(2)) : null,
     appointmentToSaleRatio: (totalAppointments && totalNJMs) ? Number(((totalAppointments / totalNJMs) * 100).toFixed(2)) : null,
