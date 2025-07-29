@@ -1,6 +1,6 @@
 const metricTypeConfigs = {
   'total-njms': {
-    // pipeline_name: 'AFC Sales Pipeline',
+    pipeline_name: 'AFC Sales Pipeline',
     status: 'won',
   },
   'total-appointments': {
