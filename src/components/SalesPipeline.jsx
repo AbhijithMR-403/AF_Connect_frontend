@@ -48,8 +48,9 @@ const SalesPipeline = () => {
       filters.customEndDate &&
       filters.dateRange !== 'all'
     ) {
-      params.created_at_min = filters.customStartDate;
-      params.created_at_max = filters.customEndDate;
+      const dateField = metricTypeConfigs[metricType]?.dateField || 'created_at';
+      params[`${dateField}_min`] = filters.customStartDate;
+      params[`${dateField}_max`] = filters.customEndDate;
     }
     // Metric-specific params from config
     if (metricTypeConfigs[metricType]) {

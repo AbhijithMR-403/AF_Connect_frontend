@@ -1,7 +1,9 @@
 const metricTypeConfigs = {
   'total-njms': {
+    // pipeline_name: 'Member Onboarding',
     pipeline_name: 'AFC Sales Pipeline',
     status: 'won',
+    dateField: 'membership_signup_date',
   },
   'total-appointments': {
     pipeline_name: 'AFC Sales Pipeline',
@@ -57,6 +59,7 @@ const metricTypeConfigs = {
     lead_source: ['Facebook', 'Whatsapp', 'Instagram', 
       'Google'
     ],
+    dateField: 'membership_signup_date',
   },
   'njm-lead-source': {
     // pipeline_name: 'AFC Sales Pipeline',
