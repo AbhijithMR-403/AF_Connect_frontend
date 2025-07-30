@@ -7,7 +7,8 @@ const metricTypeConfigs = {
   },
   'total-appointments': {
     pipeline_name: 'AFC Sales Pipeline',
-    stage_name: 'Appointment Booked',
+    dateField: 'event_created_on',
+    appointment_status: ['new', 'noshow', 'confirmed', 'showed', 'cancelled'],
   },
   
   'leads-without-tags': {
