@@ -2,6 +2,7 @@ import React from 'react';
 import { Target, Phone, BarChart3, TrendingUp } from 'lucide-react';
 import ClickableMetricCard from './ClickableMetricCard';
 import LeadSourcesChart from './charts/LeadSourcesChart';
+import { useAppSelector } from '../hooks';
 
 const LEAD_SOURCE_COLORS = [
   '#0D9488', '#7C3AED', '#FBBF24', '#14B8A6', '#F87171', '#A21CAF', '#0EA5E9',
@@ -20,6 +21,15 @@ function assignColorsToLeadSources(leadSources) {
   }));
 }
 const NJMAnalysis = ({ salesMetrics, openModal }) => {
+  const { validLeadSources } = useAppSelector((state) => state.dashboard);
+
+  // Helper to convert lead source key to value
+  const convertLeadSourceKeyToValue = (key) => {
+    if (!Array.isArray(validLeadSources)) return key;
+    const leadSource = validLeadSources.find(ls => ls.label === key);
+    return leadSource ? leadSource.value : key;
+  };
+
   if (!salesMetrics) return null;
   
   return (
@@ -34,7 +44,7 @@ const NJMAnalysis = ({ salesMetrics, openModal }) => {
         <div className="col-span-1 lg:col-span-2 order-1">
           <LeadSourcesChart
             leadSources={assignColorsToLeadSources(salesMetrics.leadSourceSaleBreakdown)}
-            openModal={(metricType, title, count, data) => openModal(metricType, title, count, 1, { lead_source: data?.name })}
+            openModal={(metricType, title, count, data) => openModal(metricType, title, count, 1, { source: convertLeadSourceKeyToValue(data?.name) })}
           />
         </div>
         {/* Right column: stack Contacted and Paid Media cards vertically */}

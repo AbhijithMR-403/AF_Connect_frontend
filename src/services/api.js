@@ -278,7 +278,7 @@ export const generateDashboardData = async (filters) => {
 
   // Extract valid_lead_sources from API response (if present)
   const validLeadSources = apiResponse.valid_lead_sources && typeof apiResponse.valid_lead_sources === 'object'
-    ? Object.entries(apiResponse.valid_lead_sources).map(([key, label]) => ({ value: key, label }))
+    ? Object.entries(apiResponse.valid_lead_sources).map(([key, value]) => ({ value: value, label: key }))
     : [];
 
   // Extract locations from API response (if present)

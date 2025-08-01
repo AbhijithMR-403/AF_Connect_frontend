@@ -56,7 +56,7 @@ const DefaulterPipeline = () => {
       params.location = filters.club;
     }
     if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
-      params.lead_source = filters.leadSource;
+      params.source = filters.leadSource;
     }
     if (filters.dateRange === 'custom-range' && filters.customStartDate && filters.customEndDate) {
       params.created_at_min = filters.customStartDate;

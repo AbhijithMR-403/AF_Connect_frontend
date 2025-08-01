@@ -12,7 +12,7 @@ import metricTypeConfigs from '../config/metricTypes';
 const PAGE_SIZE = 10;
 
 const SalesPipeline = () => {
-  const { salesMetrics, filters, countries, loading } = useAppSelector((state) => state.dashboard);
+  const { salesMetrics, filters, countries, loading, validLeadSources } = useAppSelector((state) => state.dashboard);
   const [modalData, setModalData] = useState({
     isOpen: false,
     title: '',
@@ -25,6 +25,16 @@ const SalesPipeline = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [tabbedPages, setTabbedPages] = useState({ online: 1, offline: 1, njm: 1, lead: 1, appointment: 1 });
   const [activeTab, setActiveTab] = useState(0);
+
+  // Helper to convert lead source keys to values
+  const convertLeadSourceKeysToValues = (leadSourceKeys) => {
+    if (!Array.isArray(leadSourceKeys) || !Array.isArray(validLeadSources)) return leadSourceKeys;
+    
+    return leadSourceKeys.map(key => {
+      const leadSource = validLeadSources.find(ls => ls.label === key);
+      return leadSource ? leadSource.value : key;
+    });
+  };
 
   // Helper to map filters to API query params
   const buildOpportunityParams = (metricType, count) => {
@@ -40,7 +50,7 @@ const SalesPipeline = () => {
       params.location = filters.club;
     }
     if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
-      params.lead_source = filters.leadSource;
+      params.source = convertLeadSourceKeysToValues(filters.leadSource);
     }
     // Date range
     if (
@@ -65,7 +75,7 @@ const SalesPipeline = () => {
     setModalData((prev) => ({ ...prev, isOpen: true, title, loading: true, error: null, opportunities: [], totalCount: count, metricType }));
     try {
       const params = buildOpportunityParams(metricType);
-      // Merge in any extra params (e.g., { lead_source: 'Whatsapp' })
+      // Merge in any extra params (e.g., { source: 'Whatsapp' })
       Object.assign(params, extraParams);
       params.page = page;
       const data = await fetchOpportunities(params);

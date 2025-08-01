@@ -27,7 +27,14 @@ function assignColorsToLeadSources(leadSources) {
 
 const ChartSection = ({ leadSources, appointmentStatus, openModal }) => {
 
-  const { salesMetrics } = useAppSelector((state) => state.dashboard);
+  const { salesMetrics, validLeadSources } = useAppSelector((state) => state.dashboard);
+
+  // Helper to convert lead source key to value
+  const convertLeadSourceKeyToValue = (key) => {
+    if (!Array.isArray(validLeadSources)) return key;
+    const leadSource = validLeadSources.find(ls => ls.label === key);
+    return leadSource ? leadSource.value : key;
+  };
 
   // Remove all modal state and logic
 
@@ -39,7 +46,7 @@ const ChartSection = ({ leadSources, appointmentStatus, openModal }) => {
         {/* Lead Sources Breakdown */}
         <LeadSourcesChart 
           leadSources={assignColorsToLeadSources(leadSources)}
-          openModal={(metricType, title, count, data) => openModal("lead-source", title, count, 1, { lead_source: data?.name })}
+          openModal={(metricType, title, count, data) => openModal("lead-source", title, count, 1, { source: convertLeadSourceKeyToValue(data?.name) })}
         />
         {/* Appointment Status */}
         
