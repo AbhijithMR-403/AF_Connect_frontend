@@ -30,7 +30,7 @@ export const fetchDashboardData = async (filters) => {
     apiParams.location = filters.club;
   }
   if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
-    apiParams.lead_source = filters.leadSource;
+    apiParams.source = filters.leadSource;
   }
   if (filters.customStartDate && filters.customEndDate && filters.dateRange !== 'all') {
     apiParams.created_at_min = filters.customStartDate;
@@ -277,8 +277,8 @@ export const generateDashboardData = async (filters) => {
   };
 
   // Extract valid_lead_sources from API response (if present)
-  const validLeadSources = Array.isArray(apiResponse.valid_lead_sources)
-    ? apiResponse.valid_lead_sources.map(src => src.value)
+  const validLeadSources = apiResponse.valid_lead_sources && typeof apiResponse.valid_lead_sources === 'object'
+    ? Object.entries(apiResponse.valid_lead_sources).map(([key, label]) => ({ value: key, label }))
     : [];
 
   // Extract locations from API response (if present)

@@ -333,7 +333,7 @@ const FilterBar = () => {
   const leadSourceOptions = [
     { value: 'all', label: 'All Sources' },
     ...(Array.isArray(validLeadSources) && validLeadSources.length > 0
-      ? validLeadSources.map(src => ({ value: src, label: src }))
+      ? validLeadSources
       : []),
   ];
 

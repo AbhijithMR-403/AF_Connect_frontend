@@ -36,7 +36,6 @@ const DashboardContent = () => {
           <OnboardingPipeline />
           <DefaulterPipeline />
           <RegionalView />
-          <RegionalView />
         </PipelineTabs>
       </div>
     </div>
