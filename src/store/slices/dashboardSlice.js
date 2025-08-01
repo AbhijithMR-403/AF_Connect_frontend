@@ -6,7 +6,7 @@ const initialState = {
     country: ['all'],
     club: ['all'],
     assignedUser: ['all'],
-    dateRange: 'all',
+    dateRange: 'last-7-days',
     leadSource: ['all'],
     customStartDate: null,
     customEndDate: null,
