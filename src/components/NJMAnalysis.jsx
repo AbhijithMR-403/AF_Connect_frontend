@@ -16,7 +16,7 @@ function assignColorsToLeadSources(leadSources) {
   }
   return leadSources.map((source, idx) => ({
     ...source,
-    color: LEAD_SOURCE_COLORS[idx]
+    color: LEAD_SOURCE_COLORS[idx]  
   }));
 }
 const NJMAnalysis = ({ salesMetrics, openModal }) => {
@@ -48,7 +48,7 @@ const NJMAnalysis = ({ salesMetrics, openModal }) => {
             onClick={() => openModal('contacted-njms', 'Contacted NJMs - GHL Opportunities', Math.round(0))}
           />
           <div 
-            onClick={() => openModal('paid-media-njms', 'NJM from Paid Media - GHL Opportunities', Math.round(salesMetrics.totalNJMs * 0.79))}
+            onClick={() => openModal('paid-media-njms', 'NJM from Paid Media - GHL Opportunities', Math.round(salesMetrics.totalPaidMedia))}
             className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg p-6 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group"
           >
             <div className="flex items-center justify-between">

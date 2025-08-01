@@ -246,7 +246,7 @@ export const generateDashboardData = async (filters) => {
     leadToAppointmentRatio: (totalLeads && totalAppointments) ? Number(((totalAppointments / totalLeads) * 100).toFixed(2)) : 0,
     appointmentToSaleRatio: (totalAppointments && totalNJMs) ? Number(((totalAppointments / totalNJMs) * 100).toFixed(2)) : 0,
     leadSourceBreakdown: sm.leadSourceBreakdown ?? [],
-    leadSourceSaleBreakdown: apiResponse.leadSourceSaleBreakdown ?? [],
+    leadSourceSaleBreakdown: sm.leadSourceSaleBreakdown ?? [],
     appointmentStatus: apiResponse.appointment_stats ?? [],
     trend: apiResponse.trend ?? { daily: [], weekly: [], monthly: [] },
   };

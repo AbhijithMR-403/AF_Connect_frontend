@@ -9,7 +9,9 @@ import { fetchOpportunities, normalizeOpportunitiesResponse } from '../services/
 const LEAD_SOURCE_COLORS = [
   '#0D9488', '#7C3AED', '#FBBF24', '#14B8A6', '#F87171', '#A21CAF', '#0EA5E9',
   '#F43F5E', '#F59E42', '#8B5CF6', '#F59E0B', '#10B981', '#6366F1', '#F472B6',
-  '#25D366', '#111827', '#EC4899', '#3B82F6'
+  '#25D366', '#111827', '#EC4899', '#3B82F6', '#06B6D4', '#84CC16', '#F97316',
+  '#8B5A2B', '#4F46E5', '#DC2626', '#059669', '#7C2D12', '#BE185D', '#1E40AF',
+  '#15803D', '#C2410C', '#9D174D', '#1E293B', '#475569', '#64748B', '#94A3B8'
 ];
 
 function assignColorsToLeadSources(leadSources) {
