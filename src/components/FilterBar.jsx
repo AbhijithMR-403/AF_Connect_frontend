@@ -112,23 +112,62 @@ const FilterBar = () => {
   const MultiSelectDropdown = ({ label, filterType, options, selectedValues = [], isLoading = false, error = null }) => {
     const isOpen = dropdownStates[filterType];
     
+    // Method 1: Simple truncation (current approach)
+    const renderSimpleTruncation = (text) => (
+      <span className="truncate max-w-[100px] sm:max-w-[120px] lg:max-w-[140px] text-xs">{text}</span>
+    );
+
+    // Method 2: Tooltip with full text on hover
+    const renderWithTooltip = (text) => (
+      <span 
+        className="truncate max-w-[100px] sm:max-w-[120px] lg:max-w-[140px] cursor-help text-xs" 
+        title={text}
+      >
+        {text}
+      </span>
+    );
+
+    // Method 3: Responsive text sizing
+    const renderResponsiveText = (text) => (
+      <span className="truncate text-xs sm:text-xs lg:text-xs max-w-[100px] sm:max-w-[120px] lg:max-w-[140px]">
+        {text}
+      </span>
+    );
+
+    // Method 4: Multi-line with max height
+    const renderMultiLine = (text) => (
+      <span className="line-clamp-2 text-xs leading-tight max-w-[100px] sm:max-w-[120px] lg:max-w-[140px]">
+        {text}
+      </span>
+    );
+
+    // Method 5: Dynamic width based on container
+    const renderDynamicWidth = (text) => (
+      <span className="truncate w-full max-w-none">
+        {text}
+      </span>
+    );
+
+    // Choose which method to use (you can change this)
+    const renderText = renderWithTooltip; // Change this to try different methods
+    
     return (
       <div className="relative">
-        <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">{label}</label>
+        <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">{label}</label>
         
         {/* Dropdown button */}
         <button
           onClick={() => toggleDropdown(filterType)}
           disabled={isLoading}
-          className="w-full flex items-center justify-between px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 dark:hover:border-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-between px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 dark:hover:border-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <span className="text-gray-700 dark:text-gray-300">
+          <span className="text-gray-700 dark:text-gray-300 truncate">
             {isLoading ? `Loading ${label}...` : `Select ${label}`}
           </span>
           {isLoading ? (
-            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
           ) : (
-            <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
           )}
         </button>
         
@@ -146,14 +185,14 @@ const FilterBar = () => {
             selectedValues.map(value => {
               const option = options.find(opt => opt.value === value);
               return option ? (
-                <span key={value} className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                  {option.label}
+                <span key={value} className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 max-w-full">
+                  {renderText(option.label)}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       removeFilter(filterType, value);
                     }}
-                    className="hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full p-0.5"
+                    className="hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full p-0.5 flex-shrink-0"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -164,6 +203,41 @@ const FilterBar = () => {
             <span className="text-xs text-gray-500 dark:text-gray-400">No {label.toLowerCase()} selected</span>
           )}
         </div>
+
+        {/* Alternative: Grid layout for selected items (uncomment to use) */}
+        {/* 
+        <div className="grid grid-cols-3 gap-1 mt-2 min-h-[24px] max-h-[80px] overflow-y-auto">
+          {error ? (
+            <span className="col-span-3 inline-flex items-center px-2 py-1 rounded-md text-xs bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+              Error loading {label.toLowerCase()}
+            </span>
+          ) : selectedValues.includes('all') ? (
+            <span className="col-span-3 inline-flex items-center px-2 py-1 rounded-md text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+              All {label}
+            </span>
+          ) : selectedValues.length > 0 ? (
+            selectedValues.map(value => {
+              const option = options.find(opt => opt.value === value);
+              return option ? (
+                <span key={value} className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 w-full">
+                  <span className="truncate">{option.label}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFilter(filterType, value);
+                    }}
+                    className="hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full p-0.5 flex-shrink-0"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ) : null;
+            })
+          ) : (
+            <span className="col-span-3 text-xs text-gray-500 dark:text-gray-400">No {label.toLowerCase()} selected</span>
+          )}
+        </div>
+        */}
         
         {/* Dropdown menu */}
         {isOpen && (
@@ -189,13 +263,13 @@ const FilterBar = () => {
                     <button
                       key={option.value}
                       onClick={() => handleMultiSelectChange(filterType, option.value)}
-                      className={`w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                        isSelected ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'
-                      }`}
-                    >
-                      <span>{option.label}</span>
-                      {isSelected && <Check className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
-                    </button>
+                                        className={`w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                    isSelected ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  <span className="truncate flex-1 text-left">{option.label}</span>
+                  {isSelected && <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 ml-2" />}
+                </button>
                   );
                 })
               )}
@@ -219,21 +293,21 @@ const FilterBar = () => {
 
     return (
       <div className="relative">
-        <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">{label}</label>
+        <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">{label}</label>
         
         {/* Dropdown button */}
         <button
           onClick={() => toggleDropdown('dateRange')}
-          className="w-full flex items-center justify-between px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+          className="w-full flex items-center justify-between px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
         >
-          <span className="text-gray-700 dark:text-gray-300">Change Date Range</span>
-          <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <span className="text-gray-700 dark:text-gray-300 truncate">Change Date Range</span>
+          <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
         </button>
         
         {/* Current selection display BELOW the dropdown button */}
         <div className="mt-2 min-h-[24px]">
-          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-            {getDisplayValue()}
+          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 max-w-full">
+            <span className="truncate max-w-[100px] sm:max-w-[120px] lg:max-w-[140px]">{getDisplayValue()}</span>
           </span>
         </div>
         
@@ -252,11 +326,11 @@ const FilterBar = () => {
                     onChange(option.value);
                     closeDropdown('dateRange');
                   }}
-                  className={`w-full flex items-center px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                  className={`w-full flex items-center px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
                     value === option.value ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'
                   }`}
                 >
-                  <span>{option.label}</span>
+                  <span className="truncate flex-1 text-left">{option.label}</span>
                 </button>
               ))}
             </div>
@@ -320,15 +394,15 @@ const FilterBar = () => {
 
   return (
     <>
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 sm:p-6 transition-colors duration-200">
-        <div className="flex items-center gap-2 mb-4 sm:mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-3 sm:p-4 lg:p-5 transition-colors duration-200">
+        <div className="flex items-center gap-2 mb-3 sm:mb-4">
           <div className="w-4 h-4 sm:w-5 sm:h-5 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center flex-shrink-0">
             <div className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
           </div>
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Filters</h2>
+          <h2 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">Filters</h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
           <MultiSelectDropdown
             label="Countries"
             filterType="country"
