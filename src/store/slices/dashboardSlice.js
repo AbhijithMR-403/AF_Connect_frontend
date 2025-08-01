@@ -1,6 +1,35 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { fetchDashboardData, generateDashboardData, fetchUsers, fetchClubsAndCountries } from '../../services/api';
 
+// Helper function to calculate date range parameters
+export const calculateDateRangeParams = (dateRange, customStartDate = null, customEndDate = null) => {
+  if (!dateRange || dateRange === 'all') {
+    return { startDate: null, endDate: null };
+  }
+
+  if (dateRange === 'custom-range' && customStartDate && customEndDate) {
+    return { startDate: customStartDate, endDate: customEndDate };
+  }
+
+  // Calculate start and end dates for predefined ranges
+  const today = new Date();
+  let startDate = new Date(today);
+  
+  if (dateRange === 'last-7-days') {
+    startDate.setDate(today.getDate() - 6);
+  } else if (dateRange === 'last-30-days') {
+    startDate.setDate(today.getDate() - 29);
+  } else if (dateRange === 'last-90-days') {
+    startDate.setDate(today.getDate() - 89);
+  } else if (dateRange === 'last-year') {
+    startDate.setFullYear(today.getFullYear() - 1);
+    startDate.setDate(startDate.getDate() + 1);
+  }
+  
+  const format = (d) => d.toISOString().slice(0, 10);
+  return { startDate: format(startDate), endDate: format(today) };
+};
+
 const initialState = {
   filters: {
     country: ['all'],
@@ -138,4 +167,21 @@ const dashboardSlice = createSlice({
 });
 
 export const { updateFilters, clearError } = dashboardSlice.actions;
+
+// Selector to get processed filters with calculated date ranges
+export const selectProcessedFilters = (state) => {
+  const { filters } = state.dashboard;
+  const { startDate, endDate } = calculateDateRangeParams(
+    filters.dateRange, 
+    filters.customStartDate, 
+    filters.customEndDate
+  );
+  
+  return {
+    ...filters,
+    calculatedStartDate: startDate,
+    calculatedEndDate: endDate,
+  };
+};
+
 export default dashboardSlice.reducer;

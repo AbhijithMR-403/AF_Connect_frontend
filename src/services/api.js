@@ -1,4 +1,5 @@
 import { config } from '../config/env.js';
+import { calculateDateRangeParams } from '../store/slices/dashboardSlice.js';
 
 export const fetchDashboardData = async (filters) => {
   // Build query parameters from filters
@@ -32,31 +33,16 @@ export const fetchDashboardData = async (filters) => {
   if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
     apiParams.source = filters.leadSource;
   }
-  // Handle date range filters
-  if (filters.dateRange && filters.dateRange !== 'all') {
-    if (filters.dateRange === 'custom-range' && filters.customStartDate && filters.customEndDate) {
-      apiParams.created_at_min = filters.customStartDate;
-      apiParams.created_at_max = filters.customEndDate;
-    } else if (filters.dateRange !== 'custom-range') {
-      // Calculate start and end dates for predefined ranges
-      const today = new Date();
-      let startDate = new Date(today);
-      
-      if (filters.dateRange === 'last-7-days') {
-        startDate.setDate(today.getDate() - 6);
-      } else if (filters.dateRange === 'last-30-days') {
-        startDate.setDate(today.getDate() - 29);
-      } else if (filters.dateRange === 'last-90-days') {
-        startDate.setDate(today.getDate() - 89);
-      } else if (filters.dateRange === 'last-year') {
-        startDate.setFullYear(today.getFullYear() - 1);
-        startDate.setDate(startDate.getDate() + 1);
-      }
-      
-      const format = (d) => d.toISOString().slice(0, 10);
-      apiParams.created_at_min = format(startDate);
-      apiParams.created_at_max = format(today);
-    }
+  // Handle date range filters using centralized logic
+  const { startDate, endDate } = calculateDateRangeParams(
+    filters.dateRange, 
+    filters.customStartDate, 
+    filters.customEndDate
+  );
+  
+  if (startDate && endDate) {
+    apiParams.created_at_min = startDate;
+    apiParams.created_at_max = endDate;
   }
 
   const queryString = buildQueryString(apiParams);

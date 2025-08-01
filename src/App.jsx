@@ -15,14 +15,8 @@ const DashboardContent = () => {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    // Load initial data
-    dispatch(loadDashboardData({
-      country: ['all'],
-      club: ['all'],
-      assignedUser: ['all'],
-      dateRange: 'last-30-days',
-      leadSource: 'all',
-    }));
+    // Load clubs and countries on initial load
+    // Dashboard data will be loaded by FilterBar when filters are initialized
     dispatch(loadClubsAndCountries());
   }, [dispatch]);
 

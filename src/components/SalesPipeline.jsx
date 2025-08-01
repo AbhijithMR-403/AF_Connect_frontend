@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Calendar, Target, FileText, TrendingUp, AlertCircle, BarChart3, Phone, Eye } from 'lucide-react';
 import { useAppSelector } from '../hooks';
+import { selectProcessedFilters } from '../store/slices/dashboardSlice';
 import ClickableMetricCard from './ClickableMetricCard';
 import ChartSection from './ChartSection';
 import TrendGraphs from './TrendGraphs';
@@ -12,7 +13,8 @@ import metricTypeConfigs from '../config/metricTypes';
 const PAGE_SIZE = 10;
 
 const SalesPipeline = () => {
-  const { salesMetrics, filters, countries, loading, validLeadSources } = useAppSelector((state) => state.dashboard);
+  const { salesMetrics, countries, loading, validLeadSources } = useAppSelector((state) => state.dashboard);
+  const filters = useAppSelector(selectProcessedFilters);
   const [modalData, setModalData] = useState({
     isOpen: false,
     title: '',
@@ -52,15 +54,11 @@ const SalesPipeline = () => {
     if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
       params.source = convertLeadSourceKeysToValues(filters.leadSource);
     }
-    // Date range
-    if (
-      filters.customStartDate &&
-      filters.customEndDate &&
-      filters.dateRange !== 'all'
-    ) {
+    // Date range - use calculated dates from slice
+    if (filters.calculatedStartDate && filters.calculatedEndDate) {
       const dateField = metricTypeConfigs[metricType]?.dateField || 'created_at';
-      params[`${dateField}_min`] = filters.customStartDate;
-      params[`${dateField}_max`] = filters.customEndDate;
+      params[`${dateField}_min`] = filters.calculatedStartDate;
+      params[`${dateField}_max`] = filters.calculatedEndDate;
     }
     // Metric-specific params from config
     if (metricTypeConfigs[metricType]) {
