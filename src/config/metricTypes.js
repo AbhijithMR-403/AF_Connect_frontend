@@ -65,13 +65,14 @@ const metricTypeConfigs = {
   'njm-lead-source': {
     pipeline_name: 'AFC Sales Pipeline',
     status: 'won',
+    dateField: 'membership_signup_date',
     // stage_name: 'Sale',
   },
   'lead-source': {
     // pipeline_name: 'AFC Sales Pipeline',
   },
   'appointment-status': {
-    pipeline_name: 'AFC Sales Pipeline',
+    // pipeline_name: 'AFC Sales Pipeline',
   },
   'shown-appointments': {
     // pipeline_name: 'AFC Sales Pipeline',
