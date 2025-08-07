@@ -41,8 +41,8 @@ export const fetchDashboardData = async (filters) => {
   );
   
   if (startDate && endDate) {
-    apiParams.created_at_min = startDate;
-    apiParams.created_at_max = endDate;
+    apiParams.raw_created_at_min = startDate;
+    apiParams.raw_created_at_max = endDate;
   }
 
   const queryString = buildQueryString(apiParams);

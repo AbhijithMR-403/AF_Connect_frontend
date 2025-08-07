@@ -3,6 +3,27 @@ import { ChevronDown, X, Check, Calendar } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../hooks';
 import { updateFilters, loadUsers, loadClubsAndCountries, loadDashboardData } from '../store/slices/dashboardSlice';
 
+// Custom styles to hide scrollbars
+const dropdownStyles = `
+  .dropdown-menu::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .dropdown-menu {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .dropdown-options::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .dropdown-options {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+`;
+
 const FilterBar = () => {
   const dispatch = useAppDispatch();
   const { filters, countries, clubs, users, usersLoading, usersError, clubsLoading, clubsError, validLeadSources } = useAppSelector((state) => state.dashboard);
@@ -111,6 +132,12 @@ const FilterBar = () => {
 
   const MultiSelectDropdown = ({ label, filterType, options, selectedValues = [], isLoading = false, error = null }) => {
     const isOpen = dropdownStates[filterType];
+    const [searchTerm, setSearchTerm] = useState('');
+    
+    // Filter options based on search term
+    const filteredOptions = options.filter(option =>
+      option.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
     
     // Method 1: Simple truncation (current approach)
     const renderSimpleTruncation = (text) => (
@@ -150,6 +177,13 @@ const FilterBar = () => {
 
     // Choose which method to use (you can change this)
     const renderText = renderWithTooltip; // Change this to try different methods
+    
+    // Clear search when dropdown closes
+    useEffect(() => {
+      if (!isOpen) {
+        setSearchTerm('');
+      }
+    }, [isOpen]);
     
     return (
       <div className="relative">
@@ -246,7 +280,7 @@ const FilterBar = () => {
               className="fixed inset-0 z-10" 
               onClick={() => closeDropdown(filterType)}
             />
-            <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto dropdown-menu">
               {isLoading ? (
                 <div className="flex items-center justify-center px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
                   <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
@@ -257,21 +291,44 @@ const FilterBar = () => {
                   Failed to load {label.toLowerCase()}. Please try again.
                 </div>
               ) : (
-                options.map((option) => {
-                  const isSelected = selectedValues.includes(option.value);
-                  return (
-                    <button
-                      key={option.value}
-                      onClick={() => handleMultiSelectChange(filterType, option.value)}
-                                        className={`w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                    isSelected ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'
-                  }`}
-                >
-                  <span className="truncate flex-1 text-left">{option.label}</span>
-                  {isSelected && <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 ml-2" />}
-                </button>
-                  );
-                })
+                <>
+                  {/* Search input */}
+                  <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 p-2">
+                    <input
+                      type="text"
+                      placeholder={`Search ${label.toLowerCase()}...`}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 dark:text-gray-300 placeholder-gray-500 dark:placeholder-gray-400"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                  
+                  {/* Options list */}
+                  <div className="max-h-48 overflow-y-auto dropdown-options">
+                    {filteredOptions.length === 0 ? (
+                      <div className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400 text-center">
+                        No {label.toLowerCase()} found matching "{searchTerm}"
+                      </div>
+                    ) : (
+                      filteredOptions.map((option) => {
+                        const isSelected = selectedValues.includes(option.value);
+                        return (
+                          <button
+                            key={option.value}
+                            onClick={() => handleMultiSelectChange(filterType, option.value)}
+                            className={`w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                              isSelected ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'
+                            }`}
+                          >
+                            <span className="truncate flex-1 text-left" title={option.label}>{option.label}</span>
+                            {isSelected && <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 ml-2" />}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </>
               )}
             </div>
           </>
@@ -330,7 +387,7 @@ const FilterBar = () => {
                     value === option.value ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'
                   }`}
                 >
-                  <span className="truncate flex-1 text-left">{option.label}</span>
+                  <span className="truncate flex-1 text-left" title={option.label}>{option.label}</span>
                 </button>
               ))}
             </div>
@@ -394,6 +451,7 @@ const FilterBar = () => {
 
   return (
     <>
+      <style>{dropdownStyles}</style>
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-3 sm:p-4 lg:p-5 transition-colors duration-200">
         <div className="flex items-center gap-2 mb-3 sm:mb-4">
           <div className="w-4 h-4 sm:w-5 sm:h-5 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center flex-shrink-0">

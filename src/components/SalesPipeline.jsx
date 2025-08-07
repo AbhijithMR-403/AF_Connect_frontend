@@ -56,7 +56,7 @@ const SalesPipeline = () => {
     }
     // Date range - use calculated dates from slice
     if (filters.calculatedStartDate && filters.calculatedEndDate) {
-      const dateField = metricTypeConfigs[metricType]?.dateField || 'created_at';
+      const dateField = metricTypeConfigs[metricType]?.dateField || 'raw_created_at';
       params[`${dateField}_min`] = filters.calculatedStartDate;
       params[`${dateField}_max`] = filters.calculatedEndDate;
     }
