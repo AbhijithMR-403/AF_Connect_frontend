@@ -332,9 +332,10 @@ const SalesPipeline = () => {
               iconBgColor="bg-green-100 dark:bg-green-900"
               onClick={() => openModal('total-appointments', 'Total Appointments - GHL Opportunities', salesMetrics.totalAppointments)}
             />
-            <div 
+            <button
+              type="button"
               onClick={() => openModal('leads-without-tags', 'Leads Without Source Tags - GHL Opportunities', Math.round(salesMetrics.totalNoLeadSource))}
-              className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg p-6 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group"
+              className="text-left bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg p-6 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -352,7 +353,7 @@ const SalesPipeline = () => {
                   <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
                 </div>
               </div>
-            </div>
+            </button>
             <ClickableMetricCard
               title="Total Leads"
               value={salesMetrics.totalLeads}
@@ -361,9 +362,10 @@ const SalesPipeline = () => {
               iconBgColor="bg-blue-100 dark:bg-blue-900"
               onClick={() => openModal('total-leads', 'Total Leads - GHL Opportunities', salesMetrics.totalLeads)}
             />
-            <div 
+            <button
+              type="button"
               onClick={() => openTabbedModal('online-vs-offline', 'Online vs Offline Leads - GHL Opportunities')}
-              className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg p-6 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group"
+              className="text-left bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg p-6 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -384,7 +386,7 @@ const SalesPipeline = () => {
                   <BarChart3 className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                 </div>
               </div>
-            </div>
+            </button>
             <ClickableMetricCard
               title="Total Shown Appointments' Opportunities"
               value={Math.round(salesMetrics.appointment_showed)}
@@ -424,9 +426,10 @@ const SalesPipeline = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div 
+            <button
+              type="button"
               onClick={() => openTabbedModal('lead-to-sale', 'Lead to Sale Ratio - GHL Opportunities')}
-              className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 rounded-lg p-6 border border-blue-200 dark:border-blue-700 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group"
+              className="text-left bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 rounded-lg p-6 border border-blue-200 dark:border-blue-700 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group"
             >
               <div className="text-center">
                 <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
@@ -441,11 +444,12 @@ const SalesPipeline = () => {
                   Click to view opportunities
                 </div>
               </div>
-            </div>
+            </button>
 
-            <div 
+            <button
+              type="button"
               onClick={() => openTabbedModal('lead-to-appointment', 'Lead to Appointment Ratio - GHL Opportunities')}
-              className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 rounded-lg p-6 border border-green-200 dark:border-green-700 hover:shadow-md hover:border-green-300 dark:hover:border-green-600 transition-all duration-200 cursor-pointer group"
+              className="text-left bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 rounded-lg p-6 border border-green-200 dark:border-green-700 hover:shadow-md hover:border-green-300 dark:hover:border-green-600 transition-all duration-200 cursor-pointer group"
             >
               <div className="text-center">
                 <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2 group-hover:text-green-700 dark:group-hover:text-green-300 transition-colors">
@@ -460,11 +464,12 @@ const SalesPipeline = () => {
                   Click to view opportunities
                 </div>
               </div>
-            </div>
+            </button>
 
-            <div 
+            <button
+              type="button"
               onClick={() => openTabbedModal('appointment-to-sale', 'Appointment to Sale Ratio - GHL Opportunities')}
-              className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900 dark:to-purple-800 rounded-lg p-6 border border-purple-200 dark:border-purple-700 hover:shadow-md hover:border-purple-300 dark:hover:border-purple-600 transition-all duration-200 cursor-pointer group"
+              className="text-left bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900 dark:to-purple-800 rounded-lg p-6 border border-purple-200 dark:border-purple-700 hover:shadow-md hover:border-purple-300 dark:hover:border-purple-600 transition-all duration-200 cursor-pointer group"
             >
               <div className="text-center">
                 <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
@@ -479,7 +484,7 @@ const SalesPipeline = () => {
                   Click to view opportunities
                 </div>
               </div>
-            </div>
+            </button>
           </div>
         </div>
 

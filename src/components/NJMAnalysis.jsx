@@ -57,9 +57,10 @@ const NJMAnalysis = ({ salesMetrics, openModal }) => {
             iconBgColor="bg-blue-100 dark:bg-blue-900"
             onClick={() => openModal('contacted-njms', 'Contacted NJMs - GHL Opportunities', Math.round(0))}
           />
-          <div 
+          <button
+            type="button"
             onClick={() => openModal('paid-media-njms', 'NJM from Paid Media - GHL Opportunities', Math.round(salesMetrics.totalPaidMedia))}
-            className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg p-6 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group"
+            className="text-left bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg p-6 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group"
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">
@@ -78,7 +79,7 @@ const NJMAnalysis = ({ salesMetrics, openModal }) => {
                 <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
-          </div>
+          </button>
         </div>
       </div>
     </div>

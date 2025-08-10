@@ -19,9 +19,10 @@ const ClickableMetricCard = ({
   };
 
   return (
-    <div 
+    <button
+      type="button"
       onClick={onClick}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group"
+      className="w-full text-left bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group"
     >
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
@@ -46,7 +47,7 @@ const ClickableMetricCard = ({
           <Icon className={`w-4 h-4 sm:w-6 sm:h-6 ${iconColor}`} />
         </div>
       </div>
-    </div>
+    </button>
   );
 };
 

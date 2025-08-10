@@ -149,10 +149,11 @@ const OnboardingPipeline = () => {
         {metrics.map((metric, index) => {
           const Icon = metric.icon;
           return (
-            <div
+            <button
+              type="button"
               key={index}
               onClick={() => openTabbedModal(metric.metricType, `${metric.title} - GHL Opportunities`)}
-              className="border border-gray-100 dark:border-gray-700 rounded-lg p-6 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group bg-white dark:bg-gray-800"
+              className="text-left border border-gray-100 dark:border-gray-700 rounded-lg p-6 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group bg-white dark:bg-gray-800"
             >
               <div className="flex items-center justify-between mb-4">
                 <div className={`p-2 rounded-lg ${metric.bgColor} group-hover:scale-110 transition-transform`}>
@@ -169,7 +170,7 @@ const OnboardingPipeline = () => {
                   Click to view opportunities
                 </div>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
