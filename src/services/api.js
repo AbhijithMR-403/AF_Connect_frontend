@@ -2,6 +2,7 @@ import { config } from '../config/env.js';
 import { calculateDateRangeParams } from '../store/slices/dashboardSlice.js';
 
 export const fetchDashboardData = async (filters) => {
+  return {}
   // Build query parameters from filters
   const buildQueryString = (paramsObj) => {
     const esc = encodeURIComponent;
@@ -224,21 +225,31 @@ export const fetchClubsAndCountries = async () => {
 };
 
 export const generateDashboardData = async (filters) => {
-  const apiResponse = await fetchDashboardData(filters);
+  // Fetch dashboard data, member onboarding metrics, defaulter metrics, location stats, sales metrics, trend data, and appointment stats in parallel
+  const [apiResponse, memberOnboardingResponse, defaulterResponse, locationStatsResponse, salesMetricsResponse, trendDataResponse, appointmentStatsResponse] = await Promise.all([
+    fetchDashboardData(filters),
+    fetchMemberOnboardingMetrics(filters),
+    fetchDefaulterMetrics(filters),
+    fetchLocationStats(filters),
+    fetchSalesMetrics(filters),
+    fetchTrendData(filters),
+    fetchAppointmentStats(filters)
+  ]);
   
   // Debug: Log the API response to see what we're getting
-  const appointment_showed = apiResponse.opportunities_with_shown_appointments ?? 0;
-  const sm = apiResponse.sales_metrics || {};
-  const totalLeads = sm.total_leads ?? null;
-  const totalAppointments = sm.total_appointments ?? null;
-  const totalCount = sm.total_count ?? null;
-  const totalNJMs = sm.total_njms ?? null;
+  const appointment_showed = appointmentStatsResponse.opportunities_with_shown_appointments ?? 0;
+  // Use the dedicated sales metrics endpoint response
+  const totalLeads = salesMetricsResponse.total_leads ?? null;
+  // Use appointment stats for total appointments
+  const totalAppointments = appointmentStatsResponse.total_appointments ?? null;
+  const totalCount = salesMetricsResponse.total_count ?? null;
+  const totalNJMs = salesMetricsResponse.total_njms ?? null;
   // Extract online and offline from online_v_offline if present
-  const online = sm.online_v_offline?.online ?? null;
-  const offline = sm.online_v_offline?.offline ?? null;
-  const totalNoLeadSource = sm.total_no_lead_source ?? null;
-  const totalContacted = sm.total_contacted ?? null;
-  const totalPaidMedia = sm.total_paid_media ?? null;
+  const online = salesMetricsResponse.online_v_offline?.online ?? null;
+  const offline = salesMetricsResponse.online_v_offline?.offline ?? null;
+  const totalNoLeadSource = salesMetricsResponse.total_no_lead_source ?? null;
+  const totalContacted = salesMetricsResponse.total_contacted ?? null;
+  const totalPaidMedia = salesMetricsResponse.total_paid_media ?? null;
   const salesMetrics = {
     totalLeads,
     totalAppointments,
@@ -253,35 +264,35 @@ export const generateDashboardData = async (filters) => {
     leadToSaleRatio: (totalLeads && totalNJMs) ? Number(((totalNJMs / totalLeads) * 100).toFixed(2)) : null,
     leadToAppointmentRatio: (totalLeads && totalAppointments) ? Number(((totalAppointments / totalLeads) * 100).toFixed(2)) : 0,
     appointmentToSaleRatio: (totalAppointments && totalNJMs) ? Number(((totalAppointments / totalNJMs) * 100).toFixed(2)) : 0,
-    leadSourceBreakdown: sm.leadSourceBreakdown ?? [],
-    leadSourceSaleBreakdown: sm.leadSourceSaleBreakdown ?? [],
-    appointmentStatus: apiResponse.appointment_stats ?? [],
-    trend: apiResponse.trend ?? { daily: [], weekly: [], monthly: [] },
+    leadSourceBreakdown: salesMetricsResponse.leadSourceBreakdown ?? [],
+    leadSourceSaleBreakdown: salesMetricsResponse.leadSourceSaleBreakdown ?? [],
+    appointmentStatus: appointmentStatsResponse.appointment_stats ?? [],
+    trend: trendDataResponse ?? { daily: [], weekly: [], monthly: [] },
   };
 
   // Calculate trend sums
   const trendSums = sumTrend(salesMetrics.trend);
 
-  const om = apiResponse.member_onboarding_metrics || {};
+  // Use the dedicated member onboarding metrics endpoint response
   const onboardingMetrics = {
-    assessmentUptake: om.assessment_uptake ?? null,
-    afResults: om.af_results ?? null,
-    conversionRate: om.conversion_rate ?? null,
-    appAdoptionRate: om.app_adoption_rate ?? null,
+    assessmentUptake: memberOnboardingResponse.assessment_uptake ?? null,
+    afResults: memberOnboardingResponse.af_results ?? null,
+    conversionRate: memberOnboardingResponse.conversion_rate ?? null,
+    appAdoptionRate: memberOnboardingResponse.app_adoption_rate ?? null,
   };
 
-  const dm = apiResponse.defaulter_metrics || {};
+  // Use the dedicated defaulter metrics endpoint response
   const defaulterMetrics = {
-    totalDefaulters: dm.d1 ?? null,
-    totalDefaulters2Month: dm.d2 ?? null,
-    totalDefaulters3Month: dm.d3 ?? null,
-    communicationsSent: dm.communication_sent ?? null,
-    ptpConversion: dm.ptp_conversion ?? null,
-    paymentRecoveryRate: dm.payment_recovery ?? null,
-    paid: dm.paid ?? null,
-    totalPTP: dm.ptp ?? null,
-    noResponse: dm.no_res ?? null,
-    cancelledMembership: dm.cancelled_member ?? null,
+    totalDefaulters: defaulterResponse.d1 ?? null,
+    totalDefaulters2Month: defaulterResponse.d2 ?? null,
+    totalDefaulters3Month: defaulterResponse.d3 ?? null,
+    communicationsSent: defaulterResponse.communication_sent ?? null,
+    ptpConversion: defaulterResponse.ptp_conversion ?? null,
+    paymentRecoveryRate: defaulterResponse.payment_recovery ?? null,
+    paid: defaulterResponse.paid ?? null,
+    totalPTP: defaulterResponse.ptp ?? null,
+    noResponse: defaulterResponse.no_res ?? null,
+    cancelledMembership: defaulterResponse.cancelled_member ?? null,
   };
 
   // Extract valid_lead_sources from API response (if present)
@@ -289,9 +300,9 @@ export const generateDashboardData = async (filters) => {
     ? Object.entries(apiResponse.valid_lead_sources).map(([key, value]) => ({ value: value, label: key }))
     : [];
 
-  // Extract locations from API response (if present)
-  const locations = Array.isArray(apiResponse.locations)
-    ? apiResponse.locations
+  // Use the dedicated location stats endpoint response
+  const locations = Array.isArray(locationStatsResponse)
+    ? locationStatsResponse
     : [];
 
   // Clubs: fetch separately if needed
@@ -306,6 +317,372 @@ export const generateDashboardData = async (filters) => {
     validLeadSources, // Add this line
     locations, // Add this line
   };
+};
+
+export const fetchMemberOnboardingMetrics = async (filters) => {
+  // Build query parameters from filters
+  const buildQueryString = (paramsObj) => {
+    const esc = encodeURIComponent;
+    return Object.entries(paramsObj)
+      .flatMap(([key, value]) => {
+        if (Array.isArray(value)) {
+          return value.map(v => `${esc(key)}=${esc(v)}`);
+        } else if (value !== undefined && value !== null && value !== 'all') {
+          return `${esc(key)}=${esc(value)}`;
+        } else {
+          return [];
+        }
+      })
+      .join('&');
+  };
+
+  // Convert filters to API query parameters
+  const apiParams = {};
+  
+  if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
+    apiParams.assigned_to = filters.assignedUser;
+  }
+  if (filters.country && Array.isArray(filters.country) && !filters.country.includes('all')) {
+    apiParams.country = filters.country;
+  }
+  if (filters.club && Array.isArray(filters.club) && !filters.club.includes('all')) {
+    apiParams.location = filters.club;
+  }
+  if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
+    apiParams.source = filters.leadSource;
+  }
+  // Handle date range filters using centralized logic
+  const { startDate, endDate } = calculateDateRangeParams(
+    filters.dateRange, 
+    filters.customStartDate, 
+    filters.customEndDate
+  );
+  
+  if (startDate && endDate) {
+    apiParams.raw_created_at_min = startDate;
+    apiParams.raw_created_at_max = endDate;
+  }
+
+  const queryString = buildQueryString(apiParams);
+  const url = `${config.api.baseUrl}/opportunity_dash/member-onboarding-metrics/${queryString ? `?${queryString}` : ''}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch member onboarding metrics');
+  }
+
+  return response.json();
+};
+
+export const fetchDefaulterMetrics = async (filters) => {
+  // Build query parameters from filters
+  const buildQueryString = (paramsObj) => {
+    const esc = encodeURIComponent;
+    return Object.entries(paramsObj)
+      .flatMap(([key, value]) => {
+        if (Array.isArray(value)) {
+          return value.map(v => `${esc(key)}=${esc(v)}`);
+        } else if (value !== undefined && value !== null && value !== 'all') {
+          return `${esc(key)}=${esc(value)}`;
+        } else {
+          return [];
+        }
+      })
+      .join('&');
+  };
+
+  // Convert filters to API query parameters
+  const apiParams = {};
+  
+  if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
+    apiParams.assigned_to = filters.assignedUser;
+  }
+  if (filters.country && Array.isArray(filters.country) && !filters.country.includes('all')) {
+    apiParams.country = filters.country;
+  }
+  if (filters.club && Array.isArray(filters.club) && !filters.club.includes('all')) {
+    apiParams.location = filters.club;
+  }
+  if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
+    apiParams.source = filters.leadSource;
+  }
+  // Handle date range filters using centralized logic
+  const { startDate, endDate } = calculateDateRangeParams(
+    filters.dateRange, 
+    filters.customStartDate, 
+    filters.customEndDate
+  );
+  
+  if (startDate && endDate) {
+    apiParams.raw_created_at_min = startDate;
+    apiParams.raw_created_at_max = endDate;
+  }
+
+  const queryString = buildQueryString(apiParams);
+  const url = `${config.api.baseUrl}/opportunity_dash/defaulter-metrics/${queryString ? `?${queryString}` : ''}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch defaulter metrics');
+  }
+
+  return response.json();
+};
+
+export const fetchLocationStats = async (filters) => {
+  // Build query parameters from filters
+  const buildQueryString = (paramsObj) => {
+    const esc = encodeURIComponent;
+    return Object.entries(paramsObj)
+      .flatMap(([key, value]) => {
+        if (Array.isArray(value)) {
+          return value.map(v => `${esc(key)}=${esc(v)}`);
+        } else if (value !== undefined && value !== null && value !== 'all') {
+          return `${esc(key)}=${esc(value)}`;
+        } else {
+          return [];
+        }
+      })
+      .join('&');
+  };
+
+  // Convert filters to API query parameters
+  const apiParams = {};
+  
+  if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
+    apiParams.assigned_to = filters.assignedUser;
+  }
+  if (filters.country && Array.isArray(filters.country) && !filters.country.includes('all')) {
+    apiParams.country = filters.country;
+  }
+  if (filters.club && Array.isArray(filters.club) && !filters.club.includes('all')) {
+    apiParams.location = filters.club;
+  }
+  if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
+    apiParams.source = filters.leadSource;
+  }
+  // Handle date range filters using centralized logic
+  const { startDate, endDate } = calculateDateRangeParams(
+    filters.dateRange, 
+    filters.customStartDate, 
+    filters.customEndDate
+  );
+  
+  if (startDate && endDate) {
+    apiParams.raw_created_at_min = startDate;
+    apiParams.raw_created_at_max = endDate;
+  }
+
+  const queryString = buildQueryString(apiParams);
+  const url = `${config.api.baseUrl}/opportunity_dash/location-stats/${queryString ? `?${queryString}` : ''}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch location stats');
+  }
+
+  return response.json();
+};
+
+export const fetchSalesMetrics = async (filters) => {
+  // Build query parameters from filters
+  const buildQueryString = (paramsObj) => {
+    const esc = encodeURIComponent;
+    return Object.entries(paramsObj)
+      .flatMap(([key, value]) => {
+        if (Array.isArray(value)) {
+          return value.map(v => `${esc(key)}=${esc(v)}`);
+        } else if (value !== undefined && value !== null && value !== 'all') {
+          return `${esc(key)}=${esc(value)}`;
+        } else {
+          return [];
+        }
+      })
+      .join('&');
+  };
+
+  // Convert filters to API query parameters
+  const apiParams = {};
+  
+  if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
+    apiParams.assigned_to = filters.assignedUser;
+  }
+  if (filters.country && Array.isArray(filters.country) && !filters.country.includes('all')) {
+    apiParams.country = filters.country;
+  }
+  if (filters.club && Array.isArray(filters.club) && !filters.club.includes('all')) {
+    apiParams.location = filters.club;
+  }
+  if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
+    apiParams.source = filters.leadSource;
+  }
+  // Handle date range filters using centralized logic
+  const { startDate, endDate } = calculateDateRangeParams(
+    filters.dateRange, 
+    filters.customStartDate, 
+    filters.customEndDate
+  );
+  
+  if (startDate && endDate) {
+    apiParams.raw_created_at_min = startDate;
+    apiParams.raw_created_at_max = endDate;
+  }
+
+  const queryString = buildQueryString(apiParams);
+  const url = `${config.api.baseUrl}/opportunity_dash/sales-metrics/${queryString ? `?${queryString}` : ''}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch sales metrics');
+  }
+
+  return response.json();
+};
+
+export const fetchTrendData = async (filters) => {
+  // Build query parameters from filters
+  const buildQueryString = (paramsObj) => {
+    const esc = encodeURIComponent;
+    return Object.entries(paramsObj)
+      .flatMap(([key, value]) => {
+        if (Array.isArray(value)) {
+          return value.map(v => `${esc(key)}=${esc(v)}`);
+        } else if (value !== undefined && value !== null && value !== 'all') {
+          return `${esc(key)}=${esc(value)}`;
+        } else {
+          return [];
+        }
+      })
+      .join('&');
+  };
+
+  // Convert filters to API query parameters
+  const apiParams = {};
+  
+  if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
+    apiParams.assigned_to = filters.assignedUser;
+  }
+  if (filters.country && Array.isArray(filters.country) && !filters.country.includes('all')) {
+    apiParams.country = filters.country;
+  }
+  if (filters.club && Array.isArray(filters.club) && !filters.club.includes('all')) {
+    apiParams.location = filters.club;
+  }
+  if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
+    apiParams.source = filters.leadSource;
+  }
+  // Handle date range filters using centralized logic
+  const { startDate, endDate } = calculateDateRangeParams(
+    filters.dateRange, 
+    filters.customStartDate, 
+    filters.customEndDate
+  );
+  
+  if (startDate && endDate) {
+    apiParams.raw_created_at_min = startDate;
+    apiParams.raw_created_at_max = endDate;
+  }
+
+  const queryString = buildQueryString(apiParams);
+  const url = `${config.api.baseUrl}/opportunity_dash/trend-data/${queryString ? `?${queryString}` : ''}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch trend data');
+  }
+
+  return response.json();
+};
+
+export const fetchAppointmentStats = async (filters) => {
+  // Build query parameters from filters
+  const buildQueryString = (paramsObj) => {
+    const esc = encodeURIComponent;
+    return Object.entries(paramsObj)
+      .flatMap(([key, value]) => {
+        if (Array.isArray(value)) {
+          return value.map(v => `${esc(key)}=${esc(v)}`);
+        } else if (value !== undefined && value !== null && value !== 'all') {
+          return `${esc(key)}=${esc(value)}`;
+        } else {
+          return [];
+        }
+      })
+      .join('&');
+  };
+
+  // Convert filters to API query parameters
+  const apiParams = {};
+  
+  if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
+    apiParams.assigned_to = filters.assignedUser;
+  }
+  if (filters.country && Array.isArray(filters.country) && !filters.country.includes('all')) {
+    apiParams.country = filters.country;
+  }
+  if (filters.club && Array.isArray(filters.club) && !filters.club.includes('all')) {
+    apiParams.location = filters.club;
+  }
+  if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
+    apiParams.source = filters.leadSource;
+  }
+  // Handle date range filters using centralized logic
+  const { startDate, endDate } = calculateDateRangeParams(
+    filters.dateRange, 
+    filters.customStartDate, 
+    filters.customEndDate
+  );
+  
+  if (startDate && endDate) {
+    apiParams.raw_created_at_min = startDate;
+    apiParams.raw_created_at_max = endDate;
+  }
+
+  const queryString = buildQueryString(apiParams);
+  const url = `${config.api.baseUrl}/opportunity_dash/appointment-stats/${queryString ? `?${queryString}` : ''}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch appointment stats');
+  }
+
+  return response.json();
 };
 
 /**

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchDashboardData, generateDashboardData, fetchUsers, fetchClubsAndCountries } from '../../services/api';
+import { fetchDashboardData, generateDashboardData, fetchUsers, fetchClubsAndCountries, fetchMemberOnboardingMetrics, fetchDefaulterMetrics, fetchLocationStats, fetchSalesMetrics, fetchTrendData, fetchAppointmentStats } from '../../services/api';
 
 // Helper function to calculate date range parameters
 export const calculateDateRangeParams = (dateRange, customStartDate = null, customEndDate = null) => {
@@ -101,6 +101,84 @@ export const loadClubsAndCountries = createAsyncThunk(
   }
 );
 
+// Async thunk for fetching member onboarding metrics separately
+export const loadMemberOnboardingMetrics = createAsyncThunk(
+  'dashboard/loadMemberOnboardingMetrics',
+  async (filters, { rejectWithValue }) => {
+    try {
+      const data = await fetchMemberOnboardingMetrics(filters);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Async thunk for fetching defaulter metrics separately
+export const loadDefaulterMetrics = createAsyncThunk(
+  'dashboard/loadDefaulterMetrics',
+  async (filters, { rejectWithValue }) => {
+    try {
+      const data = await fetchDefaulterMetrics(filters);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Async thunk for fetching location stats separately
+export const loadLocationStats = createAsyncThunk(
+  'dashboard/loadLocationStats',
+  async (filters, { rejectWithValue }) => {
+    try {
+      const data = await fetchLocationStats(filters);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Async thunk for fetching sales metrics separately
+export const loadSalesMetrics = createAsyncThunk(
+  'dashboard/loadSalesMetrics',
+  async (filters, { rejectWithValue }) => {
+    try {
+      const data = await fetchSalesMetrics(filters);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Async thunk for fetching trend data separately
+export const loadTrendData = createAsyncThunk(
+  'dashboard/loadTrendData',
+  async (filters, { rejectWithValue }) => {
+    try {
+      const data = await fetchTrendData(filters);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Async thunk for fetching appointment stats separately
+export const loadAppointmentStats = createAsyncThunk(
+  'dashboard/loadAppointmentStats',
+  async (filters, { rejectWithValue }) => {
+    try {
+      const data = await fetchAppointmentStats(filters);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState,
@@ -162,6 +240,133 @@ const dashboardSlice = createSlice({
         state.countriesLoading = false;
         state.clubsError = action.payload || 'Failed to load clubs';
         state.countriesError = action.payload || 'Failed to load countries';
+      })
+      .addCase(loadMemberOnboardingMetrics.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loadMemberOnboardingMetrics.fulfilled, (state, action) => {
+        state.loading = false;
+        state.onboardingMetrics = {
+          assessmentUptake: action.payload.assessment_uptake ?? null,
+          afResults: action.payload.af_results ?? null,
+          conversionRate: action.payload.conversion_rate ?? null,
+          appAdoptionRate: action.payload.app_adoption_rate ?? null,
+        };
+        state.lastUpdated = new Date().toISOString();
+      })
+      .addCase(loadMemberOnboardingMetrics.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to load member onboarding metrics';
+      })
+      .addCase(loadDefaulterMetrics.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loadDefaulterMetrics.fulfilled, (state, action) => {
+        state.loading = false;
+        state.defaulterMetrics = {
+          totalDefaulters: action.payload.d1 ?? null,
+          totalDefaulters2Month: action.payload.d2 ?? null,
+          totalDefaulters3Month: action.payload.d3 ?? null,
+          communicationsSent: action.payload.communication_sent ?? null,
+          ptpConversion: action.payload.ptp_conversion ?? null,
+          paymentRecoveryRate: action.payload.payment_recovery ?? null,
+          paid: action.payload.paid ?? null,
+          totalPTP: action.payload.ptp ?? null,
+          noResponse: action.payload.no_res ?? null,
+          cancelledMembership: action.payload.cancelled_member ?? null,
+        };
+        state.lastUpdated = new Date().toISOString();
+      })
+      .addCase(loadDefaulterMetrics.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to load defaulter metrics';
+      })
+      .addCase(loadLocationStats.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loadLocationStats.fulfilled, (state, action) => {
+        state.loading = false;
+        state.locations = Array.isArray(action.payload) ? action.payload : [];
+        state.lastUpdated = new Date().toISOString();
+      })
+      .addCase(loadLocationStats.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to load location stats';
+      })
+      .addCase(loadSalesMetrics.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loadSalesMetrics.fulfilled, (state, action) => {
+        state.loading = false;
+        state.salesMetrics = {
+          totalLeads: action.payload.total_leads ?? null,
+          totalAppointments: action.payload.total_appointments ?? null,
+          totalNJMs: action.payload.total_njms ?? null,
+          membershipAgreements: action.payload.total_count ?? null,
+          online: action.payload.online_v_offline?.online ?? null,
+          offline: action.payload.online_v_offline?.offline ?? null,
+          appointment_showed: action.payload.appointment_showed ?? 0,
+          totalNoLeadSource: action.payload.total_no_lead_source ?? null,
+          totalContacted: action.payload.total_contacted ?? null,
+          totalPaidMedia: action.payload.total_paid_media ?? null,
+          leadToSaleRatio: (action.payload.total_leads && action.payload.total_njms) ? Number(((action.payload.total_njms / action.payload.total_leads) * 100).toFixed(2)) : null,
+          leadToAppointmentRatio: (action.payload.total_leads && action.payload.total_appointments) ? Number(((action.payload.total_appointments / action.payload.total_leads) * 100).toFixed(2)) : 0,
+          appointmentToSaleRatio: (action.payload.total_appointments && action.payload.total_njms) ? Number(((action.payload.total_appointments / action.payload.total_njms) * 100).toFixed(2)) : 0,
+          leadSourceBreakdown: action.payload.leadSourceBreakdown ?? [],
+          leadSourceSaleBreakdown: action.payload.leadSourceSaleBreakdown ?? [],
+          appointmentStatus: action.payload.appointment_stats ?? [],
+          trend: action.payload.trend ?? { daily: [], weekly: [], monthly: [] },
+        };
+        state.lastUpdated = new Date().toISOString();
+      })
+      .addCase(loadSalesMetrics.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to load sales metrics';
+      })
+      .addCase(loadTrendData.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loadTrendData.fulfilled, (state, action) => {
+        state.loading = false;
+        // Update trend data in sales metrics
+        if (state.salesMetrics) {
+          state.salesMetrics.trend = action.payload ?? { daily: [], weekly: [], monthly: [] };
+        }
+        state.lastUpdated = new Date().toISOString();
+      })
+      .addCase(loadTrendData.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to load trend data';
+      })
+      .addCase(loadAppointmentStats.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loadAppointmentStats.fulfilled, (state, action) => {
+        state.loading = false;
+        // Update appointment stats in sales metrics
+        if (state.salesMetrics) {
+          state.salesMetrics.totalAppointments = action.payload.total_appointments ?? null;
+          state.salesMetrics.appointment_showed = action.payload.opportunities_with_shown_appointments ?? 0;
+          state.salesMetrics.appointmentStatus = action.payload.appointment_stats ?? [];
+          // Recalculate ratios with new appointment data
+          if (state.salesMetrics.totalLeads && action.payload.total_appointments) {
+            state.salesMetrics.leadToAppointmentRatio = Number(((action.payload.total_appointments / state.salesMetrics.totalLeads) * 100).toFixed(2));
+          }
+          if (action.payload.total_appointments && state.salesMetrics.totalNJMs) {
+            state.salesMetrics.appointmentToSaleRatio = Number(((action.payload.total_appointments / state.salesMetrics.totalNJMs) * 100).toFixed(2));
+          }
+        }
+        state.lastUpdated = new Date().toISOString();
+      })
+      .addCase(loadAppointmentStats.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to load appointment stats';
       });
   },
 });
