@@ -102,7 +102,7 @@ const OnboardingPipeline = () => {
   const metrics = [
     {
       title: 'Assessment Uptake',
-      value: `${onboardingMetrics.assessmentUptake}%`,
+      value: `${Number(onboardingMetrics.assessmentUptake).toFixed(2)}%`,
       description: '15-min Gofast ÷ Membership Agreements',
       icon: CheckCircle,
       color: 'text-green-600 dark:text-green-400',
@@ -111,7 +111,7 @@ const OnboardingPipeline = () => {
     },
     {
       title: 'AF Results',
-      value: `${onboardingMetrics.afResults}%`,
+      value: `${Number(onboardingMetrics.afResults).toFixed(2)}%`,
       description: 'AF Results completion rate',
       icon: Users,
       color: 'text-blue-600 dark:text-blue-400',
@@ -120,7 +120,7 @@ const OnboardingPipeline = () => {
     },
     {
       title: 'Conversion Rate',
-      value: `${onboardingMetrics.conversionRate}%`,
+      value: `${Number(onboardingMetrics.conversionRate).toFixed(2)}%`,
       description: 'AF Results ÷ 15-min Gofast',
       icon: TrendingUp,
       color: 'text-purple-600 dark:text-purple-400',
@@ -129,7 +129,7 @@ const OnboardingPipeline = () => {
     },
     {
       title: 'App Adoption Rate',
-      value: `${onboardingMetrics.appAdoptionRate}%`,
+      value: `${Number(onboardingMetrics.appAdoptionRate).toFixed(2)}%`,
       description: 'AF App Downloads ÷ Membership Agreements',
       icon: Smartphone,
       color: 'text-orange-600 dark:text-orange-400',
