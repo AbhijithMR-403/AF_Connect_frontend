@@ -52,7 +52,6 @@ const LeadSourcesChart = ({ leadSources, openModal }) => {
           <BarChart 
             data={leadSources} 
             margin={{ top: 20, right: 10, left: 10, bottom: 60 }}
-            onClick={handleBarClick}
           >
             <defs>
               <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">

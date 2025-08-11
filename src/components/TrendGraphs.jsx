@@ -7,7 +7,7 @@ import OpportunityModal from './OpportunityModal';
 
 const TrendGraphs = () => {
   const { salesMetrics, trendSums } = useAppSelector((state) => state.dashboard);
-  const [activeView, setActiveView] = useState('weekly');
+  const [activeView, setActiveView] = useState('daily');
 
   // Restore trendReport state and related functions
   const [trendReport, setTrendReport] = useState({ isOpen: false, metric: '', data: [] });
