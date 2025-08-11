@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, X, Check, Calendar } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../hooks';
-import { updateFilters, loadUsers, loadClubsAndCountries, loadDashboardData } from '../store/slices/dashboardSlice';
+import { updateFilters, loadUsers, loadClubsAndCountries, loadDashboardData, loadValidLeadSources } from '../store/slices/dashboardSlice';
 
 // Custom styles to hide scrollbars
 const dropdownStyles = `
@@ -26,7 +26,7 @@ const dropdownStyles = `
 
 const FilterBar = () => {
   const dispatch = useAppDispatch();
-  const { filters, countries, clubs, users, usersLoading, usersError, clubsLoading, clubsError, validLeadSources } = useAppSelector((state) => state.dashboard);
+  const { filters, countries, clubs, users, usersLoading, usersError, clubsLoading, clubsError, validLeadSources, validLeadSourcesLoading, validLeadSourcesError } = useAppSelector((state) => state.dashboard);
   
   // State for dropdown visibility
   const [dropdownStates, setDropdownStates] = useState({
@@ -34,6 +34,7 @@ const FilterBar = () => {
     club: false,
     assignedUser: false,
     dateRange: false,
+    leadSource: false,
   });
 
   // State for custom date range
@@ -47,7 +48,10 @@ const FilterBar = () => {
   useEffect(() => {
     dispatch(loadUsers());
     dispatch(loadClubsAndCountries());
+    dispatch(loadValidLeadSources());
   }, [dispatch]);
+
+
 
   // Call generateDashboardData API whenever filters change
   useEffect(() => {
@@ -499,6 +503,8 @@ const FilterBar = () => {
             filterType="leadSource"
             options={leadSourceOptions}
             selectedValues={Array.isArray(filters.leadSource) ? filters.leadSource : [filters.leadSource || 'all']}
+            isLoading={validLeadSourcesLoading}
+            error={validLeadSourcesError}
           />
         </div>
       </div>

@@ -748,6 +748,77 @@ export const fetchBreakdownData = async (filters) => {
 };
 
 /**
+ * Fetch valid lead sources from the API
+ * @param {Object} filters - Optional filters for date range
+ * @returns {Promise<Array>} - Array of lead source objects with value and label properties
+ */
+export const fetchValidLeadSources = async (filters = {}) => {
+  try {
+    // Build query parameters for date range if provided
+    const buildQueryString = (paramsObj) => {
+      const esc = encodeURIComponent;
+      return Object.entries(paramsObj)
+        .flatMap(([key, value]) => {
+          if (value !== undefined && value !== null && value !== 'all') {
+            return `${esc(key)}=${esc(value)}`;
+          } else {
+            return [];
+          }
+        })
+        .join('&');
+    };
+
+    const apiParams = {};
+    
+    // Handle date range filters using centralized logic
+    const { startDate, endDate } = calculateDateRangeParams(
+      filters.dateRange, 
+      filters.customStartDate, 
+      filters.customEndDate
+    );
+    
+    if (startDate && endDate) {
+      apiParams.raw_created_at_min = startDate;
+      apiParams.raw_created_at_max = endDate;
+    }
+
+    const queryString = buildQueryString(apiParams);
+    // Use the correct API base URL from the user's request
+    const baseUrl = 'https://reports.anytimefitnesscorporate.com/api';
+    const url = `${baseUrl}/opportunity_dash/valid-lead-source/${queryString ? `?${queryString}` : ''}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch valid lead sources: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    // Convert the response object to array format expected by the UI
+    // The API returns: {"0102298829":"","1 Day Trial":"daytrial",...}
+    // We need: [{value: "daytrial", label: "1 Day Trial"}, ...]
+    if (data && typeof data === 'object') {
+      const leadSources = Object.entries(data).map(([label, value]) => ({
+        value: value || label, // Use the value if provided, otherwise use the label as value
+        label: label
+      }));
+      return leadSources;
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Error fetching valid lead sources:', error);
+    throw error;
+  }
+};
+
+/**
  * Export opportunities as CSV from the API with query parameters.
  * @param {Object} params - Query parameters as key-value pairs. Arrays will be repeated as multiple params.
  * @returns {Promise<{blob: Blob, filename: string}>} - The CSV blob and filename (if available)

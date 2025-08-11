@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchDashboardData, generateDashboardData, fetchUsers, fetchClubsAndCountries, fetchMemberOnboardingMetrics, fetchDefaulterMetrics, fetchLocationStats, fetchSalesMetrics, fetchTrendData, fetchAppointmentStats, fetchBreakdownData } from '../../services/api';
+import { fetchDashboardData, generateDashboardData, fetchUsers, fetchClubsAndCountries, fetchMemberOnboardingMetrics, fetchDefaulterMetrics, fetchLocationStats, fetchSalesMetrics, fetchTrendData, fetchAppointmentStats, fetchBreakdownData, fetchValidLeadSources } from '../../services/api';
 
 // Helper function to calculate date range parameters
 export const calculateDateRangeParams = (dateRange, customStartDate = null, customEndDate = null) => {
@@ -57,6 +57,8 @@ const initialState = {
   lastUpdated: null,
   trendSums: null, // Add this line
   validLeadSources: [], // Add this line
+  validLeadSourcesLoading: false,
+  validLeadSourcesError: null,
   locations: [], // Add this line
 };
 
@@ -192,6 +194,19 @@ export const loadBreakdownData = createAsyncThunk(
   }
 );
 
+// Async thunk for fetching valid lead sources
+export const loadValidLeadSources = createAsyncThunk(
+  'dashboard/loadValidLeadSources',
+  async (_, { rejectWithValue }) => {
+    try {
+      const data = await fetchValidLeadSources();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState,
@@ -217,7 +232,7 @@ const dashboardSlice = createSlice({
         // Do not update clubs here; clubs are loaded separately
         state.lastUpdated = new Date().toISOString();
         state.trendSums = action.payload.trendSums; // Add this line
-        state.validLeadSources = action.payload.validLeadSources || [];
+        // Don't overwrite validLeadSources here as they are loaded separately
         state.locations = action.payload.locations || [];
       })
       .addCase(loadDashboardData.rejected, (state, action) => {
@@ -400,7 +415,19 @@ const dashboardSlice = createSlice({
       .addCase(loadBreakdownData.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to load breakdown data';
-      });
+      })
+             .addCase(loadValidLeadSources.pending, (state) => {
+         state.validLeadSourcesLoading = true;
+         state.validLeadSourcesError = null;
+       })
+       .addCase(loadValidLeadSources.fulfilled, (state, action) => {
+         state.validLeadSourcesLoading = false;
+         state.validLeadSources = action.payload;
+       })
+       .addCase(loadValidLeadSources.rejected, (state, action) => {
+         state.validLeadSourcesLoading = false;
+         state.validLeadSourcesError = action.error.message || 'Failed to load valid lead sources';
+       });
   },
 });
 
