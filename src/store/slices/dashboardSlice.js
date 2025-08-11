@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchDashboardData, generateDashboardData, fetchUsers, fetchClubsAndCountries, fetchMemberOnboardingMetrics, fetchDefaulterMetrics, fetchLocationStats, fetchSalesMetrics, fetchTrendData, fetchAppointmentStats } from '../../services/api';
+import { fetchDashboardData, generateDashboardData, fetchUsers, fetchClubsAndCountries, fetchMemberOnboardingMetrics, fetchDefaulterMetrics, fetchLocationStats, fetchSalesMetrics, fetchTrendData, fetchAppointmentStats, fetchBreakdownData } from '../../services/api';
 
 // Helper function to calculate date range parameters
 export const calculateDateRangeParams = (dateRange, customStartDate = null, customEndDate = null) => {
@@ -172,6 +172,19 @@ export const loadAppointmentStats = createAsyncThunk(
   async (filters, { rejectWithValue }) => {
     try {
       const data = await fetchAppointmentStats(filters);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Async thunk for fetching breakdown data separately
+export const loadBreakdownData = createAsyncThunk(
+  'dashboard/loadBreakdownData',
+  async (filters, { rejectWithValue }) => {
+    try {
+      const data = await fetchBreakdownData(filters);
       return data;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -367,6 +380,26 @@ const dashboardSlice = createSlice({
       .addCase(loadAppointmentStats.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to load appointment stats';
+      })
+      .addCase(loadBreakdownData.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loadBreakdownData.fulfilled, (state, action) => {
+        state.loading = false;
+        // Update breakdown data in sales metrics
+        if (state.salesMetrics) {
+          state.salesMetrics.online = action.payload.online_v_offline?.online ?? null;
+          state.salesMetrics.offline = action.payload.online_v_offline?.offline ?? null;
+          state.salesMetrics.totalNoLeadSource = action.payload.total_no_oppo_source ?? null;
+          state.salesMetrics.leadSourceBreakdown = action.payload.leadSourceBreakdown ?? [];
+          state.salesMetrics.leadSourceSaleBreakdown = action.payload.leadSourceSaleBreakdown ?? [];
+        }
+        state.lastUpdated = new Date().toISOString();
+      })
+      .addCase(loadBreakdownData.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to load breakdown data';
       });
   },
 });

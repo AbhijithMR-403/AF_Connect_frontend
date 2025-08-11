@@ -225,15 +225,16 @@ export const fetchClubsAndCountries = async () => {
 };
 
 export const generateDashboardData = async (filters) => {
-  // Fetch dashboard data, member onboarding metrics, defaulter metrics, location stats, sales metrics, trend data, and appointment stats in parallel
-  const [apiResponse, memberOnboardingResponse, defaulterResponse, locationStatsResponse, salesMetricsResponse, trendDataResponse, appointmentStatsResponse] = await Promise.all([
+  // Fetch dashboard data, member onboarding metrics, defaulter metrics, location stats, sales metrics, trend data, appointment stats, and breakdown data in parallel
+  const [apiResponse, memberOnboardingResponse, defaulterResponse, locationStatsResponse, salesMetricsResponse, trendDataResponse, appointmentStatsResponse, breakdownDataResponse] = await Promise.all([
     fetchDashboardData(filters),
     fetchMemberOnboardingMetrics(filters),
     fetchDefaulterMetrics(filters),
     fetchLocationStats(filters),
     fetchSalesMetrics(filters),
     fetchTrendData(filters),
-    fetchAppointmentStats(filters)
+    fetchAppointmentStats(filters),
+    fetchBreakdownData(filters)
   ]);
   
   // Debug: Log the API response to see what we're getting
@@ -244,10 +245,10 @@ export const generateDashboardData = async (filters) => {
   const totalAppointments = appointmentStatsResponse.total_appointments ?? null;
   const totalCount = salesMetricsResponse.total_count ?? null;
   const totalNJMs = salesMetricsResponse.total_njms ?? null;
-  // Extract online and offline from online_v_offline if present
-  const online = salesMetricsResponse.online_v_offline?.online ?? null;
-  const offline = salesMetricsResponse.online_v_offline?.offline ?? null;
-  const totalNoLeadSource = salesMetricsResponse.total_no_lead_source ?? null;
+  // Extract online and offline from breakdown data
+  const online = breakdownDataResponse.online_v_offline?.online ?? null;
+  const offline = breakdownDataResponse.online_v_offline?.offline ?? null;
+  const totalNoLeadSource = breakdownDataResponse.total_no_oppo_source ?? null;
   const totalContacted = salesMetricsResponse.total_contacted ?? null;
   const totalPaidMedia = salesMetricsResponse.total_paid_media ?? null;
   const salesMetrics = {
@@ -264,8 +265,8 @@ export const generateDashboardData = async (filters) => {
     leadToSaleRatio: (totalLeads && totalNJMs) ? Number(((totalNJMs / totalLeads) * 100).toFixed(2)) : null,
     leadToAppointmentRatio: (totalLeads && totalAppointments) ? Number(((totalAppointments / totalLeads) * 100).toFixed(2)) : 0,
     appointmentToSaleRatio: (totalAppointments && totalNJMs) ? Number(((totalAppointments / totalNJMs) * 100).toFixed(2)) : 0,
-    leadSourceBreakdown: salesMetricsResponse.leadSourceBreakdown ?? [],
-    leadSourceSaleBreakdown: salesMetricsResponse.leadSourceSaleBreakdown ?? [],
+    leadSourceBreakdown: breakdownDataResponse.leadSourceBreakdown ?? [],
+    leadSourceSaleBreakdown: breakdownDataResponse.leadSourceSaleBreakdown ?? [],
     appointmentStatus: appointmentStatsResponse.appointment_stats ?? [],
     trend: trendDataResponse ?? { daily: [], weekly: [], monthly: [] },
   };
@@ -680,6 +681,67 @@ export const fetchAppointmentStats = async (filters) => {
 
   if (!response.ok) {
     throw new Error('Failed to fetch appointment stats');
+  }
+
+  return response.json();
+};
+
+export const fetchBreakdownData = async (filters) => {
+  // Build query parameters from filters
+  const buildQueryString = (paramsObj) => {
+    const esc = encodeURIComponent;
+    return Object.entries(paramsObj)
+      .flatMap(([key, value]) => {
+        if (Array.isArray(value)) {
+          return value.map(v => `${esc(key)}=${esc(v)}`);
+        } else if (value !== undefined && value !== null && value !== 'all') {
+          return `${esc(key)}=${esc(value)}`;
+        } else {
+          return [];
+        }
+      })
+      .join('&');
+  };
+
+  // Convert filters to API query parameters
+  const apiParams = {};
+  
+  if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
+    apiParams.assigned_to = filters.assignedUser;
+  }
+  if (filters.country && Array.isArray(filters.country) && !filters.country.includes('all')) {
+    apiParams.country = filters.country;
+  }
+  if (filters.club && Array.isArray(filters.club) && !filters.club.includes('all')) {
+    apiParams.location = filters.club;
+  }
+  if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
+    apiParams.source = filters.leadSource;
+  }
+  // Handle date range filters using centralized logic
+  const { startDate, endDate } = calculateDateRangeParams(
+    filters.dateRange, 
+    filters.customStartDate, 
+    filters.customEndDate
+  );
+  
+  if (startDate && endDate) {
+    apiParams.created_at_min = startDate;
+    apiParams.created_at_max = endDate;
+  }
+
+  const queryString = buildQueryString(apiParams);
+  const url = `${config.api.baseUrl}/opportunity_dash/breakdown-data/${queryString ? `?${queryString}` : ''}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch breakdown data');
   }
 
   return response.json();
