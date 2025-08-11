@@ -294,9 +294,9 @@ export const generateDashboardData = async (filters, activeSection = 0) => {
   const totalCount = salesMetricsResponse?.total_count ?? null;
   const totalNJMs = salesMetricsResponse?.total_njms ?? null;
   // Extract online and offline from breakdown data
-  const online = breakdownDataResponse?.online_v_offline?.online ?? null;
-  const offline = breakdownDataResponse?.online_v_offline?.offline ?? null;
-  const totalNoLeadSource = breakdownDataResponse?.total_no_oppo_source ?? null;
+  const online = salesMetricsResponse?.online_v_offline?.online ?? null;
+  const offline = salesMetricsResponse?.online_v_offline?.offline ?? null;
+  const totalNoLeadSource = salesMetricsResponse?.total_no_oppo_source ?? null;
   const totalContacted = salesMetricsResponse?.total_contacted ?? null;
   const totalPaidMedia = salesMetricsResponse?.total_paid_media ?? null;
   const salesMetrics = {
