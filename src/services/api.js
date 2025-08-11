@@ -777,6 +777,11 @@ export const fetchBreakdownData = async (filters) => {
     apiParams.created_at_min = startDate;
     apiParams.created_at_max = endDate;
   }
+  
+  // Add pipeline name parameter only if usePipelineFilter is true
+  if (filters.usePipelineFilter) {
+    apiParams.pipeline_name = 'AFC%20Sales%20Pipeline';
+  }
 
   const queryString = buildQueryString(apiParams);
   const url = `${config.api.baseUrl}/opportunity_dash/breakdown-data/${queryString ? `?${queryString}` : ''}`;

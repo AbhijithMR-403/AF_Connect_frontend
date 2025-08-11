@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Calendar, Target, FileText, TrendingUp, AlertCircle, BarChart3, Phone, Eye } from 'lucide-react';
-import { useAppSelector } from '../hooks';
-import { selectProcessedFilters } from '../store/slices/dashboardSlice';
+import { useAppSelector, useAppDispatch } from '../hooks';
+import { selectProcessedFilters, updateFilters, loadBreakdownData } from '../store/slices/dashboardSlice';
 import ClickableMetricCard from './ClickableMetricCard';
 import ChartSection from './ChartSection';
 import TrendGraphs from './TrendGraphs';
@@ -13,8 +13,17 @@ import metricTypeConfigs from '../config/metricTypes';
 const PAGE_SIZE = 10;
 
 const SalesPipeline = () => {
+  const dispatch = useAppDispatch();
   const { salesMetrics, countries, loading, validLeadSources } = useAppSelector((state) => state.dashboard);
   const filters = useAppSelector(selectProcessedFilters);
+
+  // Reload breakdown data when pipeline filter changes
+  useEffect(() => {
+    if (filters.usePipelineFilter !== undefined) {
+      // Trigger a reload of only the breakdown data when the pipeline filter changes
+      dispatch(loadBreakdownData(filters));
+    }
+  }, [filters.usePipelineFilter, dispatch]);
   const [modalData, setModalData] = useState({
     isOpen: false,
     title: '',
@@ -403,9 +412,22 @@ const SalesPipeline = () => {
 
         {/* Charts Section */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <BarChart3 className="w-5 h-5 text-purple-600" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Lead Sources & Appointment Analysis</h3>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-purple-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Lead Sources & Appointment Analysis</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={filters.usePipelineFilter || false}
+                  onChange={(e) => dispatch(updateFilters({ usePipelineFilter: e.target.checked }))}
+                  className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                />
+                <span>Use AFC Sales Pipeline Filter</span>
+              </label>
+            </div>
           </div>
           
           <ChartSection

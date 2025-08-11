@@ -39,6 +39,7 @@ const initialState = {
     leadSource: ['all'],
     customStartDate: null,
     customEndDate: null,
+    usePipelineFilter: false,
   },
   activeSection: 0, // 0: Sales Pipeline, 1: Member Onboarding, 2: Defaulter Management, 3: Regional View
   salesMetrics: null,
