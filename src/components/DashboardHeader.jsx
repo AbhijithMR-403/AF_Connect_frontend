@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Activity, Download, FileText, RefreshCw, Moon, Sun } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../hooks';
 import { loadDashboardData } from '../store/slices/dashboardSlice';
+import { store } from '../store';
 
 const DashboardHeader = () => {
   const dispatch = useAppDispatch();
@@ -30,7 +31,8 @@ const DashboardHeader = () => {
   };
 
   const handleRefresh = () => {
-    dispatch(loadDashboardData(filters));
+    const { activeSection } = store.getState().dashboard;
+    dispatch(loadDashboardData({ filters, activeSection }));
   };
 
   const formatLastUpdated = (timestamp) => {

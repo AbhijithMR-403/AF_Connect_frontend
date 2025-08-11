@@ -40,6 +40,7 @@ const initialState = {
     customStartDate: null,
     customEndDate: null,
   },
+  activeSection: 0, // 0: Sales Pipeline, 1: Member Onboarding, 2: Defaulter Management, 3: Regional View
   salesMetrics: null,
   onboardingMetrics: null,
   defaulterMetrics: null,
@@ -65,14 +66,17 @@ const initialState = {
 // Async thunk for fetching dashboard data
 export const loadDashboardData = createAsyncThunk(
   'dashboard/loadData',
-  async (filters, { rejectWithValue }) => {
+  async ({ filters, activeSection }, { rejectWithValue, getState }) => {
     try {
+      // Get active section from state if not provided
+      const section = activeSection ?? getState().dashboard.activeSection;
       // Always use the mapping function
-      return await generateDashboardData(filters);
+      return await generateDashboardData(filters, section);
     } catch (error) {
       console.warn('API failed, using dummy data:', error);
       // Fallback to dummy data if API fails
-      return generateDashboardData(filters);
+      const section = activeSection ?? getState().dashboard.activeSection;
+      return generateDashboardData(filters, section);
     }
   }
 );
@@ -213,6 +217,9 @@ const dashboardSlice = createSlice({
   reducers: {
     updateFilters: (state, action) => {
       state.filters = { ...state.filters, ...action.payload };
+    },
+    updateActiveSection: (state, action) => {
+      state.activeSection = action.payload;
     },
     clearError: (state) => {
       state.error = null;
@@ -431,7 +438,7 @@ const dashboardSlice = createSlice({
   },
 });
 
-export const { updateFilters, clearError } = dashboardSlice.actions;
+export const { updateFilters, updateActiveSection, clearError } = dashboardSlice.actions;
 
 // Selector to get processed filters with calculated date ranges
 export const selectProcessedFilters = (state) => {

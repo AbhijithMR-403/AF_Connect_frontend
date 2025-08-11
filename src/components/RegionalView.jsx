@@ -9,18 +9,8 @@ const RegionalView = () => {
   const [sortColumn, setSortColumn] = useState('');
   const [sortDirection, setSortDirection] = useState('asc');
 
-  if (!locations || locations.length === 0) {
-    return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-8">
-        <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      </div>
-    );
-  }
-
   // Use locations from API
-  const locationData = locations;
+  const locationData = locations || [];
 
   // Columns config for sorting
   const columns = [
@@ -63,6 +53,17 @@ const RegionalView = () => {
       setSortDirection('asc');
     }
   };
+
+  // Check for loading state after all hooks
+  if (!locations || locations.length === 0) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-8">
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

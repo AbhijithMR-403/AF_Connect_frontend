@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronDown, X, Check, Calendar } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../hooks';
 import { updateFilters, loadUsers, loadClubsAndCountries, loadDashboardData, loadValidLeadSources } from '../store/slices/dashboardSlice';
+import { store } from '../store';
 
 // Custom styles to hide scrollbars
 const dropdownStyles = `
@@ -56,7 +57,8 @@ const FilterBar = () => {
   // Call generateDashboardData API whenever filters change
   useEffect(() => {
     if (filters) {
-      dispatch(loadDashboardData(filters));
+      const { activeSection } = store.getState().dashboard;
+      dispatch(loadDashboardData({ filters, activeSection }));
     }
   }, [filters, dispatch]);
 

@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TrendingUp, Users, AlertTriangle, Globe } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '../hooks';
+import { updateActiveSection, loadDashboardData } from '../store/slices/dashboardSlice';
 
 const PipelineTabs = ({ children }) => {
-  const [activeTab, setActiveTab] = useState(0);
+  const dispatch = useAppDispatch();
+  const { filters, activeSection } = useAppSelector((state) => state.dashboard);
+  const [activeTab, setActiveTab] = useState(activeSection);
 
   const tabs = [
     {
@@ -39,6 +43,21 @@ const PipelineTabs = ({ children }) => {
     },
   ];
 
+  // Update local state when Redux state changes
+  useEffect(() => {
+    setActiveTab(activeSection);
+  }, [activeSection]);
+
+  // Handle tab change
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    dispatch(updateActiveSection(tabId));
+    // Load data for the new section
+    if (filters) {
+      dispatch(loadDashboardData({ filters, activeSection: tabId }));
+    }
+  };
+
   return (
     <div className="space-y-3 sm:space-y-4 lg:space-y-6">
       {/* Tab Navigation */}
@@ -51,7 +70,7 @@ const PipelineTabs = ({ children }) => {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`flex items-center gap-1 sm:gap-1.5 lg:gap-2 px-2 sm:px-3 lg:px-4 xl:px-6 py-2 sm:py-2.5 lg:py-3 rounded-md sm:rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 flex-1 justify-center ${
                   isActive
                     ? `${tab.activeColor} text-white shadow-sm`

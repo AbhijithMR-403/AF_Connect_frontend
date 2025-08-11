@@ -224,33 +224,81 @@ export const fetchClubsAndCountries = async () => {
   return { clubs, countries };
 };
 
-export const generateDashboardData = async (filters) => {
-  // Fetch dashboard data, member onboarding metrics, defaulter metrics, location stats, sales metrics, trend data, appointment stats, and breakdown data in parallel
-  const [apiResponse, memberOnboardingResponse, defaulterResponse, locationStatsResponse, salesMetricsResponse, trendDataResponse, appointmentStatsResponse, breakdownDataResponse] = await Promise.all([
-    fetchDashboardData(filters),
-    fetchMemberOnboardingMetrics(filters),
-    fetchDefaulterMetrics(filters),
-    fetchLocationStats(filters),
-    fetchSalesMetrics(filters),
-    fetchTrendData(filters),
-    fetchAppointmentStats(filters),
-    fetchBreakdownData(filters)
-  ]);
+export const generateDashboardData = async (filters, activeSection = 0) => {
+  // Define which APIs to call based on active section
+  // 0: Sales Pipeline, 1: Member Onboarding, 2: Defaulter Management, 3: Regional View
+  const apiCalls = [];
+  
+  // Always fetch basic dashboard data for valid lead sources
+  apiCalls.push(fetchDashboardData(filters));
+  
+  // Sales Pipeline (section 0) - needs all sales-related APIs
+  if (activeSection === 0) {
+    apiCalls.push(
+      fetchSalesMetrics(filters),
+      fetchTrendData(filters),
+      fetchAppointmentStats(filters),
+      fetchBreakdownData(filters)
+    );
+  }
+  
+  // Member Onboarding (section 1) - needs onboarding metrics
+  if (activeSection === 1) {
+    apiCalls.push(fetchMemberOnboardingMetrics(filters));
+  }
+  
+  // Defaulter Management (section 2) - needs defaulter metrics
+  if (activeSection === 2) {
+    apiCalls.push(fetchDefaulterMetrics(filters));
+  }
+  
+  // Regional View (section 3) - needs location stats
+  if (activeSection === 3) {
+    apiCalls.push(fetchLocationStats(filters));
+  }
+  
+  // Execute the API calls
+  const responses = await Promise.all(apiCalls);
+  
+  // Extract responses based on what was called
+  let apiResponse = responses[0]; // fetchDashboardData is always first
+  let memberOnboardingResponse = null;
+  let defaulterResponse = null;
+  let locationStatsResponse = null;
+  let salesMetricsResponse = null;
+  let trendDataResponse = null;
+  let appointmentStatsResponse = null;
+  let breakdownDataResponse = null;
+  
+  let responseIndex = 1; // Start after fetchDashboardData
+  
+  if (activeSection === 0) {
+    salesMetricsResponse = responses[responseIndex++];
+    trendDataResponse = responses[responseIndex++];
+    appointmentStatsResponse = responses[responseIndex++];
+    breakdownDataResponse = responses[responseIndex++];
+  } else if (activeSection === 1) {
+    memberOnboardingResponse = responses[responseIndex++];
+  } else if (activeSection === 2) {
+    defaulterResponse = responses[responseIndex++];
+  } else if (activeSection === 3) {
+    locationStatsResponse = responses[responseIndex++];
+  }
   
   // Debug: Log the API response to see what we're getting
-  const appointment_showed = appointmentStatsResponse.opportunities_with_shown_appointments ?? 0;
+  const appointment_showed = appointmentStatsResponse?.opportunities_with_shown_appointments ?? 0;
   // Use the dedicated sales metrics endpoint response
-  const totalLeads = salesMetricsResponse.total_leads ?? null;
+  const totalLeads = salesMetricsResponse?.total_leads ?? null;
   // Use appointment stats for total appointments
-  const totalAppointments = appointmentStatsResponse.total_appointments ?? null;
-  const totalCount = salesMetricsResponse.total_count ?? null;
-  const totalNJMs = salesMetricsResponse.total_njms ?? null;
+  const totalAppointments = appointmentStatsResponse?.total_appointments ?? null;
+  const totalCount = salesMetricsResponse?.total_count ?? null;
+  const totalNJMs = salesMetricsResponse?.total_njms ?? null;
   // Extract online and offline from breakdown data
-  const online = breakdownDataResponse.online_v_offline?.online ?? null;
-  const offline = breakdownDataResponse.online_v_offline?.offline ?? null;
-  const totalNoLeadSource = breakdownDataResponse.total_no_oppo_source ?? null;
-  const totalContacted = salesMetricsResponse.total_contacted ?? null;
-  const totalPaidMedia = salesMetricsResponse.total_paid_media ?? null;
+  const online = breakdownDataResponse?.online_v_offline?.online ?? null;
+  const offline = breakdownDataResponse?.online_v_offline?.offline ?? null;
+  const totalNoLeadSource = breakdownDataResponse?.total_no_oppo_source ?? null;
+  const totalContacted = salesMetricsResponse?.total_contacted ?? null;
+  const totalPaidMedia = salesMetricsResponse?.total_paid_media ?? null;
   const salesMetrics = {
     totalLeads,
     totalAppointments,
@@ -265,9 +313,9 @@ export const generateDashboardData = async (filters) => {
     leadToSaleRatio: (totalLeads && totalNJMs) ? Number(((totalNJMs / totalLeads) * 100).toFixed(2)) : null,
     leadToAppointmentRatio: (totalLeads && totalAppointments) ? Number(((totalAppointments / totalLeads) * 100).toFixed(2)) : 0,
     appointmentToSaleRatio: (totalAppointments && totalNJMs) ? Number(((totalAppointments / totalNJMs) * 100).toFixed(2)) : 0,
-    leadSourceBreakdown: breakdownDataResponse.leadSourceBreakdown ?? [],
-    leadSourceSaleBreakdown: breakdownDataResponse.leadSourceSaleBreakdown ?? [],
-    appointmentStatus: appointmentStatsResponse.appointment_stats ?? [],
+    leadSourceBreakdown: breakdownDataResponse?.leadSourceBreakdown ?? [],
+    leadSourceSaleBreakdown: breakdownDataResponse?.leadSourceSaleBreakdown ?? [],
+    appointmentStatus: appointmentStatsResponse?.appointment_stats ?? [],
     trend: trendDataResponse ?? { daily: [], weekly: [], monthly: [] },
   };
 
@@ -276,24 +324,24 @@ export const generateDashboardData = async (filters) => {
 
   // Use the dedicated member onboarding metrics endpoint response
   const onboardingMetrics = {
-    assessmentUptake: memberOnboardingResponse.assessment_uptake ?? null,
-    afResults: memberOnboardingResponse.af_results ?? null,
-    conversionRate: memberOnboardingResponse.conversion_rate ?? null,
-    appAdoptionRate: memberOnboardingResponse.app_adoption_rate ?? null,
+    assessmentUptake: memberOnboardingResponse?.assessment_uptake ?? null,
+    afResults: memberOnboardingResponse?.af_results ?? null,
+    conversionRate: memberOnboardingResponse?.conversion_rate ?? null,
+    appAdoptionRate: memberOnboardingResponse?.app_adoption_rate ?? null,
   };
 
   // Use the dedicated defaulter metrics endpoint response
   const defaulterMetrics = {
-    totalDefaulters: defaulterResponse.d1 ?? null,
-    totalDefaulters2Month: defaulterResponse.d2 ?? null,
-    totalDefaulters3Month: defaulterResponse.d3 ?? null,
-    communicationsSent: defaulterResponse.communication_sent ?? null,
-    ptpConversion: defaulterResponse.ptp_conversion ?? null,
-    paymentRecoveryRate: defaulterResponse.payment_recovery ?? null,
-    paid: defaulterResponse.paid ?? null,
-    totalPTP: defaulterResponse.ptp ?? null,
-    noResponse: defaulterResponse.no_res ?? null,
-    cancelledMembership: defaulterResponse.cancelled_member ?? null,
+    totalDefaulters: defaulterResponse?.d1 ?? null,
+    totalDefaulters2Month: defaulterResponse?.d2 ?? null,
+    totalDefaulters3Month: defaulterResponse?.d3 ?? null,
+    communicationsSent: defaulterResponse?.communication_sent ?? null,
+    ptpConversion: defaulterResponse?.ptp_conversion ?? null,
+    paymentRecoveryRate: defaulterResponse?.payment_recovery ?? null,
+    paid: defaulterResponse?.paid ?? null,
+    totalPTP: defaulterResponse?.ptp ?? null,
+    noResponse: defaulterResponse?.no_res ?? null,
+    cancelledMembership: defaulterResponse?.cancelled_member ?? null,
   };
 
   // Extract valid_lead_sources from API response (if present)
