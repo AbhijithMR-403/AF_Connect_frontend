@@ -162,16 +162,9 @@ const OpportunityModal = ({
       } else {
         params = { page: isTabbed ? tabPage : currentPage };
       }
-      const { blob, filename } = await exportOpportunitiesCsv(params);
-      // Trigger download
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename || 'opportunities.csv';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
+      const { file_url, filename, time_taken_seconds } = await exportOpportunitiesCsv(params);
+      // The download is already triggered in the API function
+      console.log(`CSV export completed in ${time_taken_seconds} seconds`);
     } catch (err) {
       setExportError(err.message || 'Failed to export CSV');
     } finally {

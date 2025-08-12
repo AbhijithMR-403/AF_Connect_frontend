@@ -893,26 +893,102 @@ export const exportOpportunitiesCsv = async (params = {}) => {
   };
 
   const queryString = buildQueryString(params);
-  const url = `${config.api.baseUrl}/opportunities/export-csv/${queryString ? `?${queryString}` : ''}`;
+  const generateUrl = `${config.api.baseUrl}/opportunities/generate_csv/${queryString ? `?${queryString}` : ''}`;
 
-  const response = await fetch(url, {
+  // Step 1: Generate CSV file (using backend as proxy)
+  const generateResponse = await fetch(generateUrl, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
     },
   });
 
-  if (!response.ok) {
-    throw new Error('Failed to export opportunities CSV');
+  if (!generateResponse.ok) {
+    throw new Error('Failed to generate opportunities CSV');
   }
 
-  const blob = await response.blob();
-  // Try to extract filename from Content-Disposition header
-  let filename = 'opportunities.csv';
-  const disposition = response.headers.get('Content-Disposition');
-  if (disposition && disposition.includes('filename=')) {
-    const match = disposition.match(/filename="?([^";]+)"?/);
-    if (match && match[1]) filename = match[1];
+  const generateData = await generateResponse.json();
+  const { file_url, time_taken_seconds } = generateData;
+
+  if (!file_url) {
+    throw new Error('No file URL received from CSV generation');
   }
-  return { blob, filename };
+
+  // Step 2: Trigger browser download instead of fetching the file
+  // This avoids CORS issues by letting the browser handle the download
+  console.log('File URL:', file_url);
+  
+  // Extract filename from the file URL
+  let filename = 'opportunities.csv';
+  try {
+    const urlParts = file_url.split('/');
+    const lastPart = urlParts[urlParts.length - 1];
+    if (lastPart && lastPart.includes('.csv')) {
+      filename = lastPart;
+    }
+  } catch (error) {
+    console.warn('Could not extract filename from URL, using default');
+  }
+
+  // Create a temporary link element to trigger the download
+  const link = document.createElement('a');
+  link.href = file_url;
+  link.download = filename;
+  link.target = '_blank'; // Open in new tab as fallback
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  return { file_url, filename, time_taken_seconds };
+};
+
+// Alternative function for direct external API calls (if needed)
+export const exportOpportunitiesCsvDirect = async (params = {}) => {
+  const buildQueryString = (paramsObj) => {
+    const esc = encodeURIComponent;
+    return Object.entries(paramsObj)
+      .flatMap(([key, value]) => {
+        if (Array.isArray(value)) {
+          return value.map(v => `${esc(key)}=${esc(v)}`);
+        } else if (value !== undefined && value !== null) {
+          return `${esc(key)}=${esc(value)}`;
+        } else {
+          return [];
+        }
+      })
+      .join('&');
+  };
+
+  const queryString = buildQueryString(params);
+  const generateUrl = `https://reports.anytimefitnesscorporate.com/api/opportunities/generate_csv/${queryString ? `?${queryString}` : ''}`;
+
+  // Step 1: Generate CSV file
+  const generateResponse = await fetch(generateUrl, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!generateResponse.ok) {
+    throw new Error('Failed to generate opportunities CSV');
+  }
+
+  const generateData = await generateResponse.json();
+  const { file_url, time_taken_seconds } = generateData;
+
+  if (!file_url) {
+    throw new Error('No file URL received from CSV generation');
+  }
+
+  // Step 2: Trigger browser download instead of fetching the file
+  // This avoids CORS issues by letting the browser handle the download
+  const link = document.createElement('a');
+  link.href = file_url;
+  link.download = file_url.split('/').pop() || 'opportunities.csv';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  return { file_url, time_taken_seconds };
 };
