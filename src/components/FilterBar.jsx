@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, X, Check, Calendar } from 'lucide-react';
+import { ChevronDown, X, Check, Calendar, Filter } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../hooks';
 import { updateFilters, loadUsers, loadClubsAndCountries, loadDashboardData, loadValidLeadSources } from '../store/slices/dashboardSlice';
 import { store } from '../store';
@@ -45,6 +45,9 @@ const FilterBar = () => {
     isOpen: false,
   });
 
+  // State for pending filters (not yet applied)
+  const [pendingFilters, setPendingFilters] = useState({});
+
   // Fetch users and both clubs and countries on component mount
   useEffect(() => {
     dispatch(loadUsers());
@@ -52,15 +55,22 @@ const FilterBar = () => {
     dispatch(loadValidLeadSources());
   }, [dispatch]);
 
-
-
-  // Call generateDashboardData API whenever filters change
+  // Initialize pending filters with current filters
   useEffect(() => {
-    if (filters) {
+    setPendingFilters(filters);
+  }, []);
+
+  // Load initial dashboard data when filter data is available
+  useEffect(() => {
+    // Only load dashboard data if we have the required filter data and no dashboard data yet
+    const { salesMetrics, onboardingMetrics, defaulterMetrics, locations } = store.getState().dashboard;
+    const hasNoData = !salesMetrics && !onboardingMetrics && !defaulterMetrics && locations.length === 0;
+    
+    if (hasNoData && !usersLoading && !clubsLoading && !validLeadSourcesLoading) {
       const { activeSection } = store.getState().dashboard;
       dispatch(loadDashboardData({ filters, activeSection }));
     }
-  }, [filters, dispatch]);
+  }, [filters, usersLoading, clubsLoading, validLeadSourcesLoading, dispatch]);
 
   const toggleDropdown = (filterType) => {
     setDropdownStates(prev => ({
@@ -77,7 +87,7 @@ const FilterBar = () => {
   };
 
   const handleMultiSelectChange = (filterType, value) => {
-    const currentValues = filters[filterType] || [];
+    const currentValues = pendingFilters[filterType] || [];
     let newValues;
     
     if (value === 'all') {
@@ -97,15 +107,16 @@ const FilterBar = () => {
       }
     }
     
-    dispatch(updateFilters({ [filterType]: newValues }));
+    setPendingFilters(prev => ({ ...prev, [filterType]: newValues }));
   };
 
   const handleSingleSelectChange = (filterType, value) => {
     if (value === 'custom-range') {
       setCustomDateRange(prev => ({ ...prev, isOpen: true }));
     } else {
-      // For predefined ranges, just update the dateRange - the slice will handle the calculation
-      dispatch(updateFilters({ 
+      // For predefined ranges, just update the pending filters
+      setPendingFilters(prev => ({ 
+        ...prev,
         [filterType]: value,
         // Clear custom dates when using predefined ranges
         customStartDate: null,
@@ -116,7 +127,8 @@ const FilterBar = () => {
 
   const handleCustomDateSubmit = () => {
     if (customDateRange.startDate && customDateRange.endDate) {
-      dispatch(updateFilters({ 
+      setPendingFilters(prev => ({ 
+        ...prev,
         dateRange: 'custom-range',
         customStartDate: customDateRange.startDate,
         customEndDate: customDateRange.endDate,
@@ -126,15 +138,37 @@ const FilterBar = () => {
   };
 
   const removeFilter = (filterType, value) => {
-    const currentValues = filters[filterType] || [];
+    const currentValues = pendingFilters[filterType] || [];
     const newValues = currentValues.filter(v => v !== value);
     
     if (newValues.length === 0) {
-      dispatch(updateFilters({ [filterType]: ['all'] }));
+      setPendingFilters(prev => ({ ...prev, [filterType]: ['all'] }));
     } else {
-      dispatch(updateFilters({ [filterType]: newValues }));
+      setPendingFilters(prev => ({ ...prev, [filterType]: newValues }));
     }
   };
+
+  const applyFilters = () => {
+    dispatch(updateFilters(pendingFilters));
+    const { activeSection } = store.getState().dashboard;
+    dispatch(loadDashboardData({ filters: pendingFilters, activeSection }));
+  };
+
+  const resetFilters = () => {
+    const defaultFilters = {
+      country: ['all'],
+      club: ['all'],
+      assignedUser: ['all'],
+      dateRange: 'last-30-days',
+      leadSource: ['all'],
+      customStartDate: null,
+      customEndDate: null,
+    };
+    setPendingFilters(defaultFilters);
+  };
+
+  // Check if filters have changed
+  const hasFilterChanges = JSON.stringify(pendingFilters) !== JSON.stringify(filters);
 
   const MultiSelectDropdown = ({ label, filterType, options, selectedValues = [], isLoading = false, error = null }) => {
     const isOpen = dropdownStates[filterType];
@@ -347,8 +381,8 @@ const FilterBar = () => {
     const isOpen = dropdownStates.dateRange;
     
     const getDisplayValue = () => {
-      if (value === 'custom-range' && filters.customStartDate && filters.customEndDate) {
-        return `${filters.customStartDate} to ${filters.customEndDate}`;
+      if (value === 'custom-range' && pendingFilters.customStartDate && pendingFilters.customEndDate) {
+        return `${pendingFilters.customStartDate} to ${pendingFilters.customEndDate}`;
       }
       const option = options.find(opt => opt.value === value);
       return option ? option.label : 'Select date range';
@@ -415,8 +449,8 @@ const FilterBar = () => {
   // Map country code to display name for filtering
   const countryIdToName = Object.fromEntries(countries.map(c => [c.id.toLowerCase(), c.name]));
   const selectedCountryNames =
-    filters.country && !filters.country.includes('all')
-      ? filters.country.map(c => countryIdToName[c.toLowerCase()]).filter(Boolean)
+    pendingFilters.country && !pendingFilters.country.includes('all')
+      ? pendingFilters.country.map(c => countryIdToName[c.toLowerCase()]).filter(Boolean)
       : null;
 
   const clubOptions = [
@@ -471,14 +505,14 @@ const FilterBar = () => {
             label="Countries"
             filterType="country"
             options={countryOptions}
-            selectedValues={Array.isArray(filters.country) ? filters.country : [filters.country]}
+            selectedValues={Array.isArray(pendingFilters.country) ? pendingFilters.country : [pendingFilters.country]}
           />
           
           <MultiSelectDropdown
             label="Clubs"
             filterType="club"
             options={clubOptions}
-            selectedValues={Array.isArray(filters.club) ? filters.club : [filters.club]}
+            selectedValues={Array.isArray(pendingFilters.club) ? pendingFilters.club : [pendingFilters.club]}
             isLoading={clubsLoading}
             error={clubsError}
           />
@@ -487,14 +521,14 @@ const FilterBar = () => {
             label="Assigned Users"
             filterType="assignedUser"
             options={assignedUserOptions}
-            selectedValues={Array.isArray(filters.assignedUser) ? filters.assignedUser : [filters.assignedUser || 'all']}
+            selectedValues={Array.isArray(pendingFilters.assignedUser) ? pendingFilters.assignedUser : [pendingFilters.assignedUser || 'all']}
             isLoading={usersLoading}
             error={usersError}
           />
           
           <DateRangeDropdown
             label="Date Range"
-            value={filters.dateRange}
+            value={pendingFilters.dateRange}
             options={dateRangeOptions}
             onChange={(value) => handleSingleSelectChange('dateRange', value)}
           />
@@ -504,10 +538,28 @@ const FilterBar = () => {
             label="Lead Source"
             filterType="leadSource"
             options={leadSourceOptions}
-            selectedValues={Array.isArray(filters.leadSource) ? filters.leadSource : [filters.leadSource || 'all']}
+            selectedValues={Array.isArray(pendingFilters.leadSource) ? pendingFilters.leadSource : [pendingFilters.leadSource || 'all']}
             isLoading={validLeadSourcesLoading}
             error={validLeadSourcesError}
           />
+        </div>
+
+        {/* Filter Button */}
+        <div className="flex justify-end mt-4">
+          <button
+            onClick={applyFilters}
+            disabled={!hasFilterChanges}
+            className="flex items-center px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            Apply Filters
+          </button>
+          <button
+            onClick={resetFilters}
+            className="ml-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            Reset Filters
+          </button>
         </div>
       </div>
 
