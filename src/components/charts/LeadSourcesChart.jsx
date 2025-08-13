@@ -2,6 +2,9 @@ import React from 'react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
 const LeadSourcesChart = ({ leadSources, openModal }) => {
+  // Check if data is empty or null
+  const hasData = leadSources && leadSources.length > 0;
+
   // CustomTooltip defined inside the component
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -20,6 +23,24 @@ const LeadSourcesChart = ({ leadSources, openModal }) => {
   const handleBarClick = (data) => {
     openModal('njm-lead-source', `${data.name} Leads - GHL Opportunities`, data.value, data);
   };
+
+  // Show no data message if there's no data
+  if (!hasData) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md transition-shadow duration-300">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6">Lead Sources Breakdown</h3>
+        <div className="flex flex-col items-center justify-center h-64 text-center">
+          <div className="text-gray-400 dark:text-gray-500 mb-2">
+            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">No lead sources data available</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Data will appear here once lead sources are available</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md transition-shadow duration-300">

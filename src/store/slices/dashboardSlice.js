@@ -414,9 +414,9 @@ const dashboardSlice = createSlice({
         state.loading = false;
         // Update breakdown data in sales metrics
         if (state.salesMetrics) {
-          state.salesMetrics.online = action.payload.online_v_offline?.online ?? null;
-          state.salesMetrics.offline = action.payload.online_v_offline?.offline ?? null;
-          state.salesMetrics.totalNoLeadSource = action.payload.total_no_oppo_source ?? null;
+          // state.salesMetrics.online = action.payload.online_v_offline?.online ?? null;
+          // state.salesMetrics.offline = action.payload.online_v_offline?.offline ?? null;
+          // state.salesMetrics.totalNoLeadSource = action.payload.total_no_oppo_source ?? null;
           state.salesMetrics.leadSourceBreakdown = action.payload.leadSourceBreakdown ?? [];
           state.salesMetrics.leadSourceSaleBreakdown = action.payload.leadSourceSaleBreakdown ?? [];
         }

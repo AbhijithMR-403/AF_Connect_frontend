@@ -284,6 +284,7 @@ export const generateDashboardData = async (filters, activeSection = 0) => {
   } else if (activeSection === 3) {
     locationStatsResponse = responses[responseIndex++];
   }
+  console.log(salesMetricsResponse);
   
   // Debug: Log the API response to see what we're getting
   const appointment_showed = appointmentStatsResponse?.opportunities_with_shown_appointments ?? 0;
