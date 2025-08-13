@@ -157,7 +157,6 @@ export function normalizeOpportunitiesResponse(apiResponse, countries = []) {
   countries.forEach(country => {
     countryMap[country.id] = country.name;
   });
-  
   return apiResponse.results.map((opp) => ({
     id: opp.ghl_id || opp.id,
     name: opp.name || '',
@@ -170,7 +169,8 @@ export function normalizeOpportunitiesResponse(apiResponse, countries = []) {
     contactEmail: opp.contact?.email || '-',
     contactPhone: opp.contact?.phone || '-',
     country: opp.contact?.country ? (countryMap[opp.contact.country] || opp.contact.country) : '-',
-    location: opp.pipeline?.location || opp.contact?.location_id || '-',
+    location: opp.pipeline?.location || opp.location?.id || '-',
+    location_name: opp.location?.name || '-',
     stage: opp.stage?.name || '-',
     status: opp.status_display || '-',
     createdDate: opp.created_at ? new Date(opp.created_at).toLocaleDateString() : '-',

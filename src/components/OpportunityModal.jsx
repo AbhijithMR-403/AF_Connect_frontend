@@ -199,7 +199,7 @@ const OpportunityModal = ({
         {/* Tabs (if provided) */}
         {isTabbed && (
           <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex-shrink-0">
-            <div className="flex space-x-1 p-2 sm:p-4 overflow-x-auto">
+            <div className="flex space-x-1 p-2 sm:p-4 overflow-x-auto hide-scrollbar">
               {tabs.map((tab, idx) => (
                 <button
                   key={tab.label}
@@ -225,9 +225,9 @@ const OpportunityModal = ({
         )}
 
         {/* Modal Content */}
-        <div className="overflow-auto flex-1 min-h-0">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px]">
+        <div className="overflow-auto flex-1 min-h-0 hide-scrollbar">
+          <div className="overflow-x-auto hide-scrollbar">
+            <table className="w-full min-w-[1100px]">
               <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
                 <tr>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -241,6 +241,12 @@ const OpportunityModal = ({
                   </th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Location
+                  </th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Location Name
+                  </th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Pipeline
                   </th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Stage
@@ -292,6 +298,7 @@ const OpportunityModal = ({
                         <span className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
                           {typeof opportunity.country === 'string' ? opportunity.country :
                             (opportunity.country && typeof opportunity.country === 'object' && (opportunity.country.name || opportunity.country.id)) ||
+                            (opportunity.location && typeof opportunity.location === 'object' && opportunity.location.country_display) ||
                             '-'}
                         </span>
                       </div>
@@ -302,6 +309,24 @@ const OpportunityModal = ({
                         <span className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
                           {typeof opportunity.location === 'string' ? opportunity.location :
                             (opportunity.location && typeof opportunity.location === 'object' && (opportunity.location.name || opportunity.location.id)) ||
+                            '-'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-3 sm:px-6 py-4">
+                      <div className="flex items-center">
+                        <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
+                        <span className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
+                          {opportunity.location_name || '-'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-3 sm:px-6 py-4">
+                      <div className="flex items-center">
+                        <Tag className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
+                        <span className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
+                          {typeof opportunity.pipeline === 'string' ? opportunity.pipeline :
+                            (opportunity.pipeline && typeof opportunity.pipeline === 'object' && (opportunity.pipeline.name || opportunity.pipeline.id)) ||
                             '-'}
                         </span>
                       </div>
