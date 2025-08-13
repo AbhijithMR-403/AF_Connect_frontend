@@ -6,9 +6,9 @@ const metricTypeConfigs = {
     dateField: 'membership_signup_date',
   },
   'total-appointments': {
-    pipeline_name: 'AFC Sales Pipeline',
+    // pipeline_name: 'AFC Sales Pipeline',
     dateField: 'event_created_on',
-    appointment_status: ['new', 'noshow', 'confirmed', 'showed', 'cancelled'],
+    // appointment_status: ['new', 'noshow', 'confirmed', 'showed', 'cancelled'],
   },
   
   'leads-without-tags': {

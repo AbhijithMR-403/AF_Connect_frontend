@@ -44,7 +44,7 @@ const NJMAnalysis = ({ salesMetrics, openModal }) => {
         <div className="col-span-1 lg:col-span-2 order-1">
           <LeadSourcesChart
             leadSources={assignColorsToLeadSources(salesMetrics.leadSourceSaleBreakdown)}
-            openModal={(metricType, title, count, data) => openModal(metricType, title, count, 1, { source: convertLeadSourceKeyToValue(data?.name) })}
+            openModal={(metricType, title, count, data) => openModal(metricType, title, count, 1, { source: data?.name })}
           />
         </div>
         {/* Right column: stack Contacted and Paid Media cards vertically */}
