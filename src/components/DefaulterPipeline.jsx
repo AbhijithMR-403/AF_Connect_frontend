@@ -31,7 +31,7 @@ const metricTypeKeys = [
 ];
 
 const DefaulterPipeline = () => {
-  const { defaulterMetrics, filters, countries } = useAppSelector((state) => state.dashboard);
+  const { defaulterMetrics, filters, countries, loading } = useAppSelector((state) => state.dashboard);
   const [modalData, setModalData] = useState({
     isOpen: false,
     title: '',
@@ -68,11 +68,17 @@ const DefaulterPipeline = () => {
     return params;
   };
 
-  if (!defaulterMetrics) {
+  // Show loading state when data is being fetched or when data doesn't exist
+  if (loading || !defaulterMetrics) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-8">
-        <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              {loading ? 'Loading defaulter metrics...' : 'No data available'}
+            </p>
+          </div>
         </div>
       </div>
     );
