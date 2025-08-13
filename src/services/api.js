@@ -774,8 +774,8 @@ export const fetchBreakdownData = async (filters) => {
   );
   
   if (startDate && endDate) {
-    apiParams.created_at_min = startDate;
-    apiParams.created_at_max = endDate;
+    apiParams.raw_created_at_min = startDate;
+    apiParams.raw_created_at_max = endDate;
   }
   
   // Add pipeline name parameter only if usePipelineFilter is true

@@ -45,11 +45,15 @@ const PipelineTabs = ({ children }) => {
 
   // Update local state when Redux state changes
   useEffect(() => {
-    setActiveTab(activeSection);
-  }, [activeSection]);
+    if (activeTab !== activeSection) {
+      setActiveTab(activeSection);
+    }
+  }, [activeSection, activeTab]);
 
   // Handle tab change
   const handleTabChange = (tabId) => {
+    // Only proceed if we're actually changing tabs
+    if (tabId === activeTab) return;
     setActiveTab(tabId);
     dispatch(updateActiveSection(tabId));
     // Load data for the new section

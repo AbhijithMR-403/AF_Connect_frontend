@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, X, Check, Calendar, Filter } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../hooks';
 import { updateFilters, loadUsers, loadClubsAndCountries, loadDashboardData, loadValidLeadSources } from '../store/slices/dashboardSlice';
@@ -27,7 +27,10 @@ const dropdownStyles = `
 
 const FilterBar = () => {
   const dispatch = useAppDispatch();
-  const { filters, countries, clubs, users, usersLoading, usersError, clubsLoading, clubsError, validLeadSources, validLeadSourcesLoading, validLeadSourcesError } = useAppSelector((state) => state.dashboard);
+  const { filters, countries, clubs, users, usersLoading, usersError, clubsLoading, clubsError, validLeadSources, validLeadSourcesLoading, validLeadSourcesError, isInitialized } = useAppSelector((state) => state.dashboard);
+  
+  // Use ref to track if we've already made the initial API call
+  const initialLoadRef = useRef(false);
   
   // State for dropdown visibility
   const [dropdownStates, setDropdownStates] = useState({
@@ -58,7 +61,7 @@ const FilterBar = () => {
   // Initialize pending filters with current filters
   useEffect(() => {
     setPendingFilters(filters);
-  }, []);
+  }, []); // Only run once on mount
 
   // Load initial dashboard data when filter data is available
   useEffect(() => {
@@ -66,11 +69,20 @@ const FilterBar = () => {
     const { salesMetrics, onboardingMetrics, defaulterMetrics, locations } = store.getState().dashboard;
     const hasNoData = !salesMetrics && !onboardingMetrics && !defaulterMetrics && locations.length === 0;
     
-    if (hasNoData && !usersLoading && !clubsLoading && !validLeadSourcesLoading) {
+    if (!initialLoadRef.current && !isInitialized && hasNoData && !usersLoading && !clubsLoading && !validLeadSourcesLoading) {
       const { activeSection } = store.getState().dashboard;
+      console.log('🎯 FilterBar: Loading initial dashboard data', { activeSection, isInitialized });
+      initialLoadRef.current = true; // Mark as loaded to prevent duplicate calls
       dispatch(loadDashboardData({ filters, activeSection }));
     }
-  }, [filters, usersLoading, clubsLoading, validLeadSourcesLoading, dispatch]);
+  }, [isInitialized, usersLoading, clubsLoading, validLeadSourcesLoading, dispatch]); // Added isInitialized dependency
+
+  // Cleanup effect to reset ref when component unmounts
+  useEffect(() => {
+    return () => {
+      initialLoadRef.current = false;
+    };
+  }, []);
 
   const toggleDropdown = (filterType) => {
     setDropdownStates(prev => ({
@@ -151,6 +163,8 @@ const FilterBar = () => {
   const applyFilters = () => {
     dispatch(updateFilters(pendingFilters));
     const { activeSection } = store.getState().dashboard;
+    // Reset the ref when applying new filters to allow reloading
+    initialLoadRef.current = false;
     dispatch(loadDashboardData({ filters: pendingFilters, activeSection }));
   };
 

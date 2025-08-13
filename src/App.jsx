@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { useAppDispatch } from './hooks';
-import { loadDashboardData, loadClubsAndCountries } from './store/slices/dashboardSlice';
+import { loadDashboardData } from './store/slices/dashboardSlice';
 import DashboardHeader from './components/DashboardHeader';
 import FilterBar from './components/FilterBar';
 import PipelineTabs from './components/PipelineTabs';
@@ -14,11 +14,7 @@ import RegionalView from './components/RegionalView';
 const DashboardContent = () => {
   const dispatch = useAppDispatch();
 
-  useEffect(() => {
-    // Load clubs and countries on initial load
-    // Dashboard data will be loaded by FilterBar when filters are initialized
-    dispatch(loadClubsAndCountries());
-  }, [dispatch]);
+  // Removed duplicate loadClubsAndCountries call - it's now handled in FilterBar
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">

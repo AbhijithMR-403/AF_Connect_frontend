@@ -62,6 +62,7 @@ const initialState = {
   validLeadSourcesLoading: false,
   validLeadSourcesError: null,
   locations: [], // Add this line
+  isInitialized: false, // Flag to prevent duplicate initial API calls
 };
 
 // Async thunk for fetching dashboard data
@@ -242,6 +243,7 @@ const dashboardSlice = createSlice({
         state.trendSums = action.payload.trendSums; // Add this line
         // Don't overwrite validLeadSources here as they are loaded separately
         state.locations = action.payload.locations || [];
+        state.isInitialized = true; // Mark as initialized after first successful load
       })
       .addCase(loadDashboardData.rejected, (state, action) => {
         state.loading = false;
