@@ -1,6 +1,26 @@
 import { config } from '../config/env.js';
 import { calculateDateRangeParams } from '../store/slices/dashboardSlice.js';
 
+// Utility function to transform lead source breakdown data
+const transformLeadSourceBreakdown = (breakdownData) => {
+  if (!breakdownData || typeof breakdownData !== 'object') {
+    return [];
+  }
+
+  // Convert object to array and calculate total
+  const entries = Object.entries(breakdownData);
+  const total = entries.reduce((sum, [, value]) => sum + (value || 0), 0);
+
+  // Transform to chart format
+  return entries
+    .map(([name, value]) => ({
+      name,
+      value: value || 0,
+      percentage: total > 0 ? Number(((value || 0) / total * 100).toFixed(1)) : 0
+    }))
+    .sort((a, b) => b.value - a.value); // Sort by value descending
+};
+
 export const fetchDashboardData = async (filters) => {
   return {}
   // Build query parameters from filters
@@ -314,8 +334,8 @@ export const generateDashboardData = async (filters, activeSection = 0) => {
     leadToSaleRatio: (totalLeads && totalNJMs) ? Number(((totalNJMs / totalLeads) * 100).toFixed(2)) : null,
     leadToAppointmentRatio: (totalLeads && totalAppointments) ? Number(((totalAppointments / totalLeads) * 100).toFixed(2)) : 0,
     appointmentToSaleRatio: (totalAppointments && totalNJMs) ? Number(((totalAppointments / totalNJMs) * 100).toFixed(2)) : 0,
-    leadSourceBreakdown: breakdownDataResponse?.leadSourceBreakdown ?? [],
-    leadSourceSaleBreakdown: breakdownDataResponse?.leadSourceSaleBreakdown ?? [],
+    leadSourceBreakdown: transformLeadSourceBreakdown(breakdownDataResponse?.leadSourceBreakdown),
+    leadSourceSaleBreakdown: transformLeadSourceBreakdown(breakdownDataResponse?.leadSourceSaleBreakdown),
     appointmentStatus: appointmentStatsResponse?.appointment_stats ?? [],
     trend: trendDataResponse ?? { daily: [], weekly: [], monthly: [] },
   };
@@ -399,7 +419,7 @@ export const fetchMemberOnboardingMetrics = async (filters) => {
     apiParams.location = filters.club;
   }
   if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
-    apiParams.source = filters.leadSource;
+    apiParams.lead_source = filters.leadSource;
   }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
@@ -460,7 +480,7 @@ export const fetchDefaulterMetrics = async (filters) => {
     apiParams.location = filters.club;
   }
   if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
-    apiParams.source = filters.leadSource;
+    apiParams.lead_source = filters.leadSource;
   }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
@@ -521,7 +541,7 @@ export const fetchLocationStats = async (filters) => {
     apiParams.location = filters.club;
   }
   if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
-    apiParams.source = filters.leadSource;
+    apiParams.lead_source = filters.leadSource;
   }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
@@ -582,7 +602,7 @@ export const fetchSalesMetrics = async (filters) => {
     apiParams.location = filters.club;
   }
   if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
-    apiParams.source = filters.leadSource;
+    apiParams.lead_source = filters.leadSource;
   }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
@@ -643,7 +663,7 @@ export const fetchTrendData = async (filters) => {
     apiParams.location = filters.club;
   }
   if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
-    apiParams.source = filters.leadSource;
+    apiParams.lead_source = filters.leadSource;
   }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
@@ -704,7 +724,7 @@ export const fetchAppointmentStats = async (filters) => {
     apiParams.location = filters.club;
   }
   if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
-    apiParams.source = filters.leadSource;
+    apiParams.lead_source = filters.leadSource;
   }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
@@ -765,7 +785,7 @@ export const fetchBreakdownData = async (filters) => {
     apiParams.location = filters.club;
   }
   if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
-    apiParams.source = filters.leadSource;
+    apiParams.lead_source = filters.leadSource;
   }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
@@ -781,7 +801,7 @@ export const fetchBreakdownData = async (filters) => {
   
   // Add pipeline name parameter only if usePipelineFilter is true
   if (filters.usePipelineFilter) {
-    apiParams.pipeline_name = 'AFC%20Sales%20Pipeline';
+    apiParams.pipeline_name = 'AFC Sales Pipeline';
   }
 
   const queryString = buildQueryString(apiParams);
@@ -854,14 +874,26 @@ export const fetchValidLeadSources = async (filters = {}) => {
 
     const data = await response.json();
     
-    // Convert the response object to array format expected by the UI
-    // The API returns: {"0102298829":"","1 Day Trial":"daytrial",...}
-    // We need: [{value: "daytrial", label: "1 Day Trial"}, ...]
+    // Handle different response formats
     if (data && typeof data === 'object') {
-      const leadSources = Object.entries(data).map(([label, value]) => ({
-        value: value || label, // Use the value if provided, otherwise use the label as value
-        label: label
-      }));
+      // Case 1: API returns {"lead_sources": ["source1", "source2", ...]}
+      if (data.lead_sources && Array.isArray(data.lead_sources)) {
+        const leadSources = data.lead_sources
+          .filter(source => source !== null && source !== undefined) // Filter out null/undefined values
+          .map(source => {
+            // Handle case where source might be an array (like ["SMS"])
+            return Array.isArray(source) ? source[0] : source;
+          })
+          .filter(source => source && source.trim() !== ''); // Filter out empty values
+        
+        return leadSources;
+      }
+      
+      // Case 2: API returns {"0102298829":"","1 Day Trial":"daytrial",...} (original expected format)
+      const leadSources = Object.entries(data)
+        .map(([label, value]) => value || label)
+        .filter(source => source && source.trim() !== '');
+      
       return leadSources;
     }
     

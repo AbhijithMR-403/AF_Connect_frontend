@@ -46,7 +46,7 @@ const ChartSection = ({ leadSources, appointmentStatus, openModal }) => {
         {/* Lead Sources Breakdown */}
         <LeadSourcesChart 
           leadSources={assignColorsToLeadSources(leadSources)}
-          openModal={(metricType, title, count, data) => openModal("lead-source", title, count, 1, { source: data?.name })}
+          openModal={(metricType, title, count, data) => openModal("lead-source", title, count, 1, { lead_source: data?.name })}
         />
         {/* Appointment Status */}
         

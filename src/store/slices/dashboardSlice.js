@@ -213,6 +213,26 @@ export const loadValidLeadSources = createAsyncThunk(
   }
 );
 
+// Utility function to transform lead source breakdown data
+const transformLeadSourceBreakdown = (breakdownData) => {
+  if (!breakdownData || typeof breakdownData !== 'object') {
+    return [];
+  }
+
+  // Convert object to array and calculate total
+  const entries = Object.entries(breakdownData);
+  const total = entries.reduce((sum, [, value]) => sum + (value || 0), 0);
+
+  // Transform to chart format
+  return entries
+    .map(([name, value]) => ({
+      name,
+      value: value || 0,
+      percentage: total > 0 ? Number(((value || 0) / total * 100).toFixed(1)) : 0
+    }))
+    .sort((a, b) => b.value - a.value); // Sort by value descending
+};
+
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState,
@@ -354,8 +374,8 @@ const dashboardSlice = createSlice({
           leadToSaleRatio: (action.payload.total_leads && action.payload.total_njms) ? Number(((action.payload.total_njms / action.payload.total_leads) * 100).toFixed(2)) : null,
           leadToAppointmentRatio: (action.payload.total_leads && action.payload.total_appointments) ? Number(((action.payload.total_appointments / action.payload.total_leads) * 100).toFixed(2)) : 0,
           appointmentToSaleRatio: (action.payload.total_appointments && action.payload.total_njms) ? Number(((action.payload.total_appointments / action.payload.total_njms) * 100).toFixed(2)) : 0,
-          leadSourceBreakdown: action.payload.leadSourceBreakdown ?? [],
-          leadSourceSaleBreakdown: action.payload.leadSourceSaleBreakdown ?? [],
+          leadSourceBreakdown: transformLeadSourceBreakdown(action.payload.leadSourceBreakdown),
+          leadSourceSaleBreakdown: transformLeadSourceBreakdown(action.payload.leadSourceSaleBreakdown),
           appointmentStatus: action.payload.appointment_stats ?? [],
           trend: action.payload.trend ?? { daily: [], weekly: [], monthly: [] },
         };
@@ -417,8 +437,8 @@ const dashboardSlice = createSlice({
           // state.salesMetrics.online = action.payload.online_v_offline?.online ?? null;
           // state.salesMetrics.offline = action.payload.online_v_offline?.offline ?? null;
           // state.salesMetrics.totalNoLeadSource = action.payload.total_no_oppo_source ?? null;
-          state.salesMetrics.leadSourceBreakdown = action.payload.leadSourceBreakdown ?? [];
-          state.salesMetrics.leadSourceSaleBreakdown = action.payload.leadSourceSaleBreakdown ?? [];
+          state.salesMetrics.leadSourceBreakdown = transformLeadSourceBreakdown(action.payload.leadSourceBreakdown);
+          state.salesMetrics.leadSourceSaleBreakdown = transformLeadSourceBreakdown(action.payload.leadSourceSaleBreakdown);
         }
         state.lastUpdated = new Date().toISOString();
       })

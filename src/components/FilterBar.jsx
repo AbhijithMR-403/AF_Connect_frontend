@@ -188,10 +188,22 @@ const FilterBar = () => {
     const isOpen = dropdownStates[filterType];
     const [searchTerm, setSearchTerm] = useState('');
     
-    // Filter options based on search term
-    const filteredOptions = options.filter(option =>
-      option.label.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Filter options based on search term and sort alphabetically
+    const filteredOptions = options
+      .filter(option =>
+        option.label.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .sort((a, b) => {
+        // "All" options should always come first
+        const aIsAll = a.label.toLowerCase().startsWith('all');
+        const bIsAll = b.label.toLowerCase().startsWith('all');
+        
+        if (aIsAll && !bIsAll) return -1;
+        if (!aIsAll && bIsAll) return 1;
+        
+        // If both are "All" options or both are not "All" options, sort alphabetically
+        return a.label.localeCompare(b.label);
+      });
     
     // Method 1: Simple truncation (current approach)
     const renderSimpleTruncation = (text) => (
@@ -499,7 +511,10 @@ const FilterBar = () => {
   const leadSourceOptions = [
     { value: 'all', label: 'All Sources' },
     ...(Array.isArray(validLeadSources) && validLeadSources.length > 0
-      ? validLeadSources
+      ? validLeadSources.map(source => ({
+          value: source,
+          label: source
+        }))
       : []),
   ];
 

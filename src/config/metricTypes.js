@@ -57,7 +57,7 @@ const metricTypeConfigs = {
   'paid-media-njms': {
     pipeline_name: 'AFC Sales Pipeline',
     status: 'won',
-    source: ['Facebook', 'Whatsapp', 'Instagram', 
+    lead_source: ['Facebook', 'Whatsapp', 'Instagram', 
       'Google'
     ],
     dateField: 'membership_signup_date',
