@@ -17,6 +17,19 @@ const SalesPipeline = () => {
   const { salesMetrics, countries, loading, validLeadSources } = useAppSelector((state) => state.dashboard);
   const filters = useAppSelector(selectProcessedFilters);
 
+  // Helper function to simplify ratios
+  const simplifyRatio = (numerator, denominator) => {
+    if (denominator === 0) return '0:0';
+    if (numerator === 0) return '0:1';
+    
+    const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+    const divisor = gcd(Math.abs(numerator), Math.abs(denominator));
+    const simplifiedNum = numerator / divisor;
+    const simplifiedDen = denominator / divisor;
+    
+    return `${simplifiedNum}:${simplifiedDen}`;
+  };
+
   // Reload breakdown data when pipeline filter changes
   useEffect(() => {
     if (filters.usePipelineFilter !== undefined) {
@@ -62,6 +75,10 @@ const SalesPipeline = () => {
     }
     if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
       params.lead_source = convertLeadSourceKeysToValues(filters.leadSource);
+    }
+    // Pipeline filter - add pipeline_name parameter when checkbox is checked
+    if (filters.usePipelineFilter) {
+      params.pipeline_name = 'AFC Sales Pipeline';
     }
     // Date range - use calculated dates from slice
     if (filters.calculatedStartDate && filters.calculatedEndDate) {
@@ -495,7 +512,7 @@ const SalesPipeline = () => {
             >
               <div className="text-center">
                 <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
-                  {salesMetrics.appointmentToSaleRatio}%
+                  {simplifyRatio(salesMetrics.totalAppointments, salesMetrics.totalNJMs)}
                 </div>
                 <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">Appointment to Sale Ratio</div>
                 <div className="text-xs text-gray-600 dark:text-gray-400">Appointments / NJM</div>

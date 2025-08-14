@@ -69,10 +69,10 @@ const DashboardHeader = () => {
         {/* Action Buttons Section */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 min-w-0">
           {/* Real-time indicator */}
-          <div className="flex items-center justify-center sm:justify-start gap-2 px-3 py-2 bg-green-100 dark:bg-green-900 rounded-full order-last sm:order-first">
+          {/* <div className="flex items-center justify-center sm:justify-start gap-2 px-3 py-2 bg-green-100 dark:bg-green-900 rounded-full order-last sm:order-first">
             <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse flex-shrink-0"></div>
             <span className="text-xs sm:text-sm font-medium text-green-700 dark:text-green-300 whitespace-nowrap">Real-time Data</span>
-          </div>
+          </div> */}
 
           {/* Export and Refresh buttons */}
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
