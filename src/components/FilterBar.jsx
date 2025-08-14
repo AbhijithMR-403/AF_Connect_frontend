@@ -211,7 +211,7 @@ const FilterBar = () => {
     }
   };
 
-  const resetFilters = () => {
+  const resetFilters = async () => {
     const defaultFilters = {
       country: ['all'],
       club: ['all'],
@@ -223,6 +223,21 @@ const FilterBar = () => {
       customEndDate: null,
     };
     setPendingFilters(defaultFilters);
+    
+    // Apply the reset filters immediately
+    setIsApplyingFilters(true);
+    
+    try {
+      dispatch(updateFilters(defaultFilters));
+      const { activeSection } = store.getState().dashboard;
+      await dispatch(loadDashboardData({ filters: defaultFilters, activeSection })).unwrap();
+      console.log('✅ Filters reset and applied successfully');
+    } catch (error) {
+      console.error('❌ Error resetting filters:', error);
+      alert(`Error resetting filters: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsApplyingFilters(false);
+    }
   };
 
   // Check if filters have changed
