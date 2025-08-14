@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Calendar, Target, FileText, TrendingUp, AlertCircle, BarChart3, Phone, Eye } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../hooks';
-import { selectProcessedFilters, updateFilters, loadBreakdownData } from '../store/slices/dashboardSlice';
+import { selectProcessedFilters, updatePipelineFilter, loadBreakdownData } from '../store/slices/dashboardSlice';
 import ClickableMetricCard from './ClickableMetricCard';
 import ChartSection from './ChartSection';
 import TrendGraphs from './TrendGraphs';
@@ -61,7 +61,7 @@ const SalesPipeline = () => {
       params.location = filters.club;
     }
     if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
-      params.source = convertLeadSourceKeysToValues(filters.leadSource);
+      params.lead_source = convertLeadSourceKeysToValues(filters.leadSource);
     }
     // Date range - use calculated dates from slice
     if (filters.calculatedStartDate && filters.calculatedEndDate) {
@@ -422,7 +422,7 @@ const SalesPipeline = () => {
                 <input
                   type="checkbox"
                   checked={filters.usePipelineFilter || false}
-                  onChange={(e) => dispatch(updateFilters({ usePipelineFilter: e.target.checked }))}
+                  onChange={(e) => dispatch(updatePipelineFilter(e.target.checked))}
                   className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                 />
                 <span>Use AFC Sales Pipeline Filter</span>

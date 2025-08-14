@@ -238,12 +238,56 @@ const dashboardSlice = createSlice({
   initialState,
   reducers: {
     updateFilters: (state, action) => {
-      state.filters = { ...state.filters, ...action.payload };
+      // Validate and normalize filters before updating
+      const newFilters = action.payload;
+      
+      // Check if any global filter is being applied (other than pipeline filter)
+      const hasGlobalFilterChanges = (
+        (newFilters.country && JSON.stringify(newFilters.country) !== JSON.stringify(state.filters.country)) ||
+        (newFilters.club && JSON.stringify(newFilters.club) !== JSON.stringify(state.filters.club)) ||
+        (newFilters.assignedUser && JSON.stringify(newFilters.assignedUser) !== JSON.stringify(state.filters.assignedUser)) ||
+        (newFilters.dateRange && newFilters.dateRange !== state.filters.dateRange) ||
+        (newFilters.leadSource && JSON.stringify(newFilters.leadSource) !== JSON.stringify(state.filters.leadSource)) ||
+        (newFilters.customStartDate !== state.filters.customStartDate) ||
+        (newFilters.customEndDate !== state.filters.customEndDate)
+      );
+      
+      // If global filters are being applied, automatically uncheck the pipeline filter
+      const shouldUncheckPipelineFilter = hasGlobalFilterChanges && state.filters.usePipelineFilter;
+      
+      state.filters = {
+        country: Array.isArray(newFilters.country) ? newFilters.country : ['all'],
+        club: Array.isArray(newFilters.club) ? newFilters.club : ['all'],
+        assignedUser: Array.isArray(newFilters.assignedUser) ? newFilters.assignedUser : ['all'],
+        dateRange: newFilters.dateRange || 'last-30-days',
+        leadSource: Array.isArray(newFilters.leadSource) ? newFilters.leadSource : ['all'],
+        customStartDate: newFilters.customStartDate || null,
+        customEndDate: newFilters.customEndDate || null,
+        usePipelineFilter: shouldUncheckPipelineFilter ? false : (newFilters.usePipelineFilter !== undefined ? newFilters.usePipelineFilter : state.filters.usePipelineFilter),
+      };
+      // Reset loading state when filters change
+      state.loading = false;
+      state.error = null;
+    },
+    updatePipelineFilter: (state, action) => {
+      // Update only the pipeline filter without affecting other filters
+      state.filters.usePipelineFilter = action.payload;
     },
     updateActiveSection: (state, action) => {
       state.activeSection = action.payload;
     },
     clearError: (state) => {
+      state.error = null;
+    },
+    resetDashboard: (state) => {
+      // Reset all data when needed
+      state.salesMetrics = null;
+      state.onboardingMetrics = null;
+      state.defaulterMetrics = null;
+      state.locations = [];
+      state.trendSums = null;
+      state.isInitialized = false;
+      state.loading = false;
       state.error = null;
     },
   },
@@ -268,6 +312,7 @@ const dashboardSlice = createSlice({
       .addCase(loadDashboardData.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to load dashboard data';
+        // Don't reset isInitialized on error to prevent infinite retries
       })
       .addCase(loadUsers.pending, (state) => {
         state.usersLoading = true;
@@ -461,7 +506,7 @@ const dashboardSlice = createSlice({
   },
 });
 
-export const { updateFilters, updateActiveSection, clearError } = dashboardSlice.actions;
+export const { updateFilters, updatePipelineFilter, updateActiveSection, clearError, resetDashboard } = dashboardSlice.actions;
 
 // Selector to get processed filters with calculated date ranges
 export const selectProcessedFilters = (state) => {

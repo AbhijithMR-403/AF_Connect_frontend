@@ -27,10 +27,7 @@ const dropdownStyles = `
 
 const FilterBar = () => {
   const dispatch = useAppDispatch();
-  const { filters, countries, clubs, users, usersLoading, usersError, clubsLoading, clubsError, validLeadSources, validLeadSourcesLoading, validLeadSourcesError, isInitialized } = useAppSelector((state) => state.dashboard);
-  
-  // Use ref to track if we've already made the initial API call
-  const initialLoadRef = useRef(false);
+  const { filters, countries, clubs, users, usersLoading, usersError, clubsLoading, clubsError, validLeadSources, validLeadSourcesLoading, validLeadSourcesError, isInitialized, loading } = useAppSelector((state) => state.dashboard);
   
   // State for dropdown visibility
   const [dropdownStates, setDropdownStates] = useState({
@@ -50,6 +47,9 @@ const FilterBar = () => {
 
   // State for pending filters (not yet applied)
   const [pendingFilters, setPendingFilters] = useState({});
+  
+  // State for local loading indicator
+  const [isApplyingFilters, setIsApplyingFilters] = useState(false);
 
   // Fetch users and both clubs and countries on component mount
   useEffect(() => {
@@ -58,10 +58,10 @@ const FilterBar = () => {
     dispatch(loadValidLeadSources());
   }, [dispatch]);
 
-  // Initialize pending filters with current filters
+  // Initialize pending filters with current filters and keep them in sync
   useEffect(() => {
     setPendingFilters(filters);
-  }, []); // Only run once on mount
+  }, [filters]);
 
   // Load initial dashboard data when filter data is available
   useEffect(() => {
@@ -69,20 +69,12 @@ const FilterBar = () => {
     const { salesMetrics, onboardingMetrics, defaulterMetrics, locations } = store.getState().dashboard;
     const hasNoData = !salesMetrics && !onboardingMetrics && !defaulterMetrics && locations.length === 0;
     
-    if (!initialLoadRef.current && !isInitialized && hasNoData && !usersLoading && !clubsLoading && !validLeadSourcesLoading) {
+    if (!isInitialized && hasNoData && !usersLoading && !clubsLoading && !validLeadSourcesLoading) {
       const { activeSection } = store.getState().dashboard;
       console.log('🎯 FilterBar: Loading initial dashboard data', { activeSection, isInitialized });
-      initialLoadRef.current = true; // Mark as loaded to prevent duplicate calls
       dispatch(loadDashboardData({ filters, activeSection }));
     }
-  }, [isInitialized, usersLoading, clubsLoading, validLeadSourcesLoading, dispatch]); // Added isInitialized dependency
-
-  // Cleanup effect to reset ref when component unmounts
-  useEffect(() => {
-    return () => {
-      initialLoadRef.current = false;
-    };
-  }, []);
+  }, [isInitialized, usersLoading, clubsLoading, validLeadSourcesLoading, dispatch, filters]);
 
   const toggleDropdown = (filterType) => {
     setDropdownStates(prev => ({
@@ -160,12 +152,57 @@ const FilterBar = () => {
     }
   };
 
-  const applyFilters = () => {
-    dispatch(updateFilters(pendingFilters));
-    const { activeSection } = store.getState().dashboard;
-    // Reset the ref when applying new filters to allow reloading
-    initialLoadRef.current = false;
-    dispatch(loadDashboardData({ filters: pendingFilters, activeSection }));
+  const applyFilters = async () => {
+    // Validate filters before applying
+    const validatedFilters = {
+      country: Array.isArray(pendingFilters.country) ? pendingFilters.country : ['all'],
+      club: Array.isArray(pendingFilters.club) ? pendingFilters.club : ['all'],
+      assignedUser: Array.isArray(pendingFilters.assignedUser) ? pendingFilters.assignedUser : ['all'],
+      dateRange: pendingFilters.dateRange || 'last-30-days',
+      leadSource: Array.isArray(pendingFilters.leadSource) ? pendingFilters.leadSource : ['all'],
+      customStartDate: pendingFilters.customStartDate || null,
+      customEndDate: pendingFilters.customEndDate || null,
+    };
+
+    console.log('🔧 Applying filters:', validatedFilters);
+    
+    // Additional validation
+    const validationErrors = [];
+    if (!validatedFilters.country || validatedFilters.country.length === 0) {
+      validationErrors.push('Country filter is required');
+    }
+    if (!validatedFilters.club || validatedFilters.club.length === 0) {
+      validationErrors.push('Club filter is required');
+    }
+    if (!validatedFilters.assignedUser || validatedFilters.assignedUser.length === 0) {
+      validationErrors.push('Assigned User filter is required');
+    }
+    if (!validatedFilters.dateRange) {
+      validationErrors.push('Date range is required');
+    }
+    if (!validatedFilters.leadSource || validatedFilters.leadSource.length === 0) {
+      validationErrors.push('Lead Source filter is required');
+    }
+    
+    if (validationErrors.length > 0) {
+      console.error('❌ Filter validation errors:', validationErrors);
+      alert(`Filter validation errors:\n${validationErrors.join('\n')}`);
+      return;
+    }
+    
+    setIsApplyingFilters(true);
+    
+    try {
+      dispatch(updateFilters(validatedFilters));
+      const { activeSection } = store.getState().dashboard;
+      await dispatch(loadDashboardData({ filters: validatedFilters, activeSection })).unwrap();
+      console.log('✅ Filters applied successfully');
+    } catch (error) {
+      console.error('❌ Error applying filters:', error);
+      alert(`Error applying filters: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsApplyingFilters(false);
+    }
   };
 
   const resetFilters = () => {
@@ -205,45 +242,6 @@ const FilterBar = () => {
         return a.label.localeCompare(b.label);
       });
     
-    // Method 1: Simple truncation (current approach)
-    const renderSimpleTruncation = (text) => (
-      <span className="truncate max-w-[100px] sm:max-w-[120px] lg:max-w-[140px] text-xs">{text}</span>
-    );
-
-    // Method 2: Tooltip with full text on hover
-    const renderWithTooltip = (text) => (
-      <span 
-        className="truncate max-w-[100px] sm:max-w-[120px] lg:max-w-[140px] cursor-help text-xs" 
-        title={text}
-      >
-        {text}
-      </span>
-    );
-
-    // Method 3: Responsive text sizing
-    const renderResponsiveText = (text) => (
-      <span className="truncate text-xs sm:text-xs lg:text-xs max-w-[100px] sm:max-w-[120px] lg:max-w-[140px]">
-        {text}
-      </span>
-    );
-
-    // Method 4: Multi-line with max height
-    const renderMultiLine = (text) => (
-      <span className="line-clamp-2 text-xs leading-tight max-w-[100px] sm:max-w-[120px] lg:max-w-[140px]">
-        {text}
-      </span>
-    );
-
-    // Method 5: Dynamic width based on container
-    const renderDynamicWidth = (text) => (
-      <span className="truncate w-full max-w-none">
-        {text}
-      </span>
-    );
-
-    // Choose which method to use (you can change this)
-    const renderText = renderWithTooltip; // Change this to try different methods
-    
     // Clear search when dropdown closes
     useEffect(() => {
       if (!isOpen) {
@@ -271,7 +269,7 @@ const FilterBar = () => {
           )}
         </button>
         
-        {/* Selected items display BELOW the dropdown button */}
+        {/* Selected items count display BELOW the dropdown button */}
         <div className="flex flex-wrap gap-1 mt-2 min-h-[24px]">
           {error ? (
             <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
@@ -282,62 +280,15 @@ const FilterBar = () => {
               All {label}
             </span>
           ) : selectedValues.length > 0 ? (
-            selectedValues.map(value => {
-              const option = options.find(opt => opt.value === value);
-              return option ? (
-                <span key={value} className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 max-w-full">
-                  {renderText(option.label)}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFilter(filterType, value);
-                    }}
-                    className="hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full p-0.5 flex-shrink-0"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ) : null;
-            })
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+              {selectedValues.length} {selectedValues.length === 1 ? label.slice(0, -1) : label} selected
+            </span>
           ) : (
             <span className="text-xs text-gray-500 dark:text-gray-400">No {label.toLowerCase()} selected</span>
           )}
         </div>
 
-        {/* Alternative: Grid layout for selected items (uncomment to use) */}
-        {/* 
-        <div className="grid grid-cols-3 gap-1 mt-2 min-h-[24px] max-h-[80px] overflow-y-auto">
-          {error ? (
-            <span className="col-span-3 inline-flex items-center px-2 py-1 rounded-md text-xs bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
-              Error loading {label.toLowerCase()}
-            </span>
-          ) : selectedValues.includes('all') ? (
-            <span className="col-span-3 inline-flex items-center px-2 py-1 rounded-md text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-              All {label}
-            </span>
-          ) : selectedValues.length > 0 ? (
-            selectedValues.map(value => {
-              const option = options.find(opt => opt.value === value);
-              return option ? (
-                <span key={value} className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 w-full">
-                  <span className="truncate">{option.label}</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFilter(filterType, value);
-                    }}
-                    className="hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full p-0.5 flex-shrink-0"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ) : null;
-            })
-          ) : (
-            <span className="col-span-3 text-xs text-gray-500 dark:text-gray-400">No {label.toLowerCase()} selected</span>
-          )}
-        </div>
-        */}
+
         
         {/* Dropdown menu */}
         {isOpen && (
@@ -577,19 +528,39 @@ const FilterBar = () => {
         <div className="flex justify-end mt-4">
           <button
             onClick={applyFilters}
-            disabled={!hasFilterChanges}
+            disabled={!hasFilterChanges || isApplyingFilters || loading}
             className="flex items-center px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Filter className="w-4 h-4 mr-2" />
-            Apply Filters
+            {isApplyingFilters || loading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                {isApplyingFilters ? 'Applying...' : 'Loading...'}
+              </>
+            ) : (
+              <>
+                <Filter className="w-4 h-4 mr-2" />
+                Apply Filters
+              </>
+            )}
           </button>
           <button
             onClick={resetFilters}
-            className="ml-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            disabled={isApplyingFilters || loading}
+            className="ml-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Reset Filters
           </button>
         </div>
+        
+        {/* Loading indicator */}
+        {(isApplyingFilters || loading) && (
+          <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="flex items-center text-sm text-blue-700 dark:text-blue-300">
+              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+              {isApplyingFilters ? 'Applying filters and loading data...' : 'Loading dashboard data...'}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Custom Date Range Modal */}

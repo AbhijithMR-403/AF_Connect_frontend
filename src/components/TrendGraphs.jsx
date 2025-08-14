@@ -47,6 +47,12 @@ const TrendGraphs = () => {
     ? salesMetrics.trend[activeView]
     : [];
   
+  // Check if all values in trends are none/null
+  const hasValidTrendData = trendData.length > 0 && trendData.some(item => 
+    (item.leads && item.leads !== null && item.leads !== undefined) ||
+    (item.appointments && item.appointments !== null && item.appointments !== undefined) ||
+    (item.njms && item.njms !== null && item.njms !== undefined)
+  );
   
   const viewOptions = [
     { value: 'daily', label: 'Daily', period: 'Last 7 Days' },
@@ -151,15 +157,31 @@ const TrendGraphs = () => {
         </div>
       </div>
 
-      {/* Trend Chart */}
-      <div className="h-80">
-        <div className="mb-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {viewOptions.find(opt => opt.value === activeView)?.period}
-          </p>
+      {/* No Data Message */}
+      {!hasValidTrendData && (
+        <div className="flex flex-col items-center justify-center h-80 bg-gray-50 dark:bg-gray-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
+          <div className="text-center">
+            <TrendingUp className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              No Trend Data Available
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md">
+              There is no trend data available for the selected time period. Please check back later or try a different time range.
+            </p>
+          </div>
         </div>
-        
-        <ResponsiveContainer width="100%" height="100%">
+      )}
+
+      {/* Trend Chart */}
+      {hasValidTrendData && (
+        <div className="h-80">
+          <div className="mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {viewOptions.find(opt => opt.value === activeView)?.period}
+            </p>
+          </div>
+          
+          <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={trendData}
             margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
@@ -233,7 +255,8 @@ const TrendGraphs = () => {
             />
           </BarChart>
         </ResponsiveContainer>
-      </div>
+        </div>
+      )}
 
 
       {/* Trend Report Modal */}
