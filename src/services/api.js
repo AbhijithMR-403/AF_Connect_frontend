@@ -245,148 +245,183 @@ export const fetchClubsAndCountries = async () => {
 };
 
 export const generateDashboardData = async (filters, activeSection = 0) => {
+  console.log('🚀 generateDashboardData called with:', { filters, activeSection });
+  
+  // Validate filters before making API calls
+  const validatedFilters = {
+    country: Array.isArray(filters.country) ? filters.country : ['all'],
+    club: Array.isArray(filters.club) ? filters.club : ['all'],
+    assignedUser: Array.isArray(filters.assignedUser) ? filters.assignedUser : ['all'],
+    dateRange: filters.dateRange || 'last-30-days',
+    leadSource: Array.isArray(filters.leadSource) ? filters.leadSource : ['all'],
+    customStartDate: filters.customStartDate || null,
+    customEndDate: filters.customEndDate || null,
+  };
+
+  console.log('✅ Validated filters:', validatedFilters);
+  
   // Define which APIs to call based on active section
   // 0: Sales Pipeline, 1: Member Onboarding, 2: Defaulter Management, 3: Regional View
   const apiCalls = [];
   
   // Always fetch basic dashboard data for valid lead sources
-  apiCalls.push(fetchDashboardData(filters));
+  apiCalls.push(fetchDashboardData(validatedFilters));
   
   // Sales Pipeline (section 0) - needs all sales-related APIs
   if (activeSection === 0) {
     apiCalls.push(
-      fetchSalesMetrics(filters),
-      fetchTrendData(filters),
-      fetchAppointmentStats(filters),
-      fetchBreakdownData(filters)
+      fetchSalesMetrics(validatedFilters),
+      fetchTrendData(validatedFilters),
+      fetchAppointmentStats(validatedFilters),
+      fetchBreakdownData(validatedFilters)
     );
   }
   
   // Member Onboarding (section 1) - needs onboarding metrics
   if (activeSection === 1) {
-    apiCalls.push(fetchMemberOnboardingMetrics(filters));
+    apiCalls.push(fetchMemberOnboardingMetrics(validatedFilters));
   }
   
   // Defaulter Management (section 2) - needs defaulter metrics
   if (activeSection === 2) {
-    apiCalls.push(fetchDefaulterMetrics(filters));
+    apiCalls.push(fetchDefaulterMetrics(validatedFilters));
   }
   
   // Regional View (section 3) - needs location stats
   if (activeSection === 3) {
-    apiCalls.push(fetchLocationStats(filters));
+    apiCalls.push(fetchLocationStats(validatedFilters));
   }
   
-  // Execute the API calls
-  const responses = await Promise.all(apiCalls);
-  
-  // Extract responses based on what was called
-  let apiResponse = responses[0]; // fetchDashboardData is always first
-  let memberOnboardingResponse = null;
-  let defaulterResponse = null;
-  let locationStatsResponse = null;
-  let salesMetricsResponse = null;
-  let trendDataResponse = null;
-  let appointmentStatsResponse = null;
-  let breakdownDataResponse = null;
-  
-  let responseIndex = 1; // Start after fetchDashboardData
-  
-  if (activeSection === 0) {
-    salesMetricsResponse = responses[responseIndex++];
-    trendDataResponse = responses[responseIndex++];
-    appointmentStatsResponse = responses[responseIndex++];
-    breakdownDataResponse = responses[responseIndex++];
-  } else if (activeSection === 1) {
-    memberOnboardingResponse = responses[responseIndex++];
-  } else if (activeSection === 2) {
-    defaulterResponse = responses[responseIndex++];
-  } else if (activeSection === 3) {
-    locationStatsResponse = responses[responseIndex++];
+  try {
+    // Execute the API calls
+    console.log(`📡 Making ${apiCalls.length} API calls for section ${activeSection}`);
+    const responses = await Promise.all(apiCalls);
+    console.log('✅ All API calls completed successfully');
+    
+    // Extract responses based on what was called
+    let apiResponse = responses[0]; // fetchDashboardData is always first
+    let memberOnboardingResponse = null;
+    let defaulterResponse = null;
+    let locationStatsResponse = null;
+    let salesMetricsResponse = null;
+    let trendDataResponse = null;
+    let appointmentStatsResponse = null;
+    let breakdownDataResponse = null;
+    
+    let responseIndex = 1; // Start after fetchDashboardData
+    
+    if (activeSection === 0) {
+      salesMetricsResponse = responses[responseIndex++];
+      trendDataResponse = responses[responseIndex++];
+      appointmentStatsResponse = responses[responseIndex++];
+      breakdownDataResponse = responses[responseIndex++];
+    } else if (activeSection === 1) {
+      memberOnboardingResponse = responses[responseIndex++];
+    } else if (activeSection === 2) {
+      defaulterResponse = responses[responseIndex++];
+    } else if (activeSection === 3) {
+      locationStatsResponse = responses[responseIndex++];
+    }
+    
+    console.log('📊 API Responses:', {
+      salesMetrics: salesMetricsResponse,
+      trendData: trendDataResponse,
+      appointmentStats: appointmentStatsResponse,
+      breakdownData: breakdownDataResponse,
+      memberOnboarding: memberOnboardingResponse,
+      defaulter: defaulterResponse,
+      locationStats: locationStatsResponse
+    });
+    
+    // Debug: Log the API response to see what we're getting
+    const appointment_showed = appointmentStatsResponse?.opportunities_with_shown_appointments ?? 0;
+    // Use the dedicated sales metrics endpoint response
+    const totalLeads = salesMetricsResponse?.total_leads ?? null;
+    // Use appointment stats for total appointments
+    const totalAppointments = appointmentStatsResponse?.total_appointments ?? null;
+    const totalCount = salesMetricsResponse?.total_count ?? null;
+    const totalNJMs = salesMetricsResponse?.total_njms ?? null;
+    // Extract online and offline from breakdown data
+    const online = salesMetricsResponse?.online_v_offline?.online ?? null;
+    const offline = salesMetricsResponse?.online_v_offline?.offline ?? null;
+    const totalNoLeadSource = salesMetricsResponse?.total_no_lead_source ?? null;
+    const totalContacted = salesMetricsResponse?.total_contacted ?? null;
+    const totalPaidMedia = salesMetricsResponse?.total_paid_media ?? null;
+    const salesMetrics = {
+      totalLeads,
+      totalAppointments,
+      totalNJMs,
+      membershipAgreements: totalCount,
+      online,
+      offline,
+      appointment_showed,
+      totalNoLeadSource,
+      totalContacted,
+      totalPaidMedia,
+      leadToSaleRatio: (totalLeads && totalNJMs) ? Number(((totalNJMs / totalLeads) * 100).toFixed(2)) : null,
+      leadToAppointmentRatio: (totalLeads && totalAppointments) ? Number(((totalAppointments / totalLeads) * 100).toFixed(2)) : 0,
+      appointmentToSaleRatio: (totalAppointments && totalNJMs) ? Number(((totalAppointments / totalNJMs) * 100).toFixed(2)) : 0,
+      leadSourceBreakdown: transformLeadSourceBreakdown(breakdownDataResponse?.leadSourceBreakdown),
+      leadSourceSaleBreakdown: transformLeadSourceBreakdown(breakdownDataResponse?.leadSourceSaleBreakdown),
+      appointmentStatus: appointmentStatsResponse?.appointment_stats ?? [],
+      trend: trendDataResponse ?? { daily: [], weekly: [], monthly: [] },
+    };
+
+    // Calculate trend sums
+    const trendSums = sumTrend(salesMetrics.trend);
+
+    // Use the dedicated member onboarding metrics endpoint response
+    const onboardingMetrics = {
+      assessmentUptake: memberOnboardingResponse?.assessment_uptake ?? null,
+      afResults: memberOnboardingResponse?.af_results ?? null,
+      conversionRate: memberOnboardingResponse?.conversion_rate ?? null,
+      appAdoptionRate: memberOnboardingResponse?.app_adoption_rate ?? null,
+    };
+
+    // Use the dedicated defaulter metrics endpoint response
+    const defaulterMetrics = {
+      totalDefaulters: defaulterResponse?.d1 ?? null,
+      totalDefaulters2Month: defaulterResponse?.d2 ?? null,
+      totalDefaulters3Month: defaulterResponse?.d3 ?? null,
+      communicationsSent: defaulterResponse?.communication_sent ?? null,
+      ptpConversion: defaulterResponse?.ptp_conversion ?? null,
+      paymentRecoveryRate: defaulterResponse?.payment_recovery ?? null,
+      paid: defaulterResponse?.paid ?? null,
+      totalPTP: defaulterResponse?.ptp ?? null,
+      noResponse: defaulterResponse?.no_res ?? null,
+      cancelledMembership: defaulterResponse?.cancelled_member ?? null,
+    };
+
+    // Extract valid_lead_sources from API response (if present)
+    const validLeadSources = apiResponse.valid_lead_sources && typeof apiResponse.valid_lead_sources === 'object'
+      ? Object.entries(apiResponse.valid_lead_sources).map(([key, value]) => ({ value: value, label: key }))
+      : [];
+
+    // Use the dedicated location stats endpoint response
+    const locations = Array.isArray(locationStatsResponse)
+      ? locationStatsResponse
+      : [];
+
+    // Clubs: fetch separately if needed
+    const clubs = [];
+
+    const result = {
+      salesMetrics,
+      onboardingMetrics,
+      defaulterMetrics,
+      clubs,
+      trendSums, // Add this line
+      validLeadSources, // Add this line
+      locations, // Add this line
+    };
+
+    console.log('🎯 Final processed data:', result);
+    return result;
+    
+  } catch (error) {
+    console.error('❌ Error in generateDashboardData:', error);
+    throw error;
   }
-  console.log(salesMetricsResponse);
-  
-  // Debug: Log the API response to see what we're getting
-  const appointment_showed = appointmentStatsResponse?.opportunities_with_shown_appointments ?? 0;
-  // Use the dedicated sales metrics endpoint response
-  const totalLeads = salesMetricsResponse?.total_leads ?? null;
-  // Use appointment stats for total appointments
-  const totalAppointments = appointmentStatsResponse?.total_appointments ?? null;
-  const totalCount = salesMetricsResponse?.total_count ?? null;
-  const totalNJMs = salesMetricsResponse?.total_njms ?? null;
-  // Extract online and offline from breakdown data
-  const online = salesMetricsResponse?.online_v_offline?.online ?? null;
-  const offline = salesMetricsResponse?.online_v_offline?.offline ?? null;
-  const totalNoLeadSource = salesMetricsResponse?.total_no_lead_source ?? null;
-  const totalContacted = salesMetricsResponse?.total_contacted ?? null;
-  const totalPaidMedia = salesMetricsResponse?.total_paid_media ?? null;
-  const salesMetrics = {
-    totalLeads,
-    totalAppointments,
-    totalNJMs,
-    membershipAgreements: totalCount,
-    online,
-    offline,
-    appointment_showed,
-    totalNoLeadSource,
-    totalContacted,
-    totalPaidMedia,
-    leadToSaleRatio: (totalLeads && totalNJMs) ? Number(((totalNJMs / totalLeads) * 100).toFixed(2)) : null,
-    leadToAppointmentRatio: (totalLeads && totalAppointments) ? Number(((totalAppointments / totalLeads) * 100).toFixed(2)) : 0,
-    appointmentToSaleRatio: (totalAppointments && totalNJMs) ? Number(((totalAppointments / totalNJMs) * 100).toFixed(2)) : 0,
-    leadSourceBreakdown: transformLeadSourceBreakdown(breakdownDataResponse?.leadSourceBreakdown),
-    leadSourceSaleBreakdown: transformLeadSourceBreakdown(breakdownDataResponse?.leadSourceSaleBreakdown),
-    appointmentStatus: appointmentStatsResponse?.appointment_stats ?? [],
-    trend: trendDataResponse ?? { daily: [], weekly: [], monthly: [] },
-  };
-
-  // Calculate trend sums
-  const trendSums = sumTrend(salesMetrics.trend);
-
-  // Use the dedicated member onboarding metrics endpoint response
-  const onboardingMetrics = {
-    assessmentUptake: memberOnboardingResponse?.assessment_uptake ?? null,
-    afResults: memberOnboardingResponse?.af_results ?? null,
-    conversionRate: memberOnboardingResponse?.conversion_rate ?? null,
-    appAdoptionRate: memberOnboardingResponse?.app_adoption_rate ?? null,
-  };
-
-  // Use the dedicated defaulter metrics endpoint response
-  const defaulterMetrics = {
-    totalDefaulters: defaulterResponse?.d1 ?? null,
-    totalDefaulters2Month: defaulterResponse?.d2 ?? null,
-    totalDefaulters3Month: defaulterResponse?.d3 ?? null,
-    communicationsSent: defaulterResponse?.communication_sent ?? null,
-    ptpConversion: defaulterResponse?.ptp_conversion ?? null,
-    paymentRecoveryRate: defaulterResponse?.payment_recovery ?? null,
-    paid: defaulterResponse?.paid ?? null,
-    totalPTP: defaulterResponse?.ptp ?? null,
-    noResponse: defaulterResponse?.no_res ?? null,
-    cancelledMembership: defaulterResponse?.cancelled_member ?? null,
-  };
-
-  // Extract valid_lead_sources from API response (if present)
-  const validLeadSources = apiResponse.valid_lead_sources && typeof apiResponse.valid_lead_sources === 'object'
-    ? Object.entries(apiResponse.valid_lead_sources).map(([key, value]) => ({ value: value, label: key }))
-    : [];
-
-  // Use the dedicated location stats endpoint response
-  const locations = Array.isArray(locationStatsResponse)
-    ? locationStatsResponse
-    : [];
-
-  // Clubs: fetch separately if needed
-  const clubs = [];
-
-  return {
-    salesMetrics,
-    onboardingMetrics,
-    defaulterMetrics,
-    clubs,
-    trendSums, // Add this line
-    validLeadSources, // Add this line
-    locations, // Add this line
-  };
 };
 
 export const fetchMemberOnboardingMetrics = async (filters) => {

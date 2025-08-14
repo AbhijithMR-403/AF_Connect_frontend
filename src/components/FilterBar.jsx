@@ -27,10 +27,7 @@ const dropdownStyles = `
 
 const FilterBar = () => {
   const dispatch = useAppDispatch();
-  const { filters, countries, clubs, users, usersLoading, usersError, clubsLoading, clubsError, validLeadSources, validLeadSourcesLoading, validLeadSourcesError, isInitialized } = useAppSelector((state) => state.dashboard);
-  
-  // Use ref to track if we've already made the initial API call
-  const initialLoadRef = useRef(false);
+  const { filters, countries, clubs, users, usersLoading, usersError, clubsLoading, clubsError, validLeadSources, validLeadSourcesLoading, validLeadSourcesError, isInitialized, loading } = useAppSelector((state) => state.dashboard);
   
   // State for dropdown visibility
   const [dropdownStates, setDropdownStates] = useState({
@@ -50,6 +47,9 @@ const FilterBar = () => {
 
   // State for pending filters (not yet applied)
   const [pendingFilters, setPendingFilters] = useState({});
+  
+  // State for local loading indicator
+  const [isApplyingFilters, setIsApplyingFilters] = useState(false);
 
   // Fetch users and both clubs and countries on component mount
   useEffect(() => {
@@ -58,10 +58,10 @@ const FilterBar = () => {
     dispatch(loadValidLeadSources());
   }, [dispatch]);
 
-  // Initialize pending filters with current filters
+  // Initialize pending filters with current filters and keep them in sync
   useEffect(() => {
     setPendingFilters(filters);
-  }, []); // Only run once on mount
+  }, [filters]);
 
   // Load initial dashboard data when filter data is available
   useEffect(() => {
@@ -69,20 +69,12 @@ const FilterBar = () => {
     const { salesMetrics, onboardingMetrics, defaulterMetrics, locations } = store.getState().dashboard;
     const hasNoData = !salesMetrics && !onboardingMetrics && !defaulterMetrics && locations.length === 0;
     
-    if (!initialLoadRef.current && !isInitialized && hasNoData && !usersLoading && !clubsLoading && !validLeadSourcesLoading) {
+    if (!isInitialized && hasNoData && !usersLoading && !clubsLoading && !validLeadSourcesLoading) {
       const { activeSection } = store.getState().dashboard;
       console.log('🎯 FilterBar: Loading initial dashboard data', { activeSection, isInitialized });
-      initialLoadRef.current = true; // Mark as loaded to prevent duplicate calls
       dispatch(loadDashboardData({ filters, activeSection }));
     }
-  }, [isInitialized, usersLoading, clubsLoading, validLeadSourcesLoading, dispatch]); // Added isInitialized dependency
-
-  // Cleanup effect to reset ref when component unmounts
-  useEffect(() => {
-    return () => {
-      initialLoadRef.current = false;
-    };
-  }, []);
+  }, [isInitialized, usersLoading, clubsLoading, validLeadSourcesLoading, dispatch, filters]);
 
   const toggleDropdown = (filterType) => {
     setDropdownStates(prev => ({
@@ -160,12 +152,57 @@ const FilterBar = () => {
     }
   };
 
-  const applyFilters = () => {
-    dispatch(updateFilters(pendingFilters));
-    const { activeSection } = store.getState().dashboard;
-    // Reset the ref when applying new filters to allow reloading
-    initialLoadRef.current = false;
-    dispatch(loadDashboardData({ filters: pendingFilters, activeSection }));
+  const applyFilters = async () => {
+    // Validate filters before applying
+    const validatedFilters = {
+      country: Array.isArray(pendingFilters.country) ? pendingFilters.country : ['all'],
+      club: Array.isArray(pendingFilters.club) ? pendingFilters.club : ['all'],
+      assignedUser: Array.isArray(pendingFilters.assignedUser) ? pendingFilters.assignedUser : ['all'],
+      dateRange: pendingFilters.dateRange || 'last-30-days',
+      leadSource: Array.isArray(pendingFilters.leadSource) ? pendingFilters.leadSource : ['all'],
+      customStartDate: pendingFilters.customStartDate || null,
+      customEndDate: pendingFilters.customEndDate || null,
+    };
+
+    console.log('🔧 Applying filters:', validatedFilters);
+    
+    // Additional validation
+    const validationErrors = [];
+    if (!validatedFilters.country || validatedFilters.country.length === 0) {
+      validationErrors.push('Country filter is required');
+    }
+    if (!validatedFilters.club || validatedFilters.club.length === 0) {
+      validationErrors.push('Club filter is required');
+    }
+    if (!validatedFilters.assignedUser || validatedFilters.assignedUser.length === 0) {
+      validationErrors.push('Assigned User filter is required');
+    }
+    if (!validatedFilters.dateRange) {
+      validationErrors.push('Date range is required');
+    }
+    if (!validatedFilters.leadSource || validatedFilters.leadSource.length === 0) {
+      validationErrors.push('Lead Source filter is required');
+    }
+    
+    if (validationErrors.length > 0) {
+      console.error('❌ Filter validation errors:', validationErrors);
+      alert(`Filter validation errors:\n${validationErrors.join('\n')}`);
+      return;
+    }
+    
+    setIsApplyingFilters(true);
+    
+    try {
+      dispatch(updateFilters(validatedFilters));
+      const { activeSection } = store.getState().dashboard;
+      await dispatch(loadDashboardData({ filters: validatedFilters, activeSection })).unwrap();
+      console.log('✅ Filters applied successfully');
+    } catch (error) {
+      console.error('❌ Error applying filters:', error);
+      alert(`Error applying filters: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsApplyingFilters(false);
+    }
   };
 
   const resetFilters = () => {
@@ -577,19 +614,39 @@ const FilterBar = () => {
         <div className="flex justify-end mt-4">
           <button
             onClick={applyFilters}
-            disabled={!hasFilterChanges}
+            disabled={!hasFilterChanges || isApplyingFilters || loading}
             className="flex items-center px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Filter className="w-4 h-4 mr-2" />
-            Apply Filters
+            {isApplyingFilters || loading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                {isApplyingFilters ? 'Applying...' : 'Loading...'}
+              </>
+            ) : (
+              <>
+                <Filter className="w-4 h-4 mr-2" />
+                Apply Filters
+              </>
+            )}
           </button>
           <button
             onClick={resetFilters}
-            className="ml-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            disabled={isApplyingFilters || loading}
+            className="ml-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Reset Filters
           </button>
         </div>
+        
+        {/* Loading indicator */}
+        {(isApplyingFilters || loading) && (
+          <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="flex items-center text-sm text-blue-700 dark:text-blue-300">
+              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+              {isApplyingFilters ? 'Applying filters and loading data...' : 'Loading dashboard data...'}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Custom Date Range Modal */}
