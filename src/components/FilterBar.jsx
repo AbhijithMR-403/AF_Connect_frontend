@@ -232,7 +232,7 @@ const FilterBar = () => {
     const isOpen = dropdownStates[filterType];
     const [searchTerm, setSearchTerm] = useState('');
     
-    // Filter options based on search term and sort alphabetically
+    // Filter options based on search term and sort with "All" first, then selected options
     const filteredOptions = options
       .filter(option =>
         option.label.toLowerCase().includes(searchTerm.toLowerCase())
@@ -245,7 +245,14 @@ const FilterBar = () => {
         if (aIsAll && !bIsAll) return -1;
         if (!aIsAll && bIsAll) return 1;
         
-        // If both are "All" options or both are not "All" options, sort alphabetically
+        // If both are "All" options or both are not "All" options, selected options come next
+        const aIsSelected = selectedValues.includes(a.value);
+        const bIsSelected = selectedValues.includes(b.value);
+        
+        if (aIsSelected && !bIsSelected) return -1;
+        if (!aIsSelected && bIsSelected) return 1;
+        
+        // If both are selected or both are not selected, sort alphabetically
         return a.label.localeCompare(b.label);
       });
     

@@ -1,6 +1,24 @@
 import { config } from '../config/env.js';
 import { calculateDateRangeParams } from '../store/slices/dashboardSlice.js';
 
+// Utility function to build query string from params object
+// Arrays will be joined with commas instead of creating multiple parameters
+const buildQueryString = (paramsObj) => {
+  const esc = encodeURIComponent;
+  return Object.entries(paramsObj)
+    .flatMap(([key, value]) => {
+      if (Array.isArray(value)) {
+        // Join array values with commas instead of creating multiple parameters
+        return `${esc(key)}=${esc(value.join(','))}`;
+      } else if (value !== undefined && value !== null) {
+        return `${esc(key)}=${esc(value)}`;
+      } else {
+        return [];
+      }
+    })
+    .join('&');
+};
+
 // Utility function to transform lead source breakdown data
 const transformLeadSourceBreakdown = (breakdownData) => {
   if (!breakdownData || typeof breakdownData !== 'object') {
@@ -21,70 +39,7 @@ const transformLeadSourceBreakdown = (breakdownData) => {
     .sort((a, b) => b.value - a.value); // Sort by value descending
 };
 
-export const fetchDashboardData = async (filters) => {
-  return {}
-  // Build query parameters from filters
-  const buildQueryString = (paramsObj) => {
-    const esc = encodeURIComponent;
-    return Object.entries(paramsObj)
-      .flatMap(([key, value]) => {
-        if (Array.isArray(value)) {
-          return value.map(v => `${esc(key)}=${esc(v)}`);
-        } else if (value !== undefined && value !== null && value !== 'all') {
-          return `${esc(key)}=${esc(value)}`;
-        } else {
-          return [];
-        }
-      })
-      .join('&');
-  };
 
-  // Convert filters to API query parameters
-  const apiParams = {};
-  
-  if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
-    apiParams.assigned_to = filters.assignedUser;
-  }
-  if (filters.country && Array.isArray(filters.country) && !filters.country.includes('all')) {
-    apiParams.country = filters.country;
-  }
-  if (filters.club && Array.isArray(filters.club) && !filters.club.includes('all')) {
-    apiParams.location = filters.club;
-  }
-  if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
-    apiParams.lead_source = filters.leadSource;
-  }
-  if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
-    apiParams.pipeline_name = filters.pipeline;
-  }
-  // Handle date range filters using centralized logic
-  const { startDate, endDate } = calculateDateRangeParams(
-    filters.dateRange, 
-    filters.customStartDate, 
-    filters.customEndDate
-  );
-  
-  if (startDate && endDate) {
-    apiParams.raw_created_at_min = startDate;
-    apiParams.raw_created_at_max = endDate;
-  }
-
-  const queryString = buildQueryString(apiParams);
-  const url = `${config.api.baseUrl}/opportunity_dash/${queryString ? `?${queryString}` : ''}`;
-
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error('API request failed');
-  }
-
-  return response.json();
-};
 
 export const fetchUsers = async () => {
   try {
@@ -113,22 +68,6 @@ export const fetchUsers = async () => {
  * @returns {Promise<Object>} - The response JSON from the API.
  */
 export const fetchOpportunities = async (params = {}) => {
-  // Helper to build query string from params object
-  const buildQueryString = (paramsObj) => {
-    const esc = encodeURIComponent;
-    return Object.entries(paramsObj)
-      .flatMap(([key, value]) => {
-        if (Array.isArray(value)) {
-          return value.map(v => `${esc(key)}=${esc(v)}`);
-        } else if (value !== undefined && value !== null) {
-          return `${esc(key)}=${esc(value)}`;
-        } else {
-          return [];
-        }
-      })
-      .join('&');
-  };
-
   const queryString = buildQueryString(params);
   const url = `${config.api.baseUrl}/opportunities/${queryString ? `?${queryString}` : ''}`;
 
@@ -268,8 +207,8 @@ export const generateDashboardData = async (filters, activeSection = 0) => {
   // 0: Sales Pipeline, 1: Member Onboarding, 2: Defaulter Management, 3: Regional View
   const apiCalls = [];
   
-  // Always fetch basic dashboard data for valid lead sources
-  apiCalls.push(fetchDashboardData(validatedFilters));
+  // Always fetch valid lead sources
+  apiCalls.push(fetchValidLeadSources(validatedFilters));
   
   // Sales Pipeline (section 0) - needs all sales-related APIs
   if (activeSection === 0) {
@@ -303,7 +242,7 @@ export const generateDashboardData = async (filters, activeSection = 0) => {
     console.log('✅ All API calls completed successfully');
     
     // Extract responses based on what was called
-    let apiResponse = responses[0]; // fetchDashboardData is always first
+    let validLeadSourcesResponse = responses[0]; // fetchValidLeadSources is always first
     let memberOnboardingResponse = null;
     let defaulterResponse = null;
     let locationStatsResponse = null;
@@ -312,7 +251,7 @@ export const generateDashboardData = async (filters, activeSection = 0) => {
     let appointmentStatsResponse = null;
     let breakdownDataResponse = null;
     
-    let responseIndex = 1; // Start after fetchDashboardData
+    let responseIndex = 1; // Start after fetchValidLeadSources
     
     if (activeSection === 0) {
       salesMetricsResponse = responses[responseIndex++];
@@ -397,8 +336,8 @@ export const generateDashboardData = async (filters, activeSection = 0) => {
     };
 
     // Extract valid_lead_sources from API response (if present)
-    const validLeadSources = apiResponse.valid_lead_sources && typeof apiResponse.valid_lead_sources === 'object'
-      ? Object.entries(apiResponse.valid_lead_sources).map(([key, value]) => ({ value: value, label: key }))
+    const validLeadSources = validLeadSourcesResponse && typeof validLeadSourcesResponse === 'object'
+      ? Object.entries(validLeadSourcesResponse).map(([key, value]) => ({ value: value, label: key }))
       : [];
 
     // Use the dedicated location stats endpoint response
@@ -430,22 +369,6 @@ export const generateDashboardData = async (filters, activeSection = 0) => {
 
 export const fetchMemberOnboardingMetrics = async (filters) => {
   // Build query parameters from filters
-  const buildQueryString = (paramsObj) => {
-    const esc = encodeURIComponent;
-    return Object.entries(paramsObj)
-      .flatMap(([key, value]) => {
-        if (Array.isArray(value)) {
-          return value.map(v => `${esc(key)}=${esc(v)}`);
-        } else if (value !== undefined && value !== null && value !== 'all') {
-          return `${esc(key)}=${esc(value)}`;
-        } else {
-          return [];
-        }
-      })
-      .join('&');
-  };
-
-  // Convert filters to API query parameters
   const apiParams = {};
   
   if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
@@ -494,22 +417,6 @@ export const fetchMemberOnboardingMetrics = async (filters) => {
 
 export const fetchDefaulterMetrics = async (filters) => {
   // Build query parameters from filters
-  const buildQueryString = (paramsObj) => {
-    const esc = encodeURIComponent;
-    return Object.entries(paramsObj)
-      .flatMap(([key, value]) => {
-        if (Array.isArray(value)) {
-          return value.map(v => `${esc(key)}=${esc(v)}`);
-        } else if (value !== undefined && value !== null && value !== 'all') {
-          return `${esc(key)}=${esc(value)}`;
-        } else {
-          return [];
-        }
-      })
-      .join('&');
-  };
-
-  // Convert filters to API query parameters
   const apiParams = {};
   
   if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
@@ -558,22 +465,6 @@ export const fetchDefaulterMetrics = async (filters) => {
 
 export const fetchLocationStats = async (filters) => {
   // Build query parameters from filters
-  const buildQueryString = (paramsObj) => {
-    const esc = encodeURIComponent;
-    return Object.entries(paramsObj)
-      .flatMap(([key, value]) => {
-        if (Array.isArray(value)) {
-          return value.map(v => `${esc(key)}=${esc(v)}`);
-        } else if (value !== undefined && value !== null && value !== 'all') {
-          return `${esc(key)}=${esc(value)}`;
-        } else {
-          return [];
-        }
-      })
-      .join('&');
-  };
-
-  // Convert filters to API query parameters
   const apiParams = {};
   
   if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
@@ -622,22 +513,6 @@ export const fetchLocationStats = async (filters) => {
 
 export const fetchSalesMetrics = async (filters) => {
   // Build query parameters from filters
-  const buildQueryString = (paramsObj) => {
-    const esc = encodeURIComponent;
-    return Object.entries(paramsObj)
-      .flatMap(([key, value]) => {
-        if (Array.isArray(value)) {
-          return value.map(v => `${esc(key)}=${esc(v)}`);
-        } else if (value !== undefined && value !== null && value !== 'all') {
-          return `${esc(key)}=${esc(value)}`;
-        } else {
-          return [];
-        }
-      })
-      .join('&');
-  };
-
-  // Convert filters to API query parameters
   const apiParams = {};
   
   if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
@@ -686,22 +561,6 @@ export const fetchSalesMetrics = async (filters) => {
 
 export const fetchTrendData = async (filters) => {
   // Build query parameters from filters
-  const buildQueryString = (paramsObj) => {
-    const esc = encodeURIComponent;
-    return Object.entries(paramsObj)
-      .flatMap(([key, value]) => {
-        if (Array.isArray(value)) {
-          return value.map(v => `${esc(key)}=${esc(v)}`);
-        } else if (value !== undefined && value !== null && value !== 'all') {
-          return `${esc(key)}=${esc(value)}`;
-        } else {
-          return [];
-        }
-      })
-      .join('&');
-  };
-
-  // Convert filters to API query parameters
   const apiParams = {};
   
   if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
@@ -750,22 +609,6 @@ export const fetchTrendData = async (filters) => {
 
 export const fetchAppointmentStats = async (filters) => {
   // Build query parameters from filters
-  const buildQueryString = (paramsObj) => {
-    const esc = encodeURIComponent;
-    return Object.entries(paramsObj)
-      .flatMap(([key, value]) => {
-        if (Array.isArray(value)) {
-          return value.map(v => `${esc(key)}=${esc(v)}`);
-        } else if (value !== undefined && value !== null && value !== 'all') {
-          return `${esc(key)}=${esc(value)}`;
-        } else {
-          return [];
-        }
-      })
-      .join('&');
-  };
-
-  // Convert filters to API query parameters
   const apiParams = {};
   
   if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
@@ -814,22 +657,6 @@ export const fetchAppointmentStats = async (filters) => {
 
 export const fetchBreakdownData = async (filters) => {
   // Build query parameters from filters
-  const buildQueryString = (paramsObj) => {
-    const esc = encodeURIComponent;
-    return Object.entries(paramsObj)
-      .flatMap(([key, value]) => {
-        if (Array.isArray(value)) {
-          return value.map(v => `${esc(key)}=${esc(v)}`);
-        } else if (value !== undefined && value !== null && value !== 'all') {
-          return `${esc(key)}=${esc(value)}`;
-        } else {
-          return [];
-        }
-      })
-      .join('&');
-  };
-
-  // Convert filters to API query parameters
   const apiParams = {};
   
   if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
@@ -886,19 +713,6 @@ export const fetchBreakdownData = async (filters) => {
 export const fetchValidLeadSources = async (filters = {}) => {
   try {
     // Build query parameters for date range if provided
-    const buildQueryString = (paramsObj) => {
-      const esc = encodeURIComponent;
-      return Object.entries(paramsObj)
-        .flatMap(([key, value]) => {
-          if (value !== undefined && value !== null && value !== 'all') {
-            return `${esc(key)}=${esc(value)}`;
-          } else {
-            return [];
-          }
-        })
-        .join('&');
-    };
-
     const apiParams = {};
     
     // Handle date range filters using centralized logic
@@ -967,21 +781,6 @@ export const fetchValidLeadSources = async (filters = {}) => {
  * @returns {Promise<{blob: Blob, filename: string}>} - The CSV blob and filename (if available)
  */
 export const exportOpportunitiesCsv = async (params = {}) => {
-  const buildQueryString = (paramsObj) => {
-    const esc = encodeURIComponent;
-    return Object.entries(paramsObj)
-      .flatMap(([key, value]) => {
-        if (Array.isArray(value)) {
-          return value.map(v => `${esc(key)}=${esc(v)}`);
-        } else if (value !== undefined && value !== null) {
-          return `${esc(key)}=${esc(value)}`;
-        } else {
-          return [];
-        }
-      })
-      .join('&');
-  };
-
   const queryString = buildQueryString(params);
   const generateUrl = `${config.api.baseUrl}/opportunities/generate_csv/${queryString ? `?${queryString}` : ''}`;
 
@@ -1034,21 +833,6 @@ export const exportOpportunitiesCsv = async (params = {}) => {
 
 // Alternative function for direct external API calls (if needed)
 export const exportOpportunitiesCsvDirect = async (params = {}) => {
-  const buildQueryString = (paramsObj) => {
-    const esc = encodeURIComponent;
-    return Object.entries(paramsObj)
-      .flatMap(([key, value]) => {
-        if (Array.isArray(value)) {
-          return value.map(v => `${esc(key)}=${esc(v)}`);
-        } else if (value !== undefined && value !== null) {
-          return `${esc(key)}=${esc(value)}`;
-        } else {
-          return [];
-        }
-      })
-      .join('&');
-  };
-
   const queryString = buildQueryString(params);
   const generateUrl = `https://reports.anytimefitnesscorporate.com/api/opportunities/generate_csv/${queryString ? `?${queryString}` : ''}`;
 
