@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchDashboardData, generateDashboardData, fetchUsers, fetchClubsAndCountries, fetchMemberOnboardingMetrics, fetchDefaulterMetrics, fetchLocationStats, fetchSalesMetrics, fetchTrendData, fetchAppointmentStats, fetchBreakdownData, fetchValidLeadSources } from '../../services/api';
+import { fetchDashboardData, generateDashboardData, fetchUsers, fetchClubsAndCountries, fetchMemberOnboardingMetrics, fetchDefaulterMetrics, fetchLocationStats, fetchSalesMetrics, fetchTrendData, fetchAppointmentStats, fetchBreakdownData, fetchValidLeadSources, fetchPipelineNames } from '../../services/api';
 
 // Helper function to calculate date range parameters
 export const calculateDateRangeParams = (dateRange, customStartDate = null, customEndDate = null) => {
@@ -37,9 +37,9 @@ const initialState = {
     assignedUser: ['all'],
     dateRange: 'last-7-days',
     leadSource: ['all'],
+    pipeline: ['all'],
     customStartDate: null,
     customEndDate: null,
-    usePipelineFilter: false,
   },
   activeSection: 0, // 0: Sales Pipeline, 1: Member Onboarding, 2: Defaulter Management, 3: Regional View
   salesMetrics: null,
@@ -54,6 +54,9 @@ const initialState = {
   clubs: [], // Will be loaded from API
   clubsLoading: false,
   clubsError: null,
+  pipelines: [], // Will be loaded from API
+  pipelinesLoading: false,
+  pipelinesError: null,
   loading: false,
   error: null,
   lastUpdated: null,
@@ -213,6 +216,19 @@ export const loadValidLeadSources = createAsyncThunk(
   }
 );
 
+// Async thunk for fetching pipeline names
+export const loadPipelineNames = createAsyncThunk(
+  'dashboard/loadPipelineNames',
+  async (_, { rejectWithValue }) => {
+    try {
+      const data = await fetchPipelineNames();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 // Utility function to transform lead source breakdown data
 const transformLeadSourceBreakdown = (breakdownData) => {
   if (!breakdownData || typeof breakdownData !== 'object') {
@@ -241,38 +257,21 @@ const dashboardSlice = createSlice({
       // Validate and normalize filters before updating
       const newFilters = action.payload;
       
-      // Check if any global filter is being applied (other than pipeline filter)
-      const hasGlobalFilterChanges = (
-        (newFilters.country && JSON.stringify(newFilters.country) !== JSON.stringify(state.filters.country)) ||
-        (newFilters.club && JSON.stringify(newFilters.club) !== JSON.stringify(state.filters.club)) ||
-        (newFilters.assignedUser && JSON.stringify(newFilters.assignedUser) !== JSON.stringify(state.filters.assignedUser)) ||
-        (newFilters.dateRange && newFilters.dateRange !== state.filters.dateRange) ||
-        (newFilters.leadSource && JSON.stringify(newFilters.leadSource) !== JSON.stringify(state.filters.leadSource)) ||
-        (newFilters.customStartDate !== state.filters.customStartDate) ||
-        (newFilters.customEndDate !== state.filters.customEndDate)
-      );
-      
-      // If global filters are being applied, automatically uncheck the pipeline filter
-      const shouldUncheckPipelineFilter = hasGlobalFilterChanges && state.filters.usePipelineFilter;
-      
       state.filters = {
         country: Array.isArray(newFilters.country) ? newFilters.country : ['all'],
         club: Array.isArray(newFilters.club) ? newFilters.club : ['all'],
         assignedUser: Array.isArray(newFilters.assignedUser) ? newFilters.assignedUser : ['all'],
         dateRange: newFilters.dateRange || 'last-30-days',
         leadSource: Array.isArray(newFilters.leadSource) ? newFilters.leadSource : ['all'],
+        pipeline: Array.isArray(newFilters.pipeline) ? newFilters.pipeline : ['all'],
         customStartDate: newFilters.customStartDate || null,
         customEndDate: newFilters.customEndDate || null,
-        usePipelineFilter: shouldUncheckPipelineFilter ? false : (newFilters.usePipelineFilter !== undefined ? newFilters.usePipelineFilter : state.filters.usePipelineFilter),
       };
       // Reset loading state when filters change
       state.loading = false;
       state.error = null;
     },
-    updatePipelineFilter: (state, action) => {
-      // Update only the pipeline filter without affecting other filters
-      state.filters.usePipelineFilter = action.payload;
-    },
+
     updateActiveSection: (state, action) => {
       state.activeSection = action.payload;
     },
@@ -502,11 +501,23 @@ const dashboardSlice = createSlice({
        .addCase(loadValidLeadSources.rejected, (state, action) => {
          state.validLeadSourcesLoading = false;
          state.validLeadSourcesError = action.error.message || 'Failed to load valid lead sources';
+       })
+       .addCase(loadPipelineNames.pending, (state) => {
+         state.pipelinesLoading = true;
+         state.pipelinesError = null;
+       })
+       .addCase(loadPipelineNames.fulfilled, (state, action) => {
+         state.pipelinesLoading = false;
+         state.pipelines = action.payload;
+       })
+       .addCase(loadPipelineNames.rejected, (state, action) => {
+         state.pipelinesLoading = false;
+         state.pipelinesError = action.error.message || 'Failed to load pipeline names';
        });
   },
 });
 
-export const { updateFilters, updatePipelineFilter, updateActiveSection, clearError, resetDashboard } = dashboardSlice.actions;
+export const { updateFilters, updateActiveSection, clearError, resetDashboard } = dashboardSlice.actions;
 
 // Selector to get processed filters with calculated date ranges
 export const selectProcessedFilters = (state) => {

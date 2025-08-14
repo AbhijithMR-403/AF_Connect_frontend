@@ -54,6 +54,9 @@ export const fetchDashboardData = async (filters) => {
   if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
     apiParams.lead_source = filters.leadSource;
   }
+  if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
+    apiParams.pipeline_name = filters.pipeline;
+  }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
     filters.dateRange, 
@@ -254,6 +257,7 @@ export const generateDashboardData = async (filters, activeSection = 0) => {
     assignedUser: Array.isArray(filters.assignedUser) ? filters.assignedUser : ['all'],
     dateRange: filters.dateRange || 'last-30-days',
     leadSource: Array.isArray(filters.leadSource) ? filters.leadSource : ['all'],
+    pipeline: Array.isArray(filters.pipeline) ? filters.pipeline : ['all'],
     customStartDate: filters.customStartDate || null,
     customEndDate: filters.customEndDate || null,
   };
@@ -456,6 +460,9 @@ export const fetchMemberOnboardingMetrics = async (filters) => {
   if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
     apiParams.lead_source = filters.leadSource;
   }
+  if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
+    apiParams.pipeline_name = filters.pipeline;
+  }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
     filters.dateRange, 
@@ -516,6 +523,9 @@ export const fetchDefaulterMetrics = async (filters) => {
   }
   if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
     apiParams.lead_source = filters.leadSource;
+  }
+  if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
+    apiParams.pipeline_name = filters.pipeline;
   }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
@@ -578,6 +588,9 @@ export const fetchLocationStats = async (filters) => {
   if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
     apiParams.lead_source = filters.leadSource;
   }
+  if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
+    apiParams.pipeline_name = filters.pipeline;
+  }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
     filters.dateRange, 
@@ -638,6 +651,9 @@ export const fetchSalesMetrics = async (filters) => {
   }
   if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
     apiParams.lead_source = filters.leadSource;
+  }
+  if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
+    apiParams.pipeline_name = filters.pipeline;
   }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
@@ -700,6 +716,9 @@ export const fetchTrendData = async (filters) => {
   if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
     apiParams.lead_source = filters.leadSource;
   }
+  if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
+    apiParams.pipeline_name = filters.pipeline;
+  }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
     filters.dateRange, 
@@ -760,6 +779,9 @@ export const fetchAppointmentStats = async (filters) => {
   }
   if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
     apiParams.lead_source = filters.leadSource;
+  }
+  if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
+    apiParams.pipeline_name = filters.pipeline;
   }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
@@ -834,9 +856,9 @@ export const fetchBreakdownData = async (filters) => {
     apiParams.raw_created_at_max = endDate;
   }
   
-  // Add pipeline name parameter only if usePipelineFilter is true
-  if (filters.usePipelineFilter) {
-    apiParams.pipeline_name = 'AFC Sales Pipeline';
+  // Add pipeline name parameter if pipeline filter is specified
+  if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
+    apiParams.pipeline_name = filters.pipeline;
   }
 
   const queryString = buildQueryString(apiParams);
@@ -1059,4 +1081,26 @@ export const exportOpportunitiesCsvDirect = async (params = {}) => {
   document.body.removeChild(link);
 
   return { file_url, time_taken_seconds };
+};
+
+// Function to fetch pipeline names
+export const fetchPipelineNames = async () => {
+  try {
+    const response = await fetch(`${config.api.baseUrl}/pipelines/names/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch pipeline names: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.pipelines || [];
+  } catch (error) {
+    console.error('Error fetching pipeline names:', error);
+    throw error;
+  }
 };

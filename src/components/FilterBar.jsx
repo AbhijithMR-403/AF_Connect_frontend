@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, X, Check, Calendar, Filter } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../hooks';
-import { updateFilters, loadUsers, loadClubsAndCountries, loadDashboardData, loadValidLeadSources } from '../store/slices/dashboardSlice';
+import { updateFilters, loadUsers, loadClubsAndCountries, loadDashboardData, loadValidLeadSources, loadPipelineNames } from '../store/slices/dashboardSlice';
 import { store } from '../store';
 
 // Custom styles to hide scrollbars
@@ -27,7 +27,7 @@ const dropdownStyles = `
 
 const FilterBar = () => {
   const dispatch = useAppDispatch();
-  const { filters, countries, clubs, users, usersLoading, usersError, clubsLoading, clubsError, validLeadSources, validLeadSourcesLoading, validLeadSourcesError, isInitialized, loading } = useAppSelector((state) => state.dashboard);
+  const { filters, countries, clubs, users, usersLoading, usersError, clubsLoading, clubsError, validLeadSources, validLeadSourcesLoading, validLeadSourcesError, pipelines, pipelinesLoading, pipelinesError, isInitialized, loading } = useAppSelector((state) => state.dashboard);
   
   // State for dropdown visibility
   const [dropdownStates, setDropdownStates] = useState({
@@ -36,6 +36,7 @@ const FilterBar = () => {
     assignedUser: false,
     dateRange: false,
     leadSource: false,
+    pipeline: false,
   });
 
   // State for custom date range
@@ -56,6 +57,7 @@ const FilterBar = () => {
     dispatch(loadUsers());
     dispatch(loadClubsAndCountries());
     dispatch(loadValidLeadSources());
+    dispatch(loadPipelineNames());
   }, [dispatch]);
 
   // Initialize pending filters with current filters and keep them in sync
@@ -160,6 +162,7 @@ const FilterBar = () => {
       assignedUser: Array.isArray(pendingFilters.assignedUser) ? pendingFilters.assignedUser : ['all'],
       dateRange: pendingFilters.dateRange || 'last-30-days',
       leadSource: Array.isArray(pendingFilters.leadSource) ? pendingFilters.leadSource : ['all'],
+      pipeline: Array.isArray(pendingFilters.pipeline) ? pendingFilters.pipeline : ['all'],
       customStartDate: pendingFilters.customStartDate || null,
       customEndDate: pendingFilters.customEndDate || null,
     };
@@ -182,6 +185,9 @@ const FilterBar = () => {
     }
     if (!validatedFilters.leadSource || validatedFilters.leadSource.length === 0) {
       validationErrors.push('Lead Source filter is required');
+    }
+    if (!validatedFilters.pipeline || validatedFilters.pipeline.length === 0) {
+      validationErrors.push('Pipeline filter is required');
     }
     
     if (validationErrors.length > 0) {
@@ -212,6 +218,7 @@ const FilterBar = () => {
       assignedUser: ['all'],
       dateRange: 'last-30-days',
       leadSource: ['all'],
+      pipeline: ['all'],
       customStartDate: null,
       customEndDate: null,
     };
@@ -469,6 +476,16 @@ const FilterBar = () => {
       : []),
   ];
 
+  const pipelineOptions = [
+    { value: 'all', label: 'All Pipelines' },
+    ...(Array.isArray(pipelines) && pipelines.length > 0
+      ? pipelines.map(pipeline => ({
+          value: pipeline,
+          label: pipeline
+        }))
+      : []),
+  ];
+
   return (
     <>
       <style>{dropdownStyles}</style>
@@ -480,7 +497,7 @@ const FilterBar = () => {
           <h2 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">Filters</h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <MultiSelectDropdown
             label="Countries"
             filterType="country"
@@ -513,7 +530,6 @@ const FilterBar = () => {
             onChange={(value) => handleSingleSelectChange('dateRange', value)}
           />
           
-          {/* Change Lead Source to MultiSelectDropdown */}
           <MultiSelectDropdown
             label="Lead Source"
             filterType="leadSource"
@@ -521,6 +537,15 @@ const FilterBar = () => {
             selectedValues={Array.isArray(pendingFilters.leadSource) ? pendingFilters.leadSource : [pendingFilters.leadSource || 'all']}
             isLoading={validLeadSourcesLoading}
             error={validLeadSourcesError}
+          />
+
+          <MultiSelectDropdown
+            label="Pipeline"
+            filterType="pipeline"
+            options={pipelineOptions}
+            selectedValues={Array.isArray(pendingFilters.pipeline) ? pendingFilters.pipeline : [pendingFilters.pipeline || 'all']}
+            isLoading={pipelinesLoading}
+            error={pipelinesError}
           />
         </div>
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Calendar, Target, FileText, TrendingUp, AlertCircle, BarChart3, Phone, Eye } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../hooks';
-import { selectProcessedFilters, updatePipelineFilter, loadBreakdownData } from '../store/slices/dashboardSlice';
+import { selectProcessedFilters, loadBreakdownData } from '../store/slices/dashboardSlice';
 import ClickableMetricCard from './ClickableMetricCard';
 import ChartSection from './ChartSection';
 import TrendGraphs from './TrendGraphs';
@@ -30,13 +30,7 @@ const SalesPipeline = () => {
     return `${simplifiedNum}:${simplifiedDen}`;
   };
 
-  // Reload breakdown data when pipeline filter changes
-  useEffect(() => {
-    if (filters.usePipelineFilter !== undefined) {
-      // Trigger a reload of only the breakdown data when the pipeline filter changes
-      dispatch(loadBreakdownData(filters));
-    }
-  }, [filters.usePipelineFilter, dispatch]);
+
   const [modalData, setModalData] = useState({
     isOpen: false,
     title: '',
@@ -76,9 +70,8 @@ const SalesPipeline = () => {
     if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
       params.lead_source = convertLeadSourceKeysToValues(filters.leadSource);
     }
-    // Pipeline filter - add pipeline_name parameter when checkbox is checked
-    if (filters.usePipelineFilter) {
-      params.pipeline_name = 'AFC Sales Pipeline';
+    if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
+      params.pipeline_name = filters.pipeline;
     }
     // Date range - use calculated dates from slice
     if (filters.calculatedStartDate && filters.calculatedEndDate) {
@@ -434,17 +427,7 @@ const SalesPipeline = () => {
               <BarChart3 className="w-5 h-5 text-purple-600" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Lead Sources & Appointment Analysis</h3>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={filters.usePipelineFilter || false}
-                  onChange={(e) => dispatch(updatePipelineFilter(e.target.checked))}
-                  className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                />
-                <span>Use AFC Sales Pipeline Filter</span>
-              </label>
-            </div>
+
           </div>
           
           <ChartSection
