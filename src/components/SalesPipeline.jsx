@@ -88,16 +88,8 @@ const SalesPipeline = () => {
         }
       });
       
-      // Combine metric type pipeline with user filter pipeline
-      if (metricPipeline && userPipelineValues.length > 0) {
-        // If metric type has a specific pipeline, find intersection
-        const metricPipelineArray = Array.isArray(metricPipeline) ? metricPipeline : [metricPipeline];
-        const intersection = userPipelineValues.filter(pipeline => metricPipelineArray.includes(pipeline));
-        if (intersection.length > 0) {
-          params.pipeline_name = intersection;
-        }
-      } else if (userPipelineValues.length > 0) {
-        // If no metric type pipeline, use user filter
+      // Always use user filter when user has selected specific pipelines
+      if (userPipelineValues.length > 0) {
         params.pipeline_name = userPipelineValues;
       }
     } else if (metricPipeline) {
