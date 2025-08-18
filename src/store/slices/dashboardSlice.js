@@ -54,7 +54,7 @@ const initialState = {
   clubs: [], // Will be loaded from API
   clubsLoading: false,
   clubsError: null,
-  pipelines: [], // Will be loaded from API
+  pipelines: {}, // Will be loaded from API - now stores the full object with keys and values
   pipelinesLoading: false,
   pipelinesError: null,
   loading: false,

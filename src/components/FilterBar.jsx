@@ -155,6 +155,24 @@ const FilterBar = () => {
   };
 
   const applyFilters = async () => {
+    // Convert selected pipeline categories to their actual pipeline values for API call
+    let pipelineValues = ['all'];
+    if (Array.isArray(pendingFilters.pipeline) && !pendingFilters.pipeline.includes('all')) {
+      const selectedCategories = pendingFilters.pipeline;
+      const allPipelineValues = [];
+      
+      selectedCategories.forEach(category => {
+        const categoryData = pipelines[category];
+        if (categoryData && Array.isArray(categoryData)) {
+          allPipelineValues.push(...categoryData);
+        }
+      });
+      
+      if (allPipelineValues.length > 0) {
+        pipelineValues = allPipelineValues;
+      }
+    }
+    
     // Validate filters before applying
     const validatedFilters = {
       country: Array.isArray(pendingFilters.country) ? pendingFilters.country : ['all'],
@@ -162,7 +180,7 @@ const FilterBar = () => {
       assignedUser: Array.isArray(pendingFilters.assignedUser) ? pendingFilters.assignedUser : ['all'],
       dateRange: pendingFilters.dateRange || 'last-30-days',
       leadSource: Array.isArray(pendingFilters.leadSource) ? pendingFilters.leadSource : ['all'],
-      pipeline: Array.isArray(pendingFilters.pipeline) ? pendingFilters.pipeline : ['all'],
+      pipeline: pendingFilters.pipeline, // Keep original category selections for display
       customStartDate: pendingFilters.customStartDate || null,
       customEndDate: pendingFilters.customEndDate || null,
     };
@@ -199,9 +217,17 @@ const FilterBar = () => {
     setIsApplyingFilters(true);
     
     try {
+      // Update Redux state with original category selections (for display)
       dispatch(updateFilters(validatedFilters));
+      
+      // Create API filters with converted pipeline values
+      const apiFilters = {
+        ...validatedFilters,
+        pipeline: pipelineValues, // Use converted pipeline values for API calls
+      };
+      
       const { activeSection } = store.getState().dashboard;
-      await dispatch(loadDashboardData({ filters: validatedFilters, activeSection })).unwrap();
+      await dispatch(loadDashboardData({ filters: apiFilters, activeSection })).unwrap();
       console.log('✅ Filters applied successfully');
     } catch (error) {
       console.error('❌ Error applying filters:', error);
@@ -228,9 +254,17 @@ const FilterBar = () => {
     setIsApplyingFilters(true);
     
     try {
+      // Update Redux state with original category selections (for display)
       dispatch(updateFilters(defaultFilters));
+      
+      // Create API filters with converted pipeline values (for reset, this is still 'all')
+      const apiFilters = {
+        ...defaultFilters,
+        pipeline: ['all'], // Reset always uses 'all'
+      };
+      
       const { activeSection } = store.getState().dashboard;
-      await dispatch(loadDashboardData({ filters: defaultFilters, activeSection })).unwrap();
+      await dispatch(loadDashboardData({ filters: apiFilters, activeSection })).unwrap();
       console.log('✅ Filters reset and applied successfully');
     } catch (error) {
       console.error('❌ Error resetting filters:', error);
@@ -498,13 +532,18 @@ const FilterBar = () => {
       : []),
   ];
 
+  // Process pipeline data to show keys (categories) to user but use values for filtering
   const pipelineOptions = [
     { value: 'all', label: 'All Pipelines' },
-    ...(Array.isArray(pipelines) && pipelines.length > 0
-      ? pipelines.map(pipeline => ({
-          value: pipeline,
-          label: pipeline
-        }))
+    ...(pipelines && typeof pipelines === 'object' && !Array.isArray(pipelines)
+      ? Object.entries(pipelines)
+          .filter(([key, value]) => Array.isArray(value) && value.length > 0)
+          .map(([key, value]) => ({
+            value: key, // Use the key as the value for the dropdown
+            label: key, // Display the key to the user
+            pipelineValues: value // The array of pipeline names for this category
+          }))
+          .sort((a, b) => a.label.localeCompare(b.label))
       : []),
   ];
 

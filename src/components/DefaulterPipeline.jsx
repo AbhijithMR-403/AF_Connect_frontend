@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AlertTriangle, MessageCircle, DollarSign, TrendingDown } from 'lucide-react';
 import { useAppSelector } from '../hooks';
+import { store } from '../store';
 import OpportunityModal from './OpportunityModal';
 import { fetchOpportunities, normalizeOpportunitiesResponse } from '../services/api';
 import metricTypeConfigs from '../config/metricTypes';
@@ -58,12 +59,49 @@ const DefaulterPipeline = () => {
     if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
       params.lead_source = filters.leadSource;
     }
+    
+    // Handle pipeline filtering - combine metric type config with user filter
+    const metricConfig = metricTypeConfigs[metricTypeKey] || {};
+    const metricPipeline = metricConfig.pipeline_name;
+    
+    if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
+      // Convert user's pipeline categories to their actual pipeline values
+      const { pipelines } = store.getState().dashboard;
+      const userPipelineValues = [];
+      
+      filters.pipeline.forEach(category => {
+        const categoryData = pipelines[category];
+        if (categoryData && Array.isArray(categoryData)) {
+          userPipelineValues.push(...categoryData);
+        }
+      });
+      
+      // Combine metric type pipeline with user filter pipeline
+      if (metricPipeline && userPipelineValues.length > 0) {
+        // If metric type has a specific pipeline, find intersection
+        const metricPipelineArray = Array.isArray(metricPipeline) ? metricPipeline : [metricPipeline];
+        const intersection = userPipelineValues.filter(pipeline => metricPipelineArray.includes(pipeline));
+        if (intersection.length > 0) {
+          params.pipeline_name = intersection;
+        }
+      } else if (userPipelineValues.length > 0) {
+        // If no metric type pipeline, use user filter
+        params.pipeline_name = userPipelineValues;
+      }
+    } else if (metricPipeline) {
+      // If no user filter but metric type has pipeline, use metric type pipeline
+      params.pipeline_name = metricPipeline;
+    }
+    
     if (filters.dateRange === 'custom-range' && filters.customStartDate && filters.customEndDate) {
       params.created_at_min = filters.customStartDate;
       params.created_at_max = filters.customEndDate;
     }
+    // Metric-specific params from config (but don't override pipeline_name if we set it above)
     if (metricTypeConfigs[metricTypeKey]) {
-      Object.assign(params, metricTypeConfigs[metricTypeKey]);
+      const configWithoutPipeline = { ...metricTypeConfigs[metricTypeKey] };
+      delete configWithoutPipeline.pipeline_name; // Don't override our pipeline logic
+      Object.assign(params, configWithoutPipeline);
     }
     return params;
   };

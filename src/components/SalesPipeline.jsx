@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Calendar, Target, FileText, TrendingUp, AlertCircle, BarChart3, Phone, Eye } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../hooks';
 import { selectProcessedFilters, loadBreakdownData } from '../store/slices/dashboardSlice';
+import { store } from '../store';
 import ClickableMetricCard from './ClickableMetricCard';
 import ChartSection from './ChartSection';
 import TrendGraphs from './TrendGraphs';
@@ -70,18 +71,51 @@ const SalesPipeline = () => {
     if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
       params.lead_source = convertLeadSourceKeysToValues(filters.leadSource);
     }
+    
+    // Handle pipeline filtering - combine metric type config with user filter
+    const metricConfig = metricTypeConfigs[metricType] || {};
+    const metricPipeline = metricConfig.pipeline_name;
+    
     if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
-      params.pipeline_name = filters.pipeline;
+      // Convert user's pipeline categories to their actual pipeline values
+      const { pipelines } = store.getState().dashboard;
+      const userPipelineValues = [];
+      
+      filters.pipeline.forEach(category => {
+        const categoryData = pipelines[category];
+        if (categoryData && Array.isArray(categoryData)) {
+          userPipelineValues.push(...categoryData);
+        }
+      });
+      
+      // Combine metric type pipeline with user filter pipeline
+      if (metricPipeline && userPipelineValues.length > 0) {
+        // If metric type has a specific pipeline, find intersection
+        const metricPipelineArray = Array.isArray(metricPipeline) ? metricPipeline : [metricPipeline];
+        const intersection = userPipelineValues.filter(pipeline => metricPipelineArray.includes(pipeline));
+        if (intersection.length > 0) {
+          params.pipeline_name = intersection;
+        }
+      } else if (userPipelineValues.length > 0) {
+        // If no metric type pipeline, use user filter
+        params.pipeline_name = userPipelineValues;
+      }
+    } else if (metricPipeline) {
+      // If no user filter but metric type has pipeline, use metric type pipeline
+      params.pipeline_name = metricPipeline;
     }
+    
     // Date range - use calculated dates from slice
     if (filters.calculatedStartDate && filters.calculatedEndDate) {
       const dateField = metricTypeConfigs[metricType]?.dateField || 'raw_created_at';
       params[`${dateField}_min`] = filters.calculatedStartDate;
       params[`${dateField}_max`] = filters.calculatedEndDate;
     }
-    // Metric-specific params from config
+    // Metric-specific params from config (but don't override pipeline_name if we set it above)
     if (metricTypeConfigs[metricType]) {
-      Object.assign(params, metricTypeConfigs[metricType]);
+      const configWithoutPipeline = { ...metricTypeConfigs[metricType] };
+      delete configWithoutPipeline.pipeline_name; // Don't override our pipeline logic
+      Object.assign(params, configWithoutPipeline);
     }
     // Limit
     if (count) params.limit = Math.min(count, 50);

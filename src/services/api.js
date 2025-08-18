@@ -870,7 +870,8 @@ export const exportOpportunitiesCsvDirect = async (params = {}) => {
 // Function to fetch pipeline names
 export const fetchPipelineNames = async () => {
   try {
-    const response = await fetch(`${config.api.baseUrl}/pipelines/names/`, {
+    // Use the new API endpoint as specified by the user
+    const response = await fetch('https://reports.anytimefitnesscorporate.com/api/pipelines/names/', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -882,9 +883,45 @@ export const fetchPipelineNames = async () => {
     }
 
     const data = await response.json();
-    return data.pipelines || [];
+    
+    // Handle the new response format
+    // The API returns an object with pipeline categories as keys and arrays of pipeline names as values
+    if (data && typeof data === 'object') {
+      // Return the entire data object so we can access both keys and values
+      return data;
+    }
+    
+    return {};
   } catch (error) {
     console.error('Error fetching pipeline names:', error);
+    throw error;
+  }
+};
+
+// Function to fetch pipeline stages (if needed in the future)
+export const fetchPipelineStages = async () => {
+  try {
+    const response = await fetch('https://reports.anytimefitnesscorporate.com/api/pipelines/names/', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch pipeline stages: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Return stages if available
+    if (data && data.stages && Array.isArray(data.stages)) {
+      return data.stages.sort();
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Error fetching pipeline stages:', error);
     throw error;
   }
 };
