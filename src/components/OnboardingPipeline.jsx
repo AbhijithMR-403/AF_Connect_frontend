@@ -4,11 +4,12 @@ import { useAppSelector } from '../hooks';
 import OpportunityModal from './OpportunityModal';
 import { fetchOpportunities, normalizeOpportunitiesResponse } from '../services/api';
 import metricTypeConfigs from '../config/metricTypes';
+import { calculateDateRangeParams } from '../store/slices/dashboardSlice';
 
 const PAGE_SIZE = 10;
 
 const OnboardingPipeline = () => {
-  const { onboardingMetrics, salesMetrics, countries, loading } = useAppSelector((state) => state.dashboard);
+  const { onboardingMetrics, salesMetrics, countries, loading, filters } = useAppSelector((state) => state.dashboard);
   const [modalData, setModalData] = useState({
     isOpen: false,
     title: '',
@@ -44,6 +45,44 @@ const OnboardingPipeline = () => {
     ],
   };
 
+  // Helper to map filters to API params (similar to DefaulterPipeline)
+  const buildOpportunityParams = (metricTypeKey) => {
+    const params = {};
+    if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
+      params.assigned_to = filters.assignedUser;
+    }
+    if (filters.country && Array.isArray(filters.country) && !filters.country.includes('all')) {
+      params.country = filters.country;
+    }
+    if (filters.club && Array.isArray(filters.club) && !filters.club.includes('all')) {
+      params.location = filters.club;
+    }
+    if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
+      params.lead_source = filters.leadSource;
+    }
+    if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
+      params.pipeline_name = filters.pipeline;
+    }
+    
+    // Handle date range filters using centralized logic
+    const { startDate, endDate } = calculateDateRangeParams(
+      filters.dateRange, 
+      filters.customStartDate, 
+      filters.customEndDate
+    );
+    
+    if (startDate && endDate) {
+      params.raw_created_at_min = startDate;
+      params.raw_created_at_max = endDate;
+    }
+    
+    // Metric-specific params from config
+    if (metricTypeConfigs[metricTypeKey]) {
+      Object.assign(params, metricTypeConfigs[metricTypeKey]);
+    }
+    return params;
+  };
+
   const openTabbedModal = async (metricType, title, tabIdx = 0, page = 1) => {
     const tabTypes = onboardingTabTypesMap[metricType];
     setModalData((prev) => ({ ...prev, isOpen: true, title }));
@@ -51,9 +90,12 @@ const OnboardingPipeline = () => {
     setModalError(null);
     setActiveTab(tabIdx);
     try {
-      const results = await Promise.all(tabTypes.map((tab, idx) =>
-        fetchOpportunities({ ...metricTypeConfigs[tab.metricType], page: tabbedPages[tab.tabKey] || 1 })
-      ));
+      const results = await Promise.all(tabTypes.map((tab, idx) => {
+        const params = buildOpportunityParams(tab.metricType);
+        params.page = tabbedPages[tab.tabKey] || 1;
+        console.log(`🔍 OnboardingPipeline API params for ${tab.metricType}:`, params);
+        return fetchOpportunities(params);
+      }));
       setModalTabs(tabTypes.map((tab, idx) => ({
         label: tab.label,
         data: normalizeOpportunitiesResponse(results[idx], countries),

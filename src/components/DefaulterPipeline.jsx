@@ -5,6 +5,7 @@ import { store } from '../store';
 import OpportunityModal from './OpportunityModal';
 import { fetchOpportunities, normalizeOpportunitiesResponse } from '../services/api';
 import metricTypeConfigs from '../config/metricTypes';
+import { calculateDateRangeParams } from '../store/slices/dashboardSlice';
 
 const PAGE_SIZE = 10;
 
@@ -76,8 +77,16 @@ const DefaulterPipeline = () => {
         }
       });
       
-      // Always use user filter when user has selected specific pipelines
-      if (userPipelineValues.length > 0) {
+      // Combine metric type pipeline with user filter pipeline
+      if (metricPipeline && userPipelineValues.length > 0) {
+        // If metric type has a specific pipeline, find intersection
+        const metricPipelineArray = Array.isArray(metricPipeline) ? metricPipeline : [metricPipeline];
+        const intersection = userPipelineValues.filter(pipeline => metricPipelineArray.includes(pipeline));
+        if (intersection.length > 0) {
+          params.pipeline_name = intersection;
+        }
+      } else if (userPipelineValues.length > 0) {
+        // If no metric type pipeline, use user filter
         params.pipeline_name = userPipelineValues;
       }
     } else if (metricPipeline) {
@@ -85,9 +94,16 @@ const DefaulterPipeline = () => {
       params.pipeline_name = metricPipeline;
     }
     
-    if (filters.dateRange === 'custom-range' && filters.customStartDate && filters.customEndDate) {
-      params.created_at_min = filters.customStartDate;
-      params.created_at_max = filters.customEndDate;
+    // Handle date range filters using centralized logic
+    const { startDate, endDate } = calculateDateRangeParams(
+      filters.dateRange, 
+      filters.customStartDate, 
+      filters.customEndDate
+    );
+    
+    if (startDate && endDate) {
+      params.raw_created_at_min = startDate;
+      params.raw_created_at_max = endDate;
     }
     // Metric-specific params from config (but don't override pipeline_name if we set it above)
     if (metricTypeConfigs[metricTypeKey]) {
