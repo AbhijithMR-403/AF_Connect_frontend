@@ -305,8 +305,33 @@ const FilterBar = () => {
     const isOpen = dropdownStates[filterType];
     const [searchTerm, setSearchTerm] = useState('');
     
+    // Special handling for clubs dropdown to show selected clubs from different countries
+    let filteredOptions = options;
+    if (filterType === 'club') {
+      // Get selected clubs that might not be in the current filtered options
+      const selectedClubsNotInOptions = selectedValues.filter(value => 
+        value !== 'all' && !options.some(option => option.value === value)
+      );
+      
+      // If we have selected clubs not in current options, add them with special styling
+      if (selectedClubsNotInOptions.length > 0) {
+        const selectedClubsData = selectedClubsNotInOptions.map(clubId => {
+          const club = clubs.find(c => c.id === clubId);
+          return {
+            value: clubId,
+            label: club ? club.name : `Club ${clubId}`,
+            isFromDifferentCountry: true,
+            countryName: club ? club.countryDisplay : 'Unknown Country'
+          };
+        });
+        
+        // Combine selected clubs from different countries with current options
+        filteredOptions = [...selectedClubsData, ...options];
+      }
+    }
+    
     // Filter options based on search term and sort with "All" first, then selected options
-    const filteredOptions = options
+    filteredOptions = filteredOptions
       .filter(option =>
         option.label.toLowerCase().includes(searchTerm.toLowerCase())
       )
@@ -417,21 +442,62 @@ const FilterBar = () => {
                     ) : (
                       filteredOptions.map((option) => {
                         const isSelected = selectedValues.includes(option.value);
+                        const isFromDifferentCountry = option.isFromDifferentCountry;
+                        
                         return (
                           <button
                             key={option.value}
                             onClick={() => handleMultiSelectChange(filterType, option.value)}
                             className={`w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                              isSelected ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'
+                              isSelected 
+                                ? isFromDifferentCountry 
+                                  ? 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-l-2 border-orange-400' 
+                                  : 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                                : isFromDifferentCountry
+                                  ? 'bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-l-2 border-orange-300'
+                                  : 'text-gray-700 dark:text-gray-300'
                             }`}
+                            title={isFromDifferentCountry ? `This club is from ${option.countryName} (not in currently selected countries)` : option.label}
                           >
-                            <span className="truncate flex-1 text-left" title={option.label}>{option.label}</span>
-                            {isSelected && <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 ml-2" />}
+                            <div className="flex items-center flex-1 text-left">
+                              <span className="truncate" title={option.label}>{option.label}</span>
+                              {isFromDifferentCountry && (
+                                <span className="ml-2 px-1.5 py-0.5 text-xs bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 rounded border border-orange-200 dark:border-orange-700">
+                                  {option.countryName}
+                                </span>
+                              )}
+                            </div>
+                            {isSelected && (
+                              <Check className={`w-4 h-4 flex-shrink-0 ml-2 ${
+                                isFromDifferentCountry 
+                                  ? 'text-orange-600 dark:text-orange-400' 
+                                  : 'text-blue-600 dark:text-blue-400'
+                              }`} />
+                            )}
                           </button>
                         );
                       })
                     )}
                   </div>
+                  
+                  {/* Warning message for clubs from different countries */}
+                  {filterType === 'club' && selectedValues.some(value => {
+                    if (value === 'all') return false;
+                    const club = clubs.find(c => c.id === value);
+                    return club && selectedCountryNames && !selectedCountryNames.includes(club.countryDisplay);
+                  }) && (
+                    <div className="border-t border-gray-200 dark:border-gray-600 p-2 bg-orange-50 dark:bg-orange-900/20">
+                      <div className="flex items-start gap-2 text-xs text-orange-700 dark:text-orange-300">
+                        <div className="w-4 h-4 mt-0.5 flex-shrink-0">⚠️</div>
+                                                 <div>
+                           <p className="font-medium">Cross-country clubs selected</p>
+                           <p className="text-orange-600 dark:text-orange-400 mt-0.5">
+                             These clubs will be included in your results.
+                           </p>
+                         </div>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
