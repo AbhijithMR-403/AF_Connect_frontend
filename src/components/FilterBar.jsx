@@ -277,6 +277,30 @@ const FilterBar = () => {
   // Check if filters have changed
   const hasFilterChanges = JSON.stringify(pendingFilters) !== JSON.stringify(filters);
 
+  // Helper function to get singular form of labels
+  const getSingularForm = (label) => {
+    const singularMap = {
+      'Country': 'Country',
+      'Clubs': 'Club',
+      'Assigned Users': 'Assigned User',
+      'Source': 'Source',
+      'Pipeline': 'Pipeline'
+    };
+    return singularMap[label] || label;
+  };
+
+  // Helper function to get plural form of labels
+  const getPluralForm = (label) => {
+    const pluralMap = {
+      'Country': 'Countries',
+      'Club': 'Clubs',
+      'Assigned User': 'Assigned Users',
+      'Source': 'Sources',
+      'Pipeline': 'Pipelines'
+    };
+    return pluralMap[label] || label;
+  };
+
   const MultiSelectDropdown = ({ label, filterType, options, selectedValues = [], isLoading = false, error = null }) => {
     const isOpen = dropdownStates[filterType];
     const [searchTerm, setSearchTerm] = useState('');
@@ -340,11 +364,11 @@ const FilterBar = () => {
             </span>
           ) : selectedValues.includes('all') ? (
             <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-              All {label}
+              All {getPluralForm(getSingularForm(label))}
             </span>
           ) : selectedValues.length > 0 ? (
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-              {selectedValues.length} {selectedValues.length === 1 ? label.slice(0, -1) : label} selected
+              {selectedValues.length} {selectedValues.length === 1 ? getSingularForm(label) : getPluralForm(getSingularForm(label))} selected
             </span>
           ) : (
             <span className="text-xs text-gray-500 dark:text-gray-400">No {label.toLowerCase()} selected</span>
@@ -560,7 +584,7 @@ const FilterBar = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <MultiSelectDropdown
-            label="Countries"
+            label="Country"
             filterType="country"
             options={countryOptions}
             selectedValues={Array.isArray(pendingFilters.country) ? pendingFilters.country : [pendingFilters.country]}
@@ -592,7 +616,7 @@ const FilterBar = () => {
           />
           
           <MultiSelectDropdown
-            label="Lead Source"
+            label="Source"
             filterType="leadSource"
             options={leadSourceOptions}
             selectedValues={Array.isArray(pendingFilters.leadSource) ? pendingFilters.leadSource : [pendingFilters.leadSource || 'all']}
