@@ -341,6 +341,9 @@ const SalesPipeline = () => {
       opportunities: [],
       totalCount: 0,
     });
+    // Reset page state when modal is closed
+    setCurrentPage(1);
+    setTabbedPages({ online: 1, offline: 1, njm: 1, lead: 1, appointment: 1 });
   };
 
   if (!salesMetrics) {

@@ -256,7 +256,11 @@ const DefaulterPipeline = () => {
     }
   };
 
-  const closeModal = () => setModalData({ ...modalData, isOpen: false });
+  const closeModal = () => {
+    setModalData({ ...modalData, isOpen: false });
+    // Reset page state when modal is closed
+    setCurrentPage(1);
+  };
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors duration-200">

@@ -160,6 +160,8 @@ const OnboardingPipeline = () => {
     setModalTabs([]);
     setModalLoading(false);
     setModalError(null);
+    // Reset page state when modal is closed
+    setTabbedPages({ agreement: 1, apps: 1, gofast: 1, afresults: 1 });
   };
 
   // Show loading state when data is being fetched or when data doesn't exist
