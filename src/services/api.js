@@ -1,5 +1,6 @@
 import { config } from '../config/env.js';
 import { calculateDateRangeParams } from '../store/slices/dashboardSlice.js';
+import { store } from '../store';
 
 // Utility function to build query string from params object
 // Arrays will be joined with commas instead of creating multiple parameters
@@ -37,6 +38,25 @@ const transformLeadSourceBreakdown = (breakdownData) => {
       percentage: total > 0 ? Number(((value || 0) / total * 100).toFixed(1)) : 0
     }))
     .sort((a, b) => b.value - a.value); // Sort by value descending
+};
+
+// Helper function to convert pipeline categories to actual pipeline names
+const convertPipelineCategoriesToNames = (pipelineCategories) => {
+  if (!Array.isArray(pipelineCategories) || pipelineCategories.includes('all')) {
+    return null;
+  }
+  
+  const { pipelines } = store.getState().dashboard;
+  const pipelineNames = [];
+  
+  pipelineCategories.forEach(category => {
+    const categoryData = pipelines[category];
+    if (categoryData && Array.isArray(categoryData)) {
+      pipelineNames.push(...categoryData);
+    }
+  });
+  
+  return pipelineNames.length > 0 ? pipelineNames : null;
 };
 
 
@@ -384,7 +404,10 @@ export const fetchMemberOnboardingMetrics = async (filters) => {
     apiParams.lead_source = filters.leadSource;
   }
   if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
-    apiParams.pipeline_name = filters.pipeline;
+    const pipelineNames = convertPipelineCategoriesToNames(filters.pipeline);
+    if (pipelineNames) {
+      apiParams.pipeline_name = pipelineNames;
+    }
   }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
@@ -432,7 +455,10 @@ export const fetchDefaulterMetrics = async (filters) => {
     apiParams.lead_source = filters.leadSource;
   }
   if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
-    apiParams.pipeline_name = filters.pipeline;
+    const pipelineNames = convertPipelineCategoriesToNames(filters.pipeline);
+    if (pipelineNames) {
+      apiParams.pipeline_name = pipelineNames;
+    }
   }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
@@ -480,7 +506,10 @@ export const fetchLocationStats = async (filters) => {
     apiParams.lead_source = filters.leadSource;
   }
   if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
-    apiParams.pipeline_name = filters.pipeline;
+    const pipelineNames = convertPipelineCategoriesToNames(filters.pipeline);
+    if (pipelineNames) {
+      apiParams.pipeline_name = pipelineNames;
+    }
   }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
@@ -528,7 +557,10 @@ export const fetchSalesMetrics = async (filters) => {
     apiParams.lead_source = filters.leadSource;
   }
   if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
-    apiParams.pipeline_name = filters.pipeline;
+    const pipelineNames = convertPipelineCategoriesToNames(filters.pipeline);
+    if (pipelineNames) {
+      apiParams.pipeline_name = pipelineNames;
+    }
   }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
@@ -576,7 +608,10 @@ export const fetchTrendData = async (filters) => {
     apiParams.lead_source = filters.leadSource;
   }
   if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
-    apiParams.pipeline_name = filters.pipeline;
+    const pipelineNames = convertPipelineCategoriesToNames(filters.pipeline);
+    if (pipelineNames) {
+      apiParams.pipeline_name = pipelineNames;
+    }
   }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
@@ -624,7 +659,10 @@ export const fetchAppointmentStats = async (filters) => {
     apiParams.lead_source = filters.leadSource;
   }
   if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
-    apiParams.pipeline_name = filters.pipeline;
+    const pipelineNames = convertPipelineCategoriesToNames(filters.pipeline);
+    if (pipelineNames) {
+      apiParams.pipeline_name = pipelineNames;
+    }
   }
   // Handle date range filters using centralized logic
   const { startDate, endDate } = calculateDateRangeParams(
@@ -685,7 +723,10 @@ export const fetchBreakdownData = async (filters) => {
   
   // Add pipeline name parameter if pipeline filter is specified
   if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
-    apiParams.pipeline_name = filters.pipeline;
+    const pipelineNames = convertPipelineCategoriesToNames(filters.pipeline);
+    if (pipelineNames) {
+      apiParams.pipeline_name = pipelineNames;
+    }
   }
 
   const queryString = buildQueryString(apiParams);

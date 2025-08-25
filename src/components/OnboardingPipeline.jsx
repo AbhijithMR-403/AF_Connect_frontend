@@ -5,6 +5,7 @@ import OpportunityModal from './OpportunityModal';
 import { fetchOpportunities, normalizeOpportunitiesResponse } from '../services/api';
 import metricTypeConfigs from '../config/metricTypes';
 import { calculateDateRangeParams } from '../store/slices/dashboardSlice';
+import { store } from '../store';
 
 const PAGE_SIZE = 10;
 
@@ -61,7 +62,35 @@ const OnboardingPipeline = () => {
       params.lead_source = filters.leadSource;
     }
     if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
-      params.pipeline_name = filters.pipeline;
+      // Convert user's pipeline categories to their actual pipeline values
+      const { pipelines } = store.getState().dashboard;
+      const userPipelineValues = [];
+      
+      filters.pipeline.forEach(category => {
+        const categoryData = pipelines[category];
+        if (categoryData && Array.isArray(categoryData)) {
+          userPipelineValues.push(...categoryData);
+        }
+      });
+      
+      if (userPipelineValues.length > 0) {
+        params.pipeline_name = userPipelineValues;
+      }
+    } else {
+      // If no user filter, use metric type pipeline
+      const metricConfig = metricTypeConfigs[metricTypeKey] || {};
+      const metricPipeline = metricConfig.pipeline_name;
+      if (metricPipeline) {
+        // Get the actual pipeline names from the API response
+        const { pipelines } = store.getState().dashboard;
+        const metricPipelineData = pipelines[metricPipeline];
+        if (metricPipelineData && Array.isArray(metricPipelineData)) {
+          params.pipeline_name = metricPipelineData;
+        } else {
+          // Fallback to the original pipeline name if not found in API response
+          params.pipeline_name = metricPipeline;
+        }
+      }
     }
     
     // Handle date range filters using centralized logic
@@ -78,7 +107,9 @@ const OnboardingPipeline = () => {
     
     // Metric-specific params from config
     if (metricTypeConfigs[metricTypeKey]) {
-      Object.assign(params, metricTypeConfigs[metricTypeKey]);
+      const configWithoutPipeline = { ...metricTypeConfigs[metricTypeKey] };
+      delete configWithoutPipeline.pipeline_name; // Don't override our pipeline logic
+      Object.assign(params, configWithoutPipeline);
     }
     return params;
   };

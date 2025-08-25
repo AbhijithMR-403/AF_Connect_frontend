@@ -94,7 +94,15 @@ const SalesPipeline = () => {
       }
     } else if (metricPipeline) {
       // If no user filter but metric type has pipeline, use metric type pipeline
-      params.pipeline_name = metricPipeline;
+      // Get the actual pipeline names from the API response
+      const { pipelines } = store.getState().dashboard;
+      const metricPipelineData = pipelines[metricPipeline];
+      if (metricPipelineData && Array.isArray(metricPipelineData)) {
+        params.pipeline_name = metricPipelineData;
+      } else {
+        // Fallback to the original pipeline name if not found in API response
+        params.pipeline_name = metricPipeline;
+      }
     }
     
     // Date range - use calculated dates from slice
