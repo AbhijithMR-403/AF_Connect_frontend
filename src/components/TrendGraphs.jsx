@@ -120,7 +120,7 @@ const TrendGraphs = () => {
             </span>
           </div>
           <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-            Current {activeView.slice(0, -2)} period
+            Current {activeView} period
           </p>
         </div>
 
@@ -136,7 +136,7 @@ const TrendGraphs = () => {
             </span>
           </div>
           <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-            Current {activeView.slice(0, -2)} period
+            Current {activeView} period
           </p>
         </div>
 
@@ -152,7 +152,7 @@ const TrendGraphs = () => {
             </span>
           </div>
           <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
-            Current {activeView.slice(0, -2)} period
+            Current {activeView} period
           </p>
         </div>
       </div>
