@@ -534,7 +534,7 @@ const FilterBar = () => {
         {/* Current selection display BELOW the dropdown button */}
         <div className="mt-2 min-h-[24px]">
           <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 max-w-full">
-            <span className="truncate max-w-[100px] sm:max-w-[120px] lg:max-w-[140px]">{getDisplayValue()}</span>
+            <span className="truncate max-w-[150px] sm:max-w-[180px] lg:max-w-[200px]" title={getDisplayValue()}>{getDisplayValue()}</span>
           </span>
         </div>
         
