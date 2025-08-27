@@ -6,27 +6,27 @@ const metricTypeConfigs = {
     dateField: 'membership_signup_date',
   },
   'total-appointments': {
-    // pipeline_name: 'AFC Sales Pipeline',
+    pipeline_name: 'AFC Sales Pipeline', //
     dateField: 'event_created_on',
     // appointment_status: ['new', 'noshow', 'confirmed', 'showed', 'cancelled'],
   },
   
   'leads-without-tags': {
-    // pipeline_name: 'AFC Sales Pipeline',
+    pipeline_name: 'AFC Sales Pipeline', //
     contact_tags: 5,
   },
   'total-leads': {
   },
   'online-leads': {
-    // pipeline_name: 'AFC Sales Pipeline',
+    pipeline_name: 'AFC Sales Pipeline', //
     contact_tags: 3,
   },
   'offline-leads': {
-    // pipeline_name: 'AFC Sales Pipeline',
+    pipeline_name: 'AFC Sales Pipeline', //
     contact_tags: 1,
   },
   'contacted-njms': {
-    // pipeline_name: 'AFC Sales Pipeline',
+    pipeline_name: 'AFC Sales Pipeline', //
     stage_name: 'Initiate Contact',
     // status: 'won',
   },
@@ -67,13 +67,13 @@ const metricTypeConfigs = {
     // stage_name: 'Sale',
   },
   'lead-source': {
-    // pipeline_name: 'AFC Sales Pipeline',
+    pipeline_name: 'AFC Sales Pipeline', //
   },
   'appointment-status': {
-    // pipeline_name: 'AFC Sales Pipeline',
+    pipeline_name: 'AFC Sales Pipeline', //
   },
   'shown-appointments': {
-    // pipeline_name: 'AFC Sales Pipeline',
+    pipeline_name: 'AFC Sales Pipeline', //
     appointment_status: 'showed',
   },
   // Add more metric types here as needed

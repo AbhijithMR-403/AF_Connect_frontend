@@ -389,7 +389,19 @@ const FilterBar = () => {
             </span>
           ) : selectedValues.includes('all') ? (
             <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-              All {getPluralForm(getSingularForm(label))}
+              All {getPluralForm(getSingularForm(label))} ({filterType === 'club' ? 
+                // For clubs, calculate based on selected countries
+                (() => {
+                  if (pendingFilters.country && !pendingFilters.country.includes('all')) {
+                    // Count clubs from selected countries
+                    const selectedCountryNames = pendingFilters.country.map(c => countryIdToName[c.toLowerCase()]).filter(Boolean);
+                    return clubs.filter(club => selectedCountryNames.includes(club.countryDisplay)).length;
+                  } else {
+                    // All countries selected, show total clubs
+                    return clubs.length;
+                  }
+                })() 
+                : options.length - 1})
             </span>
           ) : selectedValues.length > 0 ? (
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
