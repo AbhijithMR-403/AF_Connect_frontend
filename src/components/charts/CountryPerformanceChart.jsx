@@ -10,7 +10,16 @@ const CountryPerformanceChart = ({ data, onCountryClick }) => {
     if (active && payload && payload.length) {
       const countryData = payload[0].payload;
       return (
-        <div className="bg-white dark:bg-gray-800 p-4 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg backdrop-blur-sm">
+        <div 
+          className="bg-white dark:bg-gray-800 p-4 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg backdrop-blur-sm cursor-pointer"
+          style={{ pointerEvents: 'auto' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onCountryClick && countryData) {
+              onCountryClick(countryData);
+            }
+          }}
+        >
           <p className="font-semibold text-gray-900 dark:text-white mb-2">{label}</p>
           <div className="space-y-1">
             <p className="text-sm text-blue-600 dark:text-blue-400">
@@ -26,7 +35,9 @@ const CountryPerformanceChart = ({ data, onCountryClick }) => {
               Clubs: {countryData.clubs?.length ?? 0}
             </p>
           </div>
-          <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">Click to view club details</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 hover:underline">
+            Click to view club details
+          </p>
         </div>
       );
     }
