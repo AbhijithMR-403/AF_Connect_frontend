@@ -261,6 +261,29 @@ const SalesPipeline = () => {
       } catch (error) {
         setModalData((prev) => ({ ...prev, loading: false, error: error.message }));
       }
+    } else if (metricType === 'njm-to-appt-showed') {
+      setModalData({ isOpen: true, title, loading: true, tabs: [], activeTab: tabIdx });
+      try {
+        const njmParams = { ...buildOpportunityParams('total-njms'), page: tabbedPages.njm || 1 };
+        const appointmentShowedParams = { ...buildOpportunityParams('shown-appointments'), page: tabbedPages.appointment || 1 };
+        const [njms, appointmentsShowed] = await Promise.all([
+          fetchOpportunities(njmParams),
+          fetchOpportunities(appointmentShowedParams),
+        ]);
+        setModalData({
+          isOpen: true,
+          title,
+          loading: false,
+          tabs: [
+            { label: 'NJMs', data: normalizeOpportunitiesResponse(njms, countries), totalCount: njms.count, metricType: 'total-njms', queryParams: njmParams },
+            { label: 'Appointments Showed', data: normalizeOpportunitiesResponse(appointmentsShowed, countries), totalCount: appointmentsShowed.count, metricType: 'shown-appointments', queryParams: appointmentShowedParams },
+          ],
+          activeTab: tabIdx,
+        });
+        setActiveTab(tabIdx);
+      } catch (error) {
+        setModalData((prev) => ({ ...prev, loading: false, error: error.message }));
+      }
     } else {
       setModalData({
         isOpen: true,
@@ -310,6 +333,13 @@ const SalesPipeline = () => {
           activeTab,
           tabbedPages[activeTab === 0 ? 'agreement' : 'njm']
         );
+      } else if (modalData.title && modalData.title.includes('NJM to Appointment Showed Ratio')) {
+        openTabbedModal(
+          'njm-to-appt-showed',
+          modalData.title,
+          activeTab,
+          tabbedPages[activeTab === 0 ? 'njm' : 'appointment']
+        );
       }
       // Add more cases if you have more tabbed modals
     }
@@ -329,6 +359,8 @@ const SalesPipeline = () => {
       setTabbedPages((prev) => ({ ...prev, [tabIdx === 0 ? 'njm' : 'appointment']: page }));
     } else if (modalData.title && modalData.title.includes('Membership Agreement Conversion Rate')) {
       setTabbedPages((prev) => ({ ...prev, [tabIdx === 0 ? 'agreement' : 'njm']: page }));
+    } else if (modalData.title && modalData.title.includes('NJM to Appointment Showed Ratio')) {
+      setTabbedPages((prev) => ({ ...prev, [tabIdx === 0 ? 'njm' : 'appointment']: page }));
     } else {
       setTabbedPages((prev) => ({ ...prev, [tabIdx === 0 ? 'online' : 'offline']: page }));
     }
@@ -484,7 +516,7 @@ const SalesPipeline = () => {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Sales Funnel Ratios</h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <button
               type="button"
               onClick={() => openTabbedModal('lead-to-sale', 'Lead to Sale Ratio - GHL Opportunities')}
@@ -532,12 +564,32 @@ const SalesPipeline = () => {
             >
               <div className="text-center">
                 <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
-                  {simplifyRatio(salesMetrics.totalAppointments, salesMetrics.totalNJMs)}
+                  {salesMetrics.totalAppointments > 0 ? ((salesMetrics.totalNJMs / salesMetrics.totalAppointments) * 100).toFixed(1) : '0'}%
                 </div>
                 <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">Appointment to Sale Ratio</div>
-                <div className="text-xs text-gray-600 dark:text-gray-400">Appointments / NJM</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">NJM / Appointments</div>
                 <div className="mt-3 text-xs text-purple-700 dark:text-purple-300 bg-purple-200 dark:bg-purple-800 px-2 py-1 rounded-full inline-block">
-                  {salesMetrics.totalAppointments} / {salesMetrics.totalNJMs}
+                  {salesMetrics.totalNJMs} / {salesMetrics.totalAppointments}
+                </div>
+                <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Click to view opportunities
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => openTabbedModal('njm-to-appt-showed', 'NJM to Appointment Showed Ratio - GHL Opportunities')}
+              className="text-left bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900 dark:to-emerald-800 rounded-lg p-6 border border-emerald-200 dark:border-emerald-700 hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-600 transition-all duration-200 cursor-pointer group"
+            >
+              <div className="text-center">
+                <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
+                  {salesMetrics.appointment_showed > 0 ? ((salesMetrics.totalNJMs / salesMetrics.appointment_showed) * 100).toFixed(1) : '0'}%
+                </div>
+                <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">NJM:Appt Showed</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">NJM / Appointments Showed</div>
+                <div className="mt-3 text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-200 dark:bg-emerald-800 px-2 py-1 rounded-full inline-block">
+                  {salesMetrics.totalNJMs} / {Math.round(salesMetrics.appointment_showed)}
                 </div>
                 <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
                   Click to view opportunities

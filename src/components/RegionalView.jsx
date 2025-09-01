@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Globe } from 'lucide-react';
 import { useAppSelector } from '../hooks';
 import CountryPerformanceChart from './charts/CountryPerformanceChart';
+import CountryPerformancePercentageChart from './charts/CountryPerformancePercentageChart';
 import CountryTableModal from './CountryTableModal';
 
 const RegionalView = () => {
@@ -89,11 +90,20 @@ const RegionalView = () => {
         </div>
       </div>
 
-      {/* Chart Section */}
-      <CountryPerformanceChart 
-        data={chartData} 
-        onCountryClick={handleCountryClick}
-      />
+      {/* Charts Section */}
+      <div className="space-y-6">
+        {/* Absolute Values Chart */}
+        <CountryPerformanceChart 
+          data={chartData} 
+          onCountryClick={handleCountryClick}
+        />
+        
+        {/* Percentage Chart */}
+        <CountryPerformancePercentageChart 
+          data={chartData} 
+          onCountryClick={handleCountryClick}
+        />
+      </div>
 
       {/* Country Table Modal */}
       <CountryTableModal
