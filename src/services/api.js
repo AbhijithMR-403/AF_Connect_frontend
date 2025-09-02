@@ -304,6 +304,8 @@ export const generateDashboardData = async (filters, activeSection = 0) => {
     const totalAppointments = appointmentStatsResponse?.total_appointments ?? null;
     const totalCount = salesMetricsResponse?.total_count ?? null;
     const totalNJMs = salesMetricsResponse?.total_njms ?? null;
+    // Extract NJM with shown appointments from appointment stats
+    const totalNJMWithShownAppointments = appointmentStatsResponse?.total_njm_with_shown_appointments ?? 0;
     // Extract online and offline from breakdown data
     const online = salesMetricsResponse?.online_v_offline?.online ?? null;
     const offline = salesMetricsResponse?.online_v_offline?.offline ?? null;
@@ -314,6 +316,7 @@ export const generateDashboardData = async (filters, activeSection = 0) => {
       totalLeads,
       totalAppointments,
       totalNJMs,
+      totalNJMWithShownAppointments,
       membershipAgreements: totalCount,
       online,
       offline,

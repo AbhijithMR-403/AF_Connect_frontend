@@ -584,12 +584,12 @@ const SalesPipeline = () => {
             >
               <div className="text-center">
                 <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
-                  {salesMetrics.appointment_showed > 0 ? ((salesMetrics.totalNJMs / salesMetrics.appointment_showed) * 100).toFixed(1) : '0'}%
+                  {salesMetrics.appointment_showed > 0 ? ((salesMetrics.totalNJMWithShownAppointments / salesMetrics.appointment_showed) * 100).toFixed(1) : '0'}%
                 </div>
-                <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">NJM:Appt Showed</div>
-                <div className="text-xs text-gray-600 dark:text-gray-400">NJM / Appointments Showed</div>
+                <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">NJM Showed:Appt Showed</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">NJM with Shown / Appointments Showed</div>
                 <div className="mt-3 text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-200 dark:bg-emerald-800 px-2 py-1 rounded-full inline-block">
-                  {salesMetrics.totalNJMs} / {Math.round(salesMetrics.appointment_showed)}
+                  {salesMetrics.totalNJMWithShownAppointments} / {Math.round(salesMetrics.appointment_showed)}
                 </div>
                 <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
                   Click to view opportunities
