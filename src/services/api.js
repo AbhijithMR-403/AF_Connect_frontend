@@ -130,7 +130,7 @@ export function normalizeOpportunitiesResponse(apiResponse, countries = []) {
       : '-',
     contactEmail: opp.contact?.email || '-',
     contactPhone: opp.contact?.phone || '-',
-    country: opp.contact?.country ? (countryMap[opp.contact.country] || opp.contact.country) : '-',
+    country: opp.location?.country_display || '-',
     location: opp.pipeline?.location || opp.location?.id || '-',
     location_name: opp.location?.name || '-',
     stage: opp.stage?.name || '-',
