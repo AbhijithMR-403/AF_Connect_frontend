@@ -67,7 +67,7 @@ const OpportunityModal = ({
     }
   }
   const tabTotalPages = isTabbed ? Math.ceil((tab?.totalCount || 0) / pageSize) : 1;
-  const tabOpportunities = isTabbed ? tab?.data || [] : opportunities;
+  const tabOpportunities = isTabbed ? (tab?.data || []) : (opportunities || []);
   const tabTotalCount = isTabbed ? tab?.totalCount || 0 : totalCount;
 
   // Reset to first page when switching tabs
@@ -274,126 +274,134 @@ const OpportunityModal = ({
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                {(tabOpportunities || []).map((opportunity) => (
-                  <tr key={opportunity.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <td className="px-3 sm:px-6 py-4">
-                      <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate max-w-[150px]">
-                        {opportunity.name}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-300">
-                        ID: {opportunity.id}
-                      </div>
-                    </td>
-                    <td className="px-3 sm:px-6 py-4">
-                      <div className="flex items-center">
-                        <User className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
-                        <div className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
-                          {typeof opportunity.contact === 'string' ? opportunity.contact :
-                            (opportunity.contact && typeof opportunity.contact === 'object' && (opportunity.contact.first_name || opportunity.contact.firstName || opportunity.contact.email)) ||
-                            '-'}
+                {Array.isArray(tabOpportunities) && tabOpportunities.length > 0 ? (
+                  tabOpportunities.map((opportunity) => (
+                    <tr key={opportunity.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <td className="px-3 sm:px-6 py-4">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate max-w-[150px]">
+                          {opportunity.name}
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-3 sm:px-6 py-4">
-                      <div className="flex items-center">
-                        <Globe className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
-                        <span className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
-                          {typeof opportunity.country === 'string' ? opportunity.country :
-                            (opportunity.country && typeof opportunity.country === 'object' && (opportunity.country.name || opportunity.country.id)) ||
-                            (opportunity.location && typeof opportunity.location === 'object' && opportunity.location.country_display) ||
-                            '-'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-3 sm:px-6 py-4">
-                      <div className="flex items-center">
-                        <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
-                        <span className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
-                          {typeof opportunity.location === 'string' ? opportunity.location :
-                            (opportunity.location && typeof opportunity.location === 'object' && (opportunity.location.name || opportunity.location.id)) ||
-                            '-'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-3 sm:px-6 py-4">
-                      <div className="flex items-center">
-                        <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
-                        <span className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
-                          {opportunity.location_name || '-'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-3 sm:px-6 py-4">
-                      <div className="flex items-center">
-                        <Tag className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
-                        <span className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
-                          {typeof opportunity.pipeline === 'string' ? opportunity.pipeline :
-                            (opportunity.pipeline && typeof opportunity.pipeline === 'object' && (opportunity.pipeline.name || opportunity.pipeline.id)) ||
-                            '-'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-3 sm:px-6 py-4">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStageColor(opportunity.stage)}`}>
-                        {typeof opportunity.stage === 'string' ? opportunity.stage :
-                          (opportunity.stage && typeof opportunity.stage === 'object' && (opportunity.stage.name || opportunity.stage.id)) ||
-                          '-'}
-                      </span>
-                    </td>
-                    <td className="px-3 sm:px-6 py-4">
-                      <div className="flex items-center">
-                        {/* <DollarSign className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-1 flex-shrink-0" /> */}
-                        <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
-                          {typeof opportunity.value === 'number' && !isNaN(opportunity.value)
-                            ? `$${opportunity.value.toLocaleString()}`
-                            : '-'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-3 sm:px-6 py-4">
-                      <div className="flex items-center">
-                        <Tag className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
-                        <span className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
-                          {typeof opportunity.source === 'string' ? opportunity.source :
-                            (opportunity.source && typeof opportunity.source === 'object' && (opportunity.source.name || opportunity.source.id)) ||
-                            '-'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-3 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 dark:text-white hidden sm:table-cell">
-                      <div className="truncate max-w-[120px]">
-                        {typeof opportunity.assignedTo === 'string' ? opportunity.assignedTo :
-                          (opportunity.assignedTo && typeof opportunity.assignedTo === 'object' && (opportunity.assignedTo.first_name || opportunity.assignedTo.firstName || opportunity.assignedTo.email)) ||
-                          '-'}
-                      </div>
-                    </td>
-                    <td className="px-3 sm:px-6 py-4 hidden md:table-cell">
-                      <div className="flex items-center">
-                        <Calendar className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
-                        <div>
-                          <div className="text-xs sm:text-sm text-gray-900 dark:text-white">
-                            {opportunity.createdDate}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-300">
-                            Last: {opportunity.lastActivity}
+                        <div className="text-xs text-gray-500 dark:text-gray-300">
+                          ID: {opportunity.id}
+                        </div>
+                      </td>
+                      <td className="px-3 sm:px-6 py-4">
+                        <div className="flex items-center">
+                          <User className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
+                          <div className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
+                            {typeof opportunity.contact === 'string' ? opportunity.contact :
+                              (opportunity.contact && typeof opportunity.contact === 'object' && (opportunity.contact.first_name || opportunity.contact.firstName || opportunity.contact.email)) ||
+                              '-'}
                           </div>
                         </div>
-                      </div>
+                      </td>
+                      <td className="px-3 sm:px-6 py-4">
+                        <div className="flex items-center">
+                          <Globe className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
+                          <span className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
+                            {typeof opportunity.country === 'string' ? opportunity.country :
+                              (opportunity.country && typeof opportunity.country === 'object' && (opportunity.country.name || opportunity.country.id)) ||
+                              (opportunity.location && typeof opportunity.location === 'object' && opportunity.location.country_display) ||
+                              '-'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-3 sm:px-6 py-4">
+                        <div className="flex items-center">
+                          <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
+                          <span className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
+                            {typeof opportunity.location === 'string' ? opportunity.location :
+                              (opportunity.location && typeof opportunity.location === 'object' && (opportunity.location.name || opportunity.location.id)) ||
+                              '-'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-3 sm:px-6 py-4">
+                        <div className="flex items-center">
+                          <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
+                          <span className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
+                            {opportunity.location_name || '-'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-3 sm:px-6 py-4">
+                        <div className="flex items-center">
+                          <Tag className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
+                          <span className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
+                            {typeof opportunity.pipeline === 'string' ? opportunity.pipeline :
+                              (opportunity.pipeline && typeof opportunity.pipeline === 'object' && (opportunity.pipeline.name || opportunity.pipeline.id)) ||
+                              '-'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-3 sm:px-6 py-4">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStageColor(opportunity.stage)}`}>
+                          {typeof opportunity.stage === 'string' ? opportunity.stage :
+                            (opportunity.stage && typeof opportunity.stage === 'object' && (opportunity.stage.name || opportunity.stage.id)) ||
+                            '-'}
+                        </span>
+                      </td>
+                      <td className="px-3 sm:px-6 py-4">
+                        <div className="flex items-center">
+                          {/* <DollarSign className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-1 flex-shrink-0" /> */}
+                          <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
+                            {typeof opportunity.value === 'number' && !isNaN(opportunity.value)
+                              ? `$${opportunity.value.toLocaleString()}`
+                              : '-'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-3 sm:px-6 py-4">
+                        <div className="flex items-center">
+                          <Tag className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
+                          <span className="text-xs sm:text-sm text-gray-900 dark:text-white truncate">
+                            {typeof opportunity.source === 'string' ? opportunity.source :
+                              (opportunity.source && typeof opportunity.source === 'object' && (opportunity.source.name || opportunity.source.id)) ||
+                              '-'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 dark:text-white hidden sm:table-cell">
+                        <div className="truncate max-w-[120px]">
+                          {typeof opportunity.assignedTo === 'string' ? opportunity.assignedTo :
+                            (opportunity.assignedTo && typeof opportunity.assignedTo === 'object' && (opportunity.assignedTo.first_name || opportunity.assignedTo.firstName || opportunity.assignedTo.email)) ||
+                            '-'}
+                        </div>
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 hidden md:table-cell">
+                        <div className="flex items-center">
+                          <Calendar className="w-4 h-4 text-gray-400 dark:text-gray-300 mr-2 flex-shrink-0" />
+                          <div>
+                            <div className="text-xs sm:text-sm text-gray-900 dark:text-white">
+                              {opportunity.createdDate}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-300">
+                              Last: {opportunity.lastActivity}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3 sm:px-6 py-4">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(opportunity.status)}`}>
+                          {opportunity.status.toUpperCase()}
+                        </span>
+                      </td>
+                      {/* <td className="px-3 sm:px-6 py-4 text-xs sm:text-sm font-medium">
+                        <button className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 flex items-center gap-1">
+                          <ExternalLink className="w-4 h-4" />
+                          <span className="hidden sm:inline">View in GHL</span>
+                          <span className="sm:hidden">View</span>
+                        </button>
+                      </td> */}
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="12" className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                      {loading ? 'Loading opportunities...' : 'No opportunities found'}
                     </td>
-                    <td className="px-3 sm:px-6 py-4">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(opportunity.status)}`}>
-                        {opportunity.status.toUpperCase()}
-                      </span>
-                    </td>
-                    {/* <td className="px-3 sm:px-6 py-4 text-xs sm:text-sm font-medium">
-                      <button className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 flex items-center gap-1">
-                        <ExternalLink className="w-4 h-4" />
-                        <span className="hidden sm:inline">View in GHL</span>
-                        <span className="sm:hidden">View</span>
-                      </button>
-                    </td> */}
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

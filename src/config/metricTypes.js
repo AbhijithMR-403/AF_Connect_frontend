@@ -16,6 +16,7 @@ const metricTypeConfigs = {
     contact_tags: 5,
   },
   'total-leads': {
+    pipeline_name: 'AFC Sales Pipeline', //
   },
   'online-leads': {
     pipeline_name: 'AFC Sales Pipeline', //

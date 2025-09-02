@@ -116,7 +116,7 @@ const OnboardingPipeline = () => {
 
   const openTabbedModal = async (metricType, title, tabIdx = 0, page = 1) => {
     const tabTypes = onboardingTabTypesMap[metricType];
-    setModalData((prev) => ({ ...prev, isOpen: true, title }));
+    setModalData((prev) => ({ ...prev, isOpen: true, title, metricType }));
     setModalLoading(true);
     setModalError(null);
     setActiveTab(tabIdx);
@@ -145,7 +145,7 @@ const OnboardingPipeline = () => {
   };
 
   const handleTabPageChange = (tabIdx, page) => {
-    const metricType = metrics[metrics.findIndex(m => m.metricType === modalTabs[tabIdx]?.metricType)]?.metricType;
+    const metricType = modalData.metricType;
     const tabTypes = onboardingTabTypesMap[metricType] || [];
     const tabKey = tabTypes[tabIdx]?.tabKey;
     setTabbedPages((prev) => ({ ...prev, [tabKey]: page }));
@@ -271,6 +271,7 @@ const OnboardingPipeline = () => {
         pageSize={PAGE_SIZE}
         opportunities={[]}
         totalCount={0}
+        currentPage={tabbedPages[onboardingTabTypesMap[modalData.metricType]?.[activeTab]?.tabKey] || 1}
       />
     </div>
   );
