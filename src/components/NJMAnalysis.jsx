@@ -47,7 +47,7 @@ const NJMAnalysis = ({ salesMetrics, openModal }) => {
             openModal={(metricType, title, count, data) => openModal(metricType, title, count, 1, { lead_source: data?.name })}
           />
         </div>
-        {/* Right column: stack Contacted and Paid Media cards vertically */}
+        {/* Right column: stack Contacted, Online, and Offline cards vertically */}
         <div className="order-2 flex flex-col gap-6">
           <ClickableMetricCard
             title="Contacted"
@@ -59,7 +59,7 @@ const NJMAnalysis = ({ salesMetrics, openModal }) => {
           />
           <button
             type="button"
-            onClick={() => openModal('paid-media-njms', 'NJM from Paid Media - GHL Opportunities', Math.round(salesMetrics.totalPaidMedia))}
+            onClick={() => openModal('online-njms', 'NJM from Online - GHL Opportunities', Math.round(salesMetrics.njm_online_v_offline?.online || 0))}
             className="text-left bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg p-6 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group"
           >
             <div className="flex items-center justify-between">
@@ -67,16 +67,37 @@ const NJMAnalysis = ({ salesMetrics, openModal }) => {
                 <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">NJM from Online</h3>
                 <div className="flex items-baseline gap-3">
                   <span className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
-                    {Math.round(salesMetrics.totalPaidMedia)}
+                    {Math.round(salesMetrics.njm_online_v_offline?.online || 0)}
                   </span>
                 </div>
-                {/* <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Facebook + IG + Google Ads + Whatsapp</p> */}
                 <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
                   Click to view opportunities
                 </div>
               </div>
               <div className="p-3 rounded-xl bg-green-100 dark:bg-green-900 group-hover:scale-110 transition-transform">
                 <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
+          </button>
+          <button
+            type="button"
+            onClick={() => openModal('offline-njms', 'NJM from Offline - GHL Opportunities', Math.round(salesMetrics.njm_online_v_offline?.offline || 0))}
+            className="text-left bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg p-6 hover:shadow-md hover:border-orange-200 dark:hover:border-orange-600 transition-all duration-200 cursor-pointer group"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">NJM from Offline</h3>
+                <div className="flex items-baseline gap-3">
+                  <span className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-orange-700 dark:group-hover:text-orange-300 transition-colors">
+                    {Math.round(salesMetrics.njm_online_v_offline?.offline || 0)}
+                  </span>
+                </div>
+                <div className="mt-2 text-xs text-orange-600 dark:text-orange-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Click to view opportunities
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-orange-100 dark:bg-orange-900 group-hover:scale-110 transition-transform">
+                <BarChart3 className="w-6 h-6 text-orange-600 dark:text-orange-400" />
               </div>
             </div>
           </button>

@@ -312,6 +312,9 @@ export const generateDashboardData = async (filters, activeSection = 0) => {
     const totalNoLeadSource = salesMetricsResponse?.total_no_lead_source ?? null;
     const totalContacted = salesMetricsResponse?.total_contacted ?? null;
     const totalPaidMedia = salesMetricsResponse?.total_paid_media ?? null;
+    // Extract NJM online/offline breakdown
+    const njmOnline = salesMetricsResponse?.njm_online_v_offline?.online ?? null;
+    const njmOffline = salesMetricsResponse?.njm_online_v_offline?.offline ?? null;
     const salesMetrics = {
       totalLeads,
       totalAppointments,
@@ -324,6 +327,10 @@ export const generateDashboardData = async (filters, activeSection = 0) => {
       totalNoLeadSource,
       totalContacted,
       totalPaidMedia,
+      njm_online_v_offline: {
+        online: njmOnline,
+        offline: njmOffline,
+      },
       leadToSaleRatio: (totalLeads && totalNJMs) ? Number(((totalNJMs / totalLeads) * 100).toFixed(2)) : 0,
       leadToAppointmentRatio: (totalLeads && totalAppointments) ? Number(((totalAppointments / totalLeads) * 100).toFixed(2)) : 0,
       appointmentToSaleRatio: (totalAppointments && totalNJMs) ? Number(((totalAppointments / totalNJMs) * 100).toFixed(2)) : 0,

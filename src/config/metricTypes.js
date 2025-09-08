@@ -61,6 +61,18 @@ const metricTypeConfigs = {
     lead_source: ["Ads", "Facebook", "Google", "Instagram", "Whatsapp"],
     dateField: 'membership_signup_date',
   },
+  'online-njms': {
+    pipeline_name: 'AFC Sales Pipeline',
+    status: 'won',
+    contact_tags: 3, // Online tag
+    dateField: 'membership_signup_date',
+  },
+  'offline-njms': {
+    pipeline_name: 'AFC Sales Pipeline',
+    status: 'won',
+    contact_tags: 1, // Offline tag
+    dateField: 'membership_signup_date',
+  },
   'njm-lead-source': {
     pipeline_name: 'AFC Sales Pipeline',
     status: 'won',
