@@ -42,7 +42,7 @@ const SalesPipeline = () => {
     metricType: '', // <-- add this
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [tabbedPages, setTabbedPages] = useState({ online: 1, offline: 1, njm: 1, lead: 1, appointment: 1 });
+  const [tabbedPages, setTabbedPages] = useState({ online: 1, offline: 1, njm: 1, lead: 1, appointment: 1, contacted: 1 });
   const [activeTab, setActiveTab] = useState(0);
 
   // Helper to convert lead source keys to values
@@ -284,7 +284,30 @@ const SalesPipeline = () => {
       } catch (error) {
         setModalData((prev) => ({ ...prev, loading: false, error: error.message }));
       }
-    } else {
+    } else if (metricType === 'contacted-to-appointment') {
+      setModalData({ isOpen: true, title, loading: true, tabs: [], activeTab: tabIdx });
+      try {
+        const contactedParams = { ...buildOpportunityParams('contacted-njms'), page: tabbedPages.contacted || 1 };
+        const appointmentParams = { ...buildOpportunityParams('total-appointments'), page: tabbedPages.appointment || 1 };
+        const [contacted, appointments] = await Promise.all([
+          fetchOpportunities(contactedParams),
+          fetchOpportunities(appointmentParams),
+        ]);
+        setModalData({
+          isOpen: true,
+          title,
+          loading: false,
+          tabs: [
+            { label: 'Contacted', data: normalizeOpportunitiesResponse(contacted, countries), totalCount: contacted.count, metricType: 'contacted-njms', queryParams: contactedParams },
+            { label: 'Appointments', data: normalizeOpportunitiesResponse(appointments, countries), totalCount: appointments.count, metricType: 'total-appointments', queryParams: appointmentParams },
+          ],
+          activeTab: tabIdx,
+        });
+        setActiveTab(tabIdx);
+      } catch (error) {
+        setModalData((prev) => ({ ...prev, loading: false, error: error.message }));
+      }
+    } else { nb
       setModalData({
         isOpen: true,
         title,
@@ -340,6 +363,13 @@ const SalesPipeline = () => {
           activeTab,
           tabbedPages[activeTab === 0 ? 'njm' : 'appointment']
         );
+      } else if (modalData.title && modalData.title.includes('Contacted to Appointment Ratio')) {
+        openTabbedModal(
+          'contacted-to-appointment',
+          modalData.title,
+          activeTab,
+          tabbedPages[activeTab === 0 ? 'contacted' : 'appointment']
+        );
       }
       // Add more cases if you have more tabbed modals
     }
@@ -361,6 +391,8 @@ const SalesPipeline = () => {
       setTabbedPages((prev) => ({ ...prev, [tabIdx === 0 ? 'agreement' : 'njm']: page }));
     } else if (modalData.title && modalData.title.includes('NJM to Appointment Showed Ratio')) {
       setTabbedPages((prev) => ({ ...prev, [tabIdx === 0 ? 'njm' : 'appointment']: page }));
+    } else if (modalData.title && modalData.title.includes('Contacted to Appointment Ratio')) {
+      setTabbedPages((prev) => ({ ...prev, [tabIdx === 0 ? 'contacted' : 'appointment']: page }));
     } else {
       setTabbedPages((prev) => ({ ...prev, [tabIdx === 0 ? 'online' : 'offline']: page }));
     }
@@ -429,7 +461,7 @@ const SalesPipeline = () => {
                 <div className="flex-1">
                   <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Leads Without Source Tags</h3>
                   <div className="flex items-baseline gap-3">
-                    <span className="text-2xl font-bold text-red-600 dark:text-red-400">
+                    <span className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
                       {Math.round(salesMetrics.totalNoLeadSource).toLocaleString()}
                     </span>
                   </div>
@@ -459,10 +491,10 @@ const SalesPipeline = () => {
                 <div className="flex-1">
                   <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Online vs Offline Leads</h3>
                   <div className="flex items-baseline gap-3">
-                    <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                    <span className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
                       {Math.round(salesMetrics.online).toLocaleString()} Online
                     </span>
-                    <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                    <span className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
                       {Math.round(salesMetrics.offline).toLocaleString()} Offline
                     </span>
                   </div>
@@ -516,22 +548,22 @@ const SalesPipeline = () => {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Sales Funnel Ratios</h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             <button
               type="button"
               onClick={() => openTabbedModal('lead-to-sale', 'Lead to Sale Ratio - GHL Opportunities')}
-              className="text-left bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 rounded-lg p-6 border border-blue-200 dark:border-blue-700 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 cursor-pointer group"
+              className="text-left bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 rounded-lg p-6 border border-slate-200 dark:border-slate-600 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500 transition-all duration-200 cursor-pointer group"
             >
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
+                <div className="text-3xl font-bold text-slate-700 dark:text-slate-300 mb-2 group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors">
                   {salesMetrics.leadToSaleRatio}%
                 </div>
                 <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">Lead to Sale Ratio</div>
                 <div className="text-xs text-gray-600 dark:text-gray-400">NJM / Total Leads</div>
-                <div className="mt-3 text-xs text-blue-700 dark:text-blue-300 bg-blue-200 dark:bg-blue-800 px-2 py-1 rounded-full inline-block">
+                <div className="mt-3 text-xs text-slate-700 dark:text-slate-300 bg-slate-200 dark:bg-slate-600 px-2 py-1 rounded-full inline-block">
                   {salesMetrics.totalNJMs} / {salesMetrics.totalLeads}
                 </div>
-                <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
                   Click to view opportunities
                 </div>
               </div>
@@ -540,18 +572,18 @@ const SalesPipeline = () => {
             <button
               type="button"
               onClick={() => openTabbedModal('lead-to-appointment', 'Lead to Appointment Ratio - GHL Opportunities')}
-              className="text-left bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 rounded-lg p-6 border border-green-200 dark:border-green-700 hover:shadow-md hover:border-green-300 dark:hover:border-green-600 transition-all duration-200 cursor-pointer group"
+              className="text-left bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 rounded-lg p-6 border border-slate-200 dark:border-slate-600 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500 transition-all duration-200 cursor-pointer group"
             >
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2 group-hover:text-green-700 dark:group-hover:text-green-300 transition-colors">
+                <div className="text-3xl font-bold text-slate-700 dark:text-slate-300 mb-2 group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors">
                   {salesMetrics.leadToAppointmentRatio}%
                 </div>
                 <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">Lead to Appointment Ratio</div>
                 <div className="text-xs text-gray-600 dark:text-gray-400">Appointments / Total Leads</div>
-                <div className="mt-3 text-xs text-green-700 dark:text-green-300 bg-green-200 dark:bg-green-800 px-2 py-1 rounded-full inline-block">
+                <div className="mt-3 text-xs text-slate-700 dark:text-slate-300 bg-slate-200 dark:bg-slate-600 px-2 py-1 rounded-full inline-block">
                   {salesMetrics.totalAppointments} / {salesMetrics.totalLeads}
                 </div>
-                <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
                   Click to view opportunities
                 </div>
               </div>
@@ -560,18 +592,18 @@ const SalesPipeline = () => {
             <button
               type="button"
               onClick={() => openTabbedModal('appointment-to-sale', 'Appointment to Sale Ratio - GHL Opportunities')}
-              className="text-left bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900 dark:to-purple-800 rounded-lg p-6 border border-purple-200 dark:border-purple-700 hover:shadow-md hover:border-purple-300 dark:hover:border-purple-600 transition-all duration-200 cursor-pointer group"
+              className="text-left bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 rounded-lg p-6 border border-slate-200 dark:border-slate-600 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500 transition-all duration-200 cursor-pointer group"
             >
               <div className="text-center">
-                <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
+                <div className="text-3xl font-bold text-slate-700 dark:text-slate-300 mb-2 group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors">
                   {salesMetrics.totalAppointments > 0 ? ((salesMetrics.totalNJMs / salesMetrics.totalAppointments) * 100).toFixed(1) : '0'}%
                 </div>
                 <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">Appointment to Sale Ratio</div>
                 <div className="text-xs text-gray-600 dark:text-gray-400">NJM / Appointments</div>
-                <div className="mt-3 text-xs text-purple-700 dark:text-purple-300 bg-purple-200 dark:bg-purple-800 px-2 py-1 rounded-full inline-block">
+                <div className="mt-3 text-xs text-slate-700 dark:text-slate-300 bg-slate-200 dark:bg-slate-600 px-2 py-1 rounded-full inline-block">
                   {salesMetrics.totalNJMs} / {salesMetrics.totalAppointments}
                 </div>
-                <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
                   Click to view opportunities
                 </div>
               </div>
@@ -580,18 +612,38 @@ const SalesPipeline = () => {
             <button
               type="button"
               onClick={() => openTabbedModal('njm-to-appt-showed', 'NJM to Appointment Showed Ratio - GHL Opportunities')}
-              className="text-left bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900 dark:to-emerald-800 rounded-lg p-6 border border-emerald-200 dark:border-emerald-700 hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-600 transition-all duration-200 cursor-pointer group"
+              className="text-left bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 rounded-lg p-6 border border-slate-200 dark:border-slate-600 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500 transition-all duration-200 cursor-pointer group"
             >
               <div className="text-center">
-                <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
+                <div className="text-3xl font-bold text-slate-700 dark:text-slate-300 mb-2 group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors">
                   {salesMetrics.appointment_showed > 0 ? ((salesMetrics.totalNJMWithShownAppointments / salesMetrics.appointment_showed) * 100).toFixed(1) : '0'}%
                 </div>
                 <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">NJM Showed:Appt Showed</div>
                 <div className="text-xs text-gray-600 dark:text-gray-400">NJM with Shown / Appointments Showed</div>
-                <div className="mt-3 text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-200 dark:bg-emerald-800 px-2 py-1 rounded-full inline-block">
+                <div className="mt-3 text-xs text-slate-700 dark:text-slate-300 bg-slate-200 dark:bg-slate-600 px-2 py-1 rounded-full inline-block">
                   {salesMetrics.totalNJMWithShownAppointments} / {Math.round(salesMetrics.appointment_showed)}
                 </div>
-                <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Click to view opportunities
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => openTabbedModal('contacted-to-appointment', 'Contacted to Appointment Ratio - GHL Opportunities')}
+              className="text-left bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 rounded-lg p-6 border border-slate-200 dark:border-slate-600 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500 transition-all duration-200 cursor-pointer group"
+            >
+              <div className="text-center">
+                <div className="text-3xl font-bold text-slate-700 dark:text-slate-300 mb-2 group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors">
+                  {salesMetrics.contactedToAppointmentRatio}%
+                </div>
+                <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">Contacted : Appt</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">Contacted / Appointments</div>
+                <div className="mt-3 text-xs text-slate-700 dark:text-slate-300 bg-slate-200 dark:bg-slate-600 px-2 py-1 rounded-full inline-block">
+                  {salesMetrics.totalContacted} / {salesMetrics.totalAppointments}
+                </div>
+                <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
                   Click to view opportunities
                 </div>
               </div>

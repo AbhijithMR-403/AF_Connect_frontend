@@ -109,49 +109,49 @@ const TrendGraphs = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {/* Leads Summary */}
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 rounded-lg p-4 border border-blue-200 dark:border-blue-700 cursor-pointer" onClick={() => openTrendReport('leads', 'Leads')}>
+        <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 rounded-lg p-4 border border-slate-200 dark:border-slate-600 cursor-pointer" onClick={() => openTrendReport('leads', 'Leads')}>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Leads</span>
-            <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Leads</span>
+            <BarChart3 className="w-4 h-4 text-slate-600 dark:text-slate-400" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+            <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">
               {trendSums?.[activeView]?.leads?.toLocaleString() || '0'}
             </span>
           </div>
-          <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
             Current {activeView} period
           </p>
         </div>
 
         {/* Appointments Summary */}
-        <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 rounded-lg p-4 border border-green-200 dark:border-green-700 cursor-pointer" onClick={() => openTrendReport('appointments', 'Appointments')}>
+        <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 rounded-lg p-4 border border-slate-200 dark:border-slate-600 cursor-pointer" onClick={() => openTrendReport('appointments', 'Appointments')}>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-green-700 dark:text-green-300">Appointments</span>
-            <Calendar className="w-4 h-4 text-green-600 dark:text-green-400" />
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Appointments</span>
+            <Calendar className="w-4 h-4 text-slate-600 dark:text-slate-400" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-green-900 dark:text-green-100">
+            <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">
               {trendSums?.[activeView]?.appointments?.toLocaleString() || '0'}
             </span>
           </div>
-          <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
             Current {activeView} period
           </p>
         </div>
 
         {/* NJMs Summary */}
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900 dark:to-purple-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700 cursor-pointer" onClick={() => openTrendReport('njms', 'NJMs')}>
+        <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 rounded-lg p-4 border border-slate-200 dark:border-slate-600 cursor-pointer" onClick={() => openTrendReport('njms', 'NJMs')}>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-purple-700 dark:text-purple-300">NJMs</span>
-            <TrendingUp className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">NJMs</span>
+            <TrendingUp className="w-4 h-4 text-slate-600 dark:text-slate-400" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-purple-900 dark:text-purple-100">
+            <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">
               {trendSums?.[activeView]?.njms?.toLocaleString() || '0'}
             </span>
           </div>
-          <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
             Current {activeView} period
           </p>
         </div>

@@ -64,13 +64,13 @@ const NJMAnalysis = ({ salesMetrics, openModal }) => {
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">NJM from Paid Media</h3>
+                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">NJM from Online</h3>
                 <div className="flex items-baseline gap-3">
-                  <span className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  <span className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
                     {Math.round(salesMetrics.totalPaidMedia)}
                   </span>
                 </div>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Facebook + IG + Google Ads + Whatsapp</p>
+                {/* <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Facebook + IG + Google Ads + Whatsapp</p> */}
                 <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
                   Click to view opportunities
                 </div>
