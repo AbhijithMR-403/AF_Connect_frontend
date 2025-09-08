@@ -276,7 +276,7 @@ const DefaulterPipeline = () => {
           return (
             <div
               key={index}
-              className={`border border-gray-100 dark:border-gray-700 rounded-lg p-6 transition-shadow duration-200 bg-white dark:bg-gray-800${isClickable ? ' cursor-pointer hover:shadow-lg hover:border-blue-400 dark:hover:border-blue-500 hover:scale-[1.03] transform' : ' hover:shadow-md'}`}
+              className={`border border-gray-100 dark:border-gray-700 rounded-lg p-6 transition-shadow duration-200 bg-white dark:bg-gray-800 group${isClickable ? ' cursor-pointer hover:shadow-lg hover:border-blue-400 dark:hover:border-blue-500 hover:scale-[1.03] transform' : ' hover:shadow-md'}`}
               onClick={isClickable ? () => handleCardClick(metric, index) : undefined}
               style={{ transition: 'box-shadow 0.2s, border-color 0.2s, transform 0.2s' }}
             >
@@ -284,7 +284,7 @@ const DefaulterPipeline = () => {
                 <div className={`p-2 rounded-lg ${metric.bgColor}`}> 
                   <Icon className={`w-5 h-5 ${metric.color}`} />
                 </div>
-                <div className={`text-2xl font-bold ${metric.color}`}>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
                   {metric.isPercentage ? metric.value : typeof metric.value === 'number' ? metric.value.toLocaleString() : metric.value}
                 </div>
               </div>

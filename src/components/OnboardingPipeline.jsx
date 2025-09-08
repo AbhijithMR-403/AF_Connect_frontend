@@ -240,7 +240,7 @@ const OnboardingPipeline = () => {
                 <div className={`p-2 rounded-lg ${metric.bgColor} group-hover:scale-110 transition-transform`}>
                   <Icon className={`w-5 h-5 ${metric.color}`} />
                 </div>
-                <div className={`text-2xl font-bold ${metric.color} group-hover:scale-105 transition-transform`}>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
                   {metric.value}
                 </div>
               </div>

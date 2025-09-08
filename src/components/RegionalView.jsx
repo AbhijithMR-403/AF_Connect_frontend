@@ -4,6 +4,7 @@ import { useAppSelector } from '../hooks';
 import CountryPerformanceChart from './charts/CountryPerformanceChart';
 import CountryPerformancePercentageChart from './charts/CountryPerformancePercentageChart';
 import CountryTableModal from './CountryTableModal';
+import CountryLeaderboard from './CountryLeaderboard';
 
 const RegionalView = () => {
   const { locations, countries } = useAppSelector((state) => state.dashboard);
@@ -103,6 +104,9 @@ const RegionalView = () => {
           data={chartData} 
           onCountryClick={handleCountryClick}
         />
+        
+        {/* Country Leaderboard Table */}
+        <CountryLeaderboard data={chartData} />
       </div>
 
       {/* Country Table Modal */}
