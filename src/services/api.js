@@ -551,6 +551,57 @@ export const fetchLocationStats = async (filters) => {
   return response.json();
 };
 
+export const fetchLocationWiseData = async (filters) => {
+  // Build query parameters from filters
+  const apiParams = {};
+  
+  if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
+    apiParams.assigned_to = filters.assignedUser;
+  }
+  if (filters.country && Array.isArray(filters.country) && !filters.country.includes('all')) {
+    apiParams.country = filters.country;
+  }
+  if (filters.club && Array.isArray(filters.club) && !filters.club.includes('all')) {
+    apiParams.location = filters.club;
+  }
+  if (filters.leadSource && Array.isArray(filters.leadSource) && !filters.leadSource.includes('all')) {
+    apiParams.lead_source = filters.leadSource;
+  }
+  if (filters.pipeline && Array.isArray(filters.pipeline) && !filters.pipeline.includes('all')) {
+    const pipelineNames = convertPipelineCategoriesToNames(filters.pipeline);
+    if (pipelineNames) {
+      apiParams.pipeline_name = pipelineNames;
+    }
+  }
+  // Handle date range filters using centralized logic
+  const { startDate, endDate } = calculateDateRangeParams(
+    filters.dateRange, 
+    filters.customStartDate, 
+    filters.customEndDate
+  );
+  
+  if (startDate && endDate) {
+    apiParams.raw_created_at_min = startDate;
+    apiParams.raw_created_at_max = endDate;
+  }
+
+  const queryString = buildQueryString(apiParams);
+  const url = `${config.api.baseUrl}/opportunity_dash/location-vise/${queryString ? `?${queryString}` : ''}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch location-wise data');
+  }
+
+  return response.json();
+};
+
 export const fetchSalesMetrics = async (filters) => {
   // Build query parameters from filters
   const apiParams = {};

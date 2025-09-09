@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { generateDashboardData, fetchUsers, fetchClubsAndCountries, fetchMemberOnboardingMetrics, fetchDefaulterMetrics, fetchLocationStats, fetchSalesMetrics, fetchTrendData, fetchAppointmentStats, fetchBreakdownData, fetchValidLeadSources, fetchPipelineNames } from '../../services/api';
+import { generateDashboardData, fetchUsers, fetchClubsAndCountries, fetchMemberOnboardingMetrics, fetchDefaulterMetrics, fetchLocationStats, fetchLocationWiseData, fetchSalesMetrics, fetchTrendData, fetchAppointmentStats, fetchBreakdownData, fetchValidLeadSources, fetchPipelineNames } from '../../services/api';
 
 // Helper function to calculate date range parameters
 export const calculateDateRangeParams = (dateRange, customStartDate = null, customEndDate = null) => {
@@ -65,6 +65,9 @@ const initialState = {
   validLeadSourcesLoading: false,
   validLeadSourcesError: null,
   locations: [], // Add this line
+  locationWiseData: [], // Add this line
+  locationWiseLoading: false,
+  locationWiseError: null,
   isInitialized: false, // Flag to prevent duplicate initial API calls
 };
 
@@ -222,6 +225,19 @@ export const loadPipelineNames = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const data = await fetchPipelineNames();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Async thunk for fetching location-wise data
+export const loadLocationWiseData = createAsyncThunk(
+  'dashboard/loadLocationWiseData',
+  async (filters, { rejectWithValue }) => {
+    try {
+      const data = await fetchLocationWiseData(filters);
       return data;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -513,6 +529,19 @@ const dashboardSlice = createSlice({
        .addCase(loadPipelineNames.rejected, (state, action) => {
          state.pipelinesLoading = false;
          state.pipelinesError = action.error.message || 'Failed to load pipeline names';
+       })
+       .addCase(loadLocationWiseData.pending, (state) => {
+         state.locationWiseLoading = true;
+         state.locationWiseError = null;
+       })
+       .addCase(loadLocationWiseData.fulfilled, (state, action) => {
+         state.locationWiseLoading = false;
+         state.locationWiseData = Array.isArray(action.payload) ? action.payload : [];
+         state.lastUpdated = new Date().toISOString();
+       })
+       .addCase(loadLocationWiseData.rejected, (state, action) => {
+         state.locationWiseLoading = false;
+         state.locationWiseError = action.error.message || 'Failed to load location-wise data';
        });
   },
 });

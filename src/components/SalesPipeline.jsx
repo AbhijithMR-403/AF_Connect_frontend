@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Calendar, Target, FileText, TrendingUp, AlertCircle, BarChart3, Phone, Eye } from 'lucide-react';
+import { Users, Calendar, Target, FileText, TrendingUp, AlertCircle, BarChart3, Phone, Eye, MapPin } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../hooks';
-import { selectProcessedFilters, loadBreakdownData } from '../store/slices/dashboardSlice';
+import { selectProcessedFilters, loadBreakdownData, loadLocationWiseData } from '../store/slices/dashboardSlice';
 import { store } from '../store';
 import ClickableMetricCard from './ClickableMetricCard';
 import ChartSection from './ChartSection';
 import TrendGraphs from './TrendGraphs';
 import OpportunityModal from './OpportunityModal';
+import LocationWiseModal from './LocationWiseModal';
 import NJMAnalysis from './NJMAnalysis';
 import { fetchOpportunities, normalizeOpportunitiesResponse } from '../services/api';
 import metricTypeConfigs from '../config/metricTypes';
@@ -15,7 +16,7 @@ const PAGE_SIZE = 10;
 
 const SalesPipeline = () => {
   const dispatch = useAppDispatch();
-  const { salesMetrics, countries, loading, validLeadSources } = useAppSelector((state) => state.dashboard);
+  const { salesMetrics, countries, loading, validLeadSources, locationWiseData, locationWiseLoading, locationWiseError } = useAppSelector((state) => state.dashboard);
   const filters = useAppSelector(selectProcessedFilters);
 
   // Helper function to simplify ratios
@@ -41,6 +42,7 @@ const SalesPipeline = () => {
     error: null,
     metricType: '', // <-- add this
   });
+  const [locationWiseModalOpen, setLocationWiseModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [tabbedPages, setTabbedPages] = useState({ online: 1, offline: 1, njm: 1, lead: 1, appointment: 1, contacted: 1 });
   const [activeTab, setActiveTab] = useState(0);
@@ -410,6 +412,19 @@ const SalesPipeline = () => {
     setTabbedPages({ online: 1, offline: 1, njm: 1, lead: 1, appointment: 1 });
   };
 
+  const openLocationWiseModal = async () => {
+    setLocationWiseModalOpen(true);
+    try {
+      await dispatch(loadLocationWiseData(filters));
+    } catch (error) {
+      console.error('Failed to load location-wise data:', error);
+    }
+  };
+
+  const closeLocationWiseModal = () => {
+    setLocationWiseModalOpen(false);
+  };
+
   if (!salesMetrics) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-8">
@@ -430,9 +445,18 @@ const SalesPipeline = () => {
       <div className="space-y-8">
         {/* Lead Analysis Section */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <Users className="w-5 h-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Lead Analysis</h3>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Lead Analysis</h3>
+            </div>
+            <button
+              onClick={openLocationWiseModal}
+              className="flex items-center gap-2 px-4 py-2 bg-transparent text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-sm font-medium"
+            >
+              <MapPin className="w-4 h-4" />
+              Location Analysis
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -711,6 +735,15 @@ const SalesPipeline = () => {
           onTabPageChange={handleTabPageChange}
           tabbedPages={tabbedPages}
           queryParams={modalData.queryParams}
+        />
+
+        {/* Location-wise Modal */}
+        <LocationWiseModal
+          isOpen={locationWiseModalOpen}
+          onClose={closeLocationWiseModal}
+          data={locationWiseData}
+          loading={locationWiseLoading}
+          error={locationWiseError}
         />
       </div>
     </div>
