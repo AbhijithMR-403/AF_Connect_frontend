@@ -27,6 +27,8 @@ const RegionalView = () => {
           total_leads: 0,
           appointment_showed: 0,
           total_njm: 0,
+          lead_to_sale: 0,
+          appointment_to_sale: 0,
           clubs: []
         };
       }
@@ -34,6 +36,8 @@ const RegionalView = () => {
       acc[country].total_leads += location.total_leads || 0;
       acc[country].appointment_showed += location.appointment_showed || 0;
       acc[country].total_njm += location.total_njm || 0;
+      acc[country].lead_to_sale += location.lead_to_sale || 0;
+      acc[country].appointment_to_sale += location.appointment_to_sale || 0;
       acc[country].clubs.push(location);
       
       return acc;

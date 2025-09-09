@@ -32,6 +32,8 @@ const CountryLeaderboard = ({ data }) => {
               <th className="text-right py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Total Leads</th>
               <th className="text-right py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Appointments</th>
               <th className="text-right py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Total NJM</th>
+              <th className="text-right py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Lead:Sale (%)</th>
+              <th className="text-right py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Appointment:Sale (%)</th>
             </tr>
           </thead>
           <tbody>
@@ -65,6 +67,16 @@ const CountryLeaderboard = ({ data }) => {
                 <td className="py-4 px-4 text-right">
                   <span className="font-semibold text-gray-900 dark:text-white">
                     {country.total_njm.toLocaleString()}
+                  </span>
+                </td>
+                <td className="py-4 px-4 text-right">
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    {typeof country.lead_to_sale === 'number' ? country.lead_to_sale.toFixed(2) + '%' : '-'}
+                  </span>
+                </td>
+                <td className="py-4 px-4 text-right">
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    {typeof country.appointment_to_sale === 'number' ? country.appointment_to_sale.toFixed(2) + '%' : '-'}
                   </span>
                 </td>
               </tr>
