@@ -14,10 +14,13 @@ const LocationWiseModal = ({ isOpen, onClose, data, loading, error, columnOrder 
     { key: 'location_name', label: 'Location', type: 'text', align: 'left' },
     { key: 'country_display', label: 'Country', type: 'text', align: 'left' },
     { key: 'total_opps', label: 'Total Opportunities', type: 'number', align: 'right' },
+    { key: 'oppo_online', label: 'Opportunities Online', type: 'number', align: 'right' },
+    { key: 'oppo_offline', label: 'Opportunities Offline', type: 'number', align: 'right' },
     { key: 'total_appointments', label: 'Total Appointments', type: 'number', align: 'right' },
     { key: 'njms_total', label: 'Total NJMs', type: 'number', align: 'right' },
     { key: 'njm_online', label: 'NJM Online', type: 'number', align: 'right' },
-    { key: 'njm_offline', label: 'NJM Offline', type: 'number', align: 'right' }
+    { key: 'njm_offline', label: 'NJM Offline', type: 'number', align: 'right' },
+    { key: 'total_no_lead_source_tag', label: 'No Lead Source Tag', type: 'number', align: 'right' }
   ];
 
   // State for drag and drop
@@ -181,15 +184,20 @@ const LocationWiseModal = ({ isOpen, onClose, data, loading, error, columnOrder 
                               key={colIndex}
                               className={`py-3 px-4 ${
                                 column.align === 'right' ? 'text-right' : 'text-left'
+                              } ${
+                                column.key === 'location_name' ? 'whitespace-nowrap' : ''
                               }`}
                             >
-                              <span className={`${
-                                column.type === 'number' 
-                                  ? 'font-semibold text-gray-900 dark:text-white'
-                                  : column.key === 'location_name'
-                                    ? 'font-medium text-gray-900 dark:text-white'
-                                    : 'text-gray-600 dark:text-gray-400'
-                              }`}>
+                              <span 
+                                className={`${
+                                  column.type === 'number' 
+                                    ? 'font-semibold text-gray-900 dark:text-white'
+                                    : column.key === 'location_name'
+                                      ? 'font-medium text-gray-900 dark:text-white block truncate max-w-xs'
+                                      : 'text-gray-600 dark:text-gray-400'
+                                }`}
+                                title={column.key === 'location_name' ? (location.location_name || '-') : undefined}
+                              >
                                 {column.key === 'country_display' 
                                   ? (location.country_display || location.country_code || '-')
                                   : displayValue
