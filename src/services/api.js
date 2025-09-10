@@ -350,6 +350,8 @@ export const generateDashboardData = async (filters, activeSection = 0) => {
       afResults: memberOnboardingResponse?.af_results ?? null,
       conversionRate: memberOnboardingResponse?.conversion_rate ?? null,
       appAdoptionRate: memberOnboardingResponse?.app_adoption_rate ?? null,
+      afRecoveryRedemption: memberOnboardingResponse?.af_recovery_redemption ?? null,
+      afRewards: memberOnboardingResponse?.af_rewards ?? null,
     };
 
     // Use the dedicated defaulter metrics endpoint response

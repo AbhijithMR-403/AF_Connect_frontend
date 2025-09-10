@@ -15,7 +15,7 @@ const OnboardingPipeline = () => {
     isOpen: false,
     title: '',
   });
-  const [tabbedPages, setTabbedPages] = useState({ agreement: 1, apps: 1, gofast: 1, afresults: 1 });
+  const [tabbedPages, setTabbedPages] = useState({ agreement: 1, apps: 1, gofast: 1, afresults: 1, afrecovery: 1, afrewards: 1 });
   const [activeTab, setActiveTab] = useState(0);
   const [modalTabs, setModalTabs] = useState([]);
   const [modalLoading, setModalLoading] = useState(false);
@@ -43,6 +43,12 @@ const OnboardingPipeline = () => {
     'app-adoption': [
       { label: 'Apps', metricType: 'apps', tabKey: 'apps' },
       { label: 'Membership Agreement', metricType: 'membership-agreements', tabKey: 'agreement' },
+    ],
+    'af-recovery-redemption': [
+      { label: 'AF Recovery', metricType: 'af-recovery', tabKey: 'afrecovery' },
+    ],
+    'af-rewards': [
+      { label: 'AF Rewards', metricType: 'af-rewards', tabKey: 'afrewards' },
     ],
   };
 
@@ -161,7 +167,7 @@ const OnboardingPipeline = () => {
     setModalLoading(false);
     setModalError(null);
     // Reset page state when modal is closed
-    setTabbedPages({ agreement: 1, apps: 1, gofast: 1, afresults: 1 });
+    setTabbedPages({ agreement: 1, apps: 1, gofast: 1, afresults: 1, afrecovery: 1, afrewards: 1 });
   };
 
   // Show loading state when data is being fetched or when data doesn't exist
@@ -183,7 +189,7 @@ const OnboardingPipeline = () => {
   const metrics = [
     {
       title: 'Assessment Uptake',
-      value: `${Number(onboardingMetrics.assessmentUptake).toFixed(2)}%`,
+      value: onboardingMetrics.assessmentUptake !== null ? `${Number(onboardingMetrics.assessmentUptake).toFixed(2)}%` : null,
       description: '15-min Gofast ÷ Membership Agreements',
       icon: CheckCircle,
       color: 'text-green-600 dark:text-green-400',
@@ -191,31 +197,40 @@ const OnboardingPipeline = () => {
       metricType: 'assessment-uptake',
     },
     {
-      title: 'AF Results',
-      value: `${Number(onboardingMetrics.afResults).toFixed(2)}%`,
-      description: 'AF Results completion rate',
-      icon: Users,
-      color: 'text-blue-600 dark:text-blue-400',
-      bgColor: 'bg-blue-100 dark:bg-blue-900',
-      metricType: 'af-results',
-    },
-    {
-      title: 'Conversion Rate',
-      value: `${Number(onboardingMetrics.conversionRate).toFixed(2)}%`,
+      title: 'AF Result Conversion',
+      value: onboardingMetrics.conversionRate !== null ? `${Number(onboardingMetrics.conversionRate).toFixed(2)}%` : null,
       description: 'AF Results ÷ 15-min Gofast',
       icon: TrendingUp,
-      color: 'text-purple-600 dark:text-purple-400',
-      bgColor: 'bg-purple-100 dark:bg-purple-900',
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-100 dark:bg-blue-900',
       metricType: 'af-conversion',
     },
     {
       title: 'App Adoption Rate',
-      value: `${Number(onboardingMetrics.appAdoptionRate).toFixed(2)}%`,
+      value: onboardingMetrics.appAdoptionRate !== null ? `${Number(onboardingMetrics.appAdoptionRate).toFixed(2)}%` : null,
       description: 'AF App Downloads ÷ Membership Agreements',
       icon: Smartphone,
       color: 'text-orange-600 dark:text-orange-400',
       bgColor: 'bg-orange-100 dark:bg-orange-900',
       metricType: 'app-adoption',
+    },
+    {
+      title: 'AF Recovery Redemption',
+      value: onboardingMetrics.afRecoveryRedemption !== null ? `${Number(onboardingMetrics.afRecoveryRedemption).toFixed(2)}%` : null,
+      description: 'AF Recovery redemption rate',
+      icon: TrendingUp,
+      color: 'text-purple-600 dark:text-purple-400',
+      bgColor: 'bg-purple-100 dark:bg-purple-900',
+      metricType: 'af-recovery-redemption',
+    },
+    {
+      title: 'AF Rewards',
+      value: onboardingMetrics.afRewards !== null ? `${Number(onboardingMetrics.afRewards).toFixed(2)}%` : null,
+      description: 'AF Rewards engagement rate',
+      icon: CheckCircle,
+      color: 'text-indigo-600 dark:text-indigo-400',
+      bgColor: 'bg-indigo-100 dark:bg-indigo-900',
+      metricType: 'af-rewards',
     },
   ];
 
@@ -226,7 +241,7 @@ const OnboardingPipeline = () => {
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Member Onboarding Metrics</h3>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         {metrics.map((metric, index) => {
           const Icon = metric.icon;
           return (

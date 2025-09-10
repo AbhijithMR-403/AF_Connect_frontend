@@ -370,6 +370,8 @@ const dashboardSlice = createSlice({
           afResults: action.payload.af_results ?? null,
           conversionRate: action.payload.conversion_rate ?? null,
           appAdoptionRate: action.payload.app_adoption_rate ?? null,
+          afRecoveryRedemption: action.payload.af_recovery_redemption ?? null,
+          afRewards: action.payload.af_rewards ?? null,
         };
         state.lastUpdated = new Date().toISOString();
       })
