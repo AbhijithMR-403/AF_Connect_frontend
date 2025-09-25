@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { X, MapPin, Users, Calendar, Target, GripVertical } from 'lucide-react';
+import { X, MapPin, Users, Calendar, Target, GripVertical, Download } from 'lucide-react';
 
 const LocationWiseModal = ({ isOpen, onClose, data, loading, error, columnOrder }) => {
   if (!isOpen) return null;
@@ -83,9 +83,48 @@ const LocationWiseModal = ({ isOpen, onClose, data, loading, error, columnOrder 
   // Use current columns state
   const columns = currentColumns;
 
+  // Export functionality
+  const handleExport = useCallback(() => {
+    if (!data || data.length === 0) return;
+
+    // Create CSV content
+    const headers = columns.map(col => col.label).join(',');
+    const rows = data.map(location => 
+      columns.map(col => {
+        const value = location[col.key];
+        let displayValue = col.type === 'number' ? (value || 0) : (value || '');
+        
+        // Handle country display
+        if (col.key === 'country_display') {
+          displayValue = location.country_display || location.country_code || '';
+        }
+        
+        // Escape commas and quotes in CSV
+        if (typeof displayValue === 'string' && (displayValue.includes(',') || displayValue.includes('"'))) {
+          displayValue = `"${displayValue.replace(/"/g, '""')}"`;
+        }
+        
+        return displayValue;
+      }).join(',')
+    );
+
+    const csvContent = [headers, ...rows].join('\n');
+    
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `location-wise-analysis-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [data, columns]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-[95vw] w-full mx-4 max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
@@ -102,6 +141,15 @@ const LocationWiseModal = ({ isOpen, onClose, data, loading, error, columnOrder 
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleExport}
+              disabled={!data || data.length === 0}
+              className="px-3 py-2 text-sm bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-200 dark:hover:bg-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Export data to CSV"
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
+            </button>
             <button
               onClick={() => setCurrentColumns(defaultColumns)}
               className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
@@ -142,24 +190,25 @@ const LocationWiseModal = ({ isOpen, onClose, data, loading, error, columnOrder 
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-gray-700">
                     {columns.map((column, index) => (
-                      <th 
-                        key={`${column.key}-${index}`}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, index)}
-                        onDragOver={(e) => handleDragOver(e, index)}
-                        onDragLeave={handleDragLeave}
-                        onDrop={(e) => handleDrop(e, index)}
-                        onDragEnd={handleDragEnd}
-                        className={`py-3 px-4 font-semibold text-gray-900 dark:text-white select-none cursor-move transition-all duration-200 ${
-                          column.align === 'right' ? 'text-right' : 'text-left'
-                        } ${
-                          draggedColumn === index 
-                            ? 'opacity-50 bg-blue-100 dark:bg-blue-900' 
-                            : dragOverColumn === index 
-                              ? 'bg-blue-50 dark:bg-blue-800 border-l-4 border-blue-500' 
-                              : 'hover:bg-gray-50 dark:hover:bg-gray-700'
-                        }`}
-                      >
+                       <th 
+                         key={`${column.key}-${index}`}
+                         draggable
+                         onDragStart={(e) => handleDragStart(e, index)}
+                         onDragOver={(e) => handleDragOver(e, index)}
+                         onDragLeave={handleDragLeave}
+                         onDrop={(e) => handleDrop(e, index)}
+                         onDragEnd={handleDragEnd}
+                         style={column.key === 'location_name' ? { width: '140px', minWidth: '140px', height: 'auto' } : {}}
+                         className={`py-3 px-4 font-semibold text-gray-900 dark:text-white select-none cursor-move transition-all duration-200 ${
+                           column.align === 'right' ? 'text-right' : 'text-left'
+                         } ${
+                           draggedColumn === index 
+                             ? 'opacity-50 bg-blue-100 dark:bg-blue-900' 
+                             : dragOverColumn === index 
+                               ? 'bg-blue-50 dark:bg-blue-800 border-l-4 border-blue-500' 
+                               : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                         }`}
+                       >
                         <div className="flex items-center gap-2">
                           <GripVertical className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
                           <span>{column.label}</span>
@@ -180,22 +229,21 @@ const LocationWiseModal = ({ isOpen, onClose, data, loading, error, columnOrder 
                           const displayValue = column.type === 'number' ? formatNumber(value) : (value || '-');
                           
                           return (
-                            <td 
-                              key={colIndex}
-                              className={`py-3 px-4 ${
-                                column.align === 'right' ? 'text-right' : 'text-left'
-                              } ${
-                                column.key === 'location_name' ? 'whitespace-nowrap' : ''
-                              }`}
-                            >
+                             <td 
+                               key={colIndex}
+                               style={column.key === 'location_name' ? { width: '140px', minWidth: '140px', height: 'auto' } : {}}
+                               className={`py-3 px-4 ${
+                                 column.align === 'right' ? 'text-right' : 'text-left'
+                               }`}
+                             >
                               <span 
-                                className={`${
-                                  column.type === 'number' 
-                                    ? 'font-semibold text-gray-900 dark:text-white'
-                                    : column.key === 'location_name'
-                                      ? 'font-medium text-gray-900 dark:text-white block truncate max-w-xs'
-                                      : 'text-gray-600 dark:text-gray-400'
-                                }`}
+                               className={`${
+                                 column.type === 'number' 
+                                   ? 'font-semibold text-gray-900 dark:text-white'
+                                   : column.key === 'location_name'
+                                     ? 'font-medium text-gray-900 dark:text-white block break-words'
+                                     : 'text-gray-600 dark:text-gray-400'
+                               }`}
                                 title={column.key === 'location_name' ? (location.location_name || '-') : undefined}
                               >
                                 {column.key === 'country_display' 
