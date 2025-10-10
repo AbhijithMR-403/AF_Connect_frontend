@@ -9,18 +9,50 @@ const LocationWiseModal = ({ isOpen, onClose, data, loading, error, columnOrder 
     return num.toLocaleString();
   };
 
+  const formatPercentage = (num) => {
+    if (num === null || num === undefined || isNaN(num)) return '-';
+    return `${num.toFixed(1)}%`;
+  };
+
+  // Percentage calculation functions
+  const calculatePercentages = (location) => {
+    const leads = location.total_opps || 0;
+    const totalAppt = location.total_appointments || 0;
+    const showed = location.total_showed_appointments || 0;
+    const sale = location.njms_total || 0;
+    const contact = location.opportunities_with_shown_appointments || 0;
+
+    const apptContactPercentage = leads > 0 ? (totalAppt / leads) * 100 : 0;
+    const showUpPercentage = totalAppt > 0 ? (showed / totalAppt) * 100 : 0;
+    const apptSalePercentage = totalAppt > 0 ? (sale / totalAppt) * 100 : 0;
+    const contactSalePercentage = showed > 0 ? (sale / showed) * 100 : 0;
+
+    return {
+      ...location,
+      // Map API fields to component fields
+      leads: location.total_opps || 0,
+      total_appt: totalAppt,
+      showed: showed,
+      sale: sale,
+      appt_contact_percentage: apptContactPercentage,
+      show_up_percentage: showUpPercentage,
+      appt_sale_percentage: apptSalePercentage,
+      contact_sale_percentage: contactSalePercentage
+    };
+  };
+
   // Default column configuration
   const defaultColumns = [
-    { key: 'location_name', label: 'Location', type: 'text', align: 'left' },
-    { key: 'country_display', label: 'Country', type: 'text', align: 'left' },
-    { key: 'total_opps', label: 'Total Opportunities', type: 'number', align: 'right' },
-    { key: 'oppo_online', label: 'Opportunities Online', type: 'number', align: 'right' },
-    { key: 'oppo_offline', label: 'Opportunities Offline', type: 'number', align: 'right' },
-    { key: 'total_appointments', label: 'Total Appointments', type: 'number', align: 'right' },
-    { key: 'njms_total', label: 'Total NJMs', type: 'number', align: 'right' },
-    { key: 'njm_online', label: 'NJM Online', type: 'number', align: 'right' },
-    { key: 'njm_offline', label: 'NJM Offline', type: 'number', align: 'right' },
-    { key: 'total_no_lead_source_tag', label: 'No Lead Source Tag', type: 'number', align: 'right' }
+    { key: 'location_name', label: 'location_name', type: 'text', align: 'left' },
+    { key: 'country_display', label: 'country', type: 'text', align: 'left' },
+    { key: 'leads', label: 'Leads', type: 'number', align: 'right' },
+    { key: 'total_appt', label: 'Total APPT', type: 'number', align: 'right' },
+    { key: 'appt_contact_percentage', label: 'APPT - Contact %', type: 'percentage', align: 'right' },
+    { key: 'showed', label: 'Showed', type: 'number', align: 'right' },
+    { key: 'show_up_percentage', label: 'Show UP %', type: 'percentage', align: 'right' },
+    { key: 'appt_sale_percentage', label: 'APPT - Sale %', type: 'percentage', align: 'right' },
+    { key: 'contact_sale_percentage', label: 'Contact - Sale %', type: 'percentage', align: 'right' },
+    { key: 'sale', label: 'Sale', type: 'number', align: 'right' }
   ];
 
   // State for drag and drop
@@ -89,10 +121,19 @@ const LocationWiseModal = ({ isOpen, onClose, data, loading, error, columnOrder 
 
     // Create CSV content
     const headers = columns.map(col => col.label).join(',');
-    const rows = data.map(location => 
-      columns.map(col => {
-        const value = location[col.key];
-        let displayValue = col.type === 'number' ? (value || 0) : (value || '');
+    const rows = data.map(location => {
+      const locationWithPercentages = calculatePercentages(location);
+      return columns.map(col => {
+        const value = locationWithPercentages[col.key];
+        let displayValue;
+        
+        if (col.type === 'percentage') {
+          displayValue = value !== null && value !== undefined && !isNaN(value) ? `${value.toFixed(1)}%` : '';
+        } else if (col.type === 'number') {
+          displayValue = value || 0;
+        } else {
+          displayValue = value || '';
+        }
         
         // Handle country display
         if (col.key === 'country_display') {
@@ -105,8 +146,8 @@ const LocationWiseModal = ({ isOpen, onClose, data, loading, error, columnOrder 
         }
         
         return displayValue;
-      }).join(',')
-    );
+      }).join(',');
+    });
 
     const csvContent = [headers, ...rows].join('\n');
     
@@ -219,14 +260,23 @@ const LocationWiseModal = ({ isOpen, onClose, data, loading, error, columnOrder 
                 </thead>
                 <tbody>
                   {data.map((location, index) => {
+                    const locationWithPercentages = calculatePercentages(location);
                     return (
                       <tr 
                         key={location.location_id || index}
                         className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                       >
                         {columns.map((column, colIndex) => {
-                          const value = location[column.key];
-                          const displayValue = column.type === 'number' ? formatNumber(value) : (value || '-');
+                          const value = locationWithPercentages[column.key];
+                          let displayValue;
+                          
+                          if (column.type === 'percentage') {
+                            displayValue = formatPercentage(value);
+                          } else if (column.type === 'number') {
+                            displayValue = formatNumber(value);
+                          } else {
+                            displayValue = value || '-';
+                          }
                           
                           return (
                              <td 
@@ -238,7 +288,7 @@ const LocationWiseModal = ({ isOpen, onClose, data, loading, error, columnOrder 
                              >
                               <span 
                                className={`${
-                                 column.type === 'number' 
+                                 column.type === 'number' || column.type === 'percentage'
                                    ? 'font-semibold text-gray-900 dark:text-white'
                                    : column.key === 'location_name'
                                      ? 'font-medium text-gray-900 dark:text-white block break-words'
