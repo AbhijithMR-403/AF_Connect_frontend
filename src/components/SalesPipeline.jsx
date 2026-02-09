@@ -8,8 +8,9 @@ import ChartSection from './ChartSection';
 import TrendGraphs from './TrendGraphs';
 import OpportunityModal from './OpportunityModal';
 import LocationWiseModal from './LocationWiseModal';
+import ShownAppointmentsModal from './ShownAppointmentsModal';
 import NJMAnalysis from './NJMAnalysis';
-import { fetchOpportunities, normalizeOpportunitiesResponse } from '../services/api';
+import { fetchOpportunities, normalizeOpportunitiesResponse, fetchEvents } from '../services/api';
 import metricTypeConfigs from '../config/metricTypes';
 
 const PAGE_SIZE = 10;
@@ -42,8 +43,18 @@ const SalesPipeline = () => {
     error: null,
     metricType: '', // <-- add this
   });
+  const [shownAppointmentsModalData, setShownAppointmentsModalData] = useState({
+    isOpen: false,
+    title: '',
+    events: [],
+    totalCount: 0,
+    loading: false,
+    error: null,
+    queryParams: null,
+  });
   const [locationWiseModalOpen, setLocationWiseModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [shownAppointmentsPage, setShownAppointmentsPage] = useState(1);
   const [tabbedPages, setTabbedPages] = useState({ online: 1, offline: 1, njm: 1, lead: 1, appointment: 1, contacted: 1 });
   const [activeTab, setActiveTab] = useState(0);
 
@@ -122,6 +133,61 @@ const SalesPipeline = () => {
     // Limit
     if (count) params.limit = Math.min(count, 50);
     return params;
+  };
+
+  // Params for events API (shown appointments): pipeline=Sales, appointment_status=showed, same filters
+  const buildShownAppointmentsParams = (page = 1) => {
+    const params = {
+      appointment_status: 'showed',
+      page,
+    };
+    if (filters.assignedUser && Array.isArray(filters.assignedUser) && !filters.assignedUser.includes('all')) {
+      params.assigned_to = filters.assignedUser;
+    }
+    if (filters.country && Array.isArray(filters.country) && !filters.country.includes('all')) {
+      params.country = filters.country;
+    }
+    if (filters.club && Array.isArray(filters.club) && !filters.club.includes('all')) {
+      params.location = filters.club;
+    }
+    if (filters.calculatedStartDate && filters.calculatedEndDate) {
+      params.raw_created_at_min = filters.calculatedStartDate;
+      params.raw_created_at_max = filters.calculatedEndDate;
+    }
+    return params;
+  };
+
+  const openShownAppointmentsModal = async (title, page = 1) => {
+    // Ensure only one modal is visible
+    setModalData((prev) => ({ ...prev, isOpen: false }));
+    setShownAppointmentsModalData((prev) => ({
+      ...prev,
+      isOpen: true,
+      title,
+      loading: true,
+      error: null,
+      events: [],
+      totalCount: 0,
+      queryParams: null,
+    }));
+    try {
+      const params = buildShownAppointmentsParams(page);
+      const data = await fetchEvents(params);
+      setShownAppointmentsModalData((prev) => ({
+        ...prev,
+        loading: false,
+        events: Array.isArray(data?.results) ? data.results : [],
+        totalCount: data.count,
+        queryParams: { ...params },
+      }));
+      setShownAppointmentsPage(page);
+    } catch (error) {
+      setShownAppointmentsModalData((prev) => ({
+        ...prev,
+        loading: false,
+        error: error.message || 'Failed to fetch shown appointments',
+      }));
+    }
   };
 
   const openModal = async (metricType, title, count, page = 1, extraParams = {}) => {
@@ -412,6 +478,19 @@ const SalesPipeline = () => {
     setTabbedPages({ online: 1, offline: 1, njm: 1, lead: 1, appointment: 1 });
   };
 
+  const closeShownAppointmentsModal = () => {
+    setShownAppointmentsModalData({
+      isOpen: false,
+      title: '',
+      events: [],
+      totalCount: 0,
+      loading: false,
+      error: null,
+      queryParams: null,
+    });
+    setShownAppointmentsPage(1);
+  };
+
   const openLocationWiseModal = async () => {
     setLocationWiseModalOpen(true);
     try {
@@ -532,12 +611,12 @@ const SalesPipeline = () => {
               </div>
             </button>
             <ClickableMetricCard
-              title="Total Shown Appointments' Opportunities"
+              title="Total Shown Appointments"
               value={Math.round(salesMetrics.appointment_showed)}
               icon={Eye}
               iconColor="text-emerald-600 dark:text-emerald-400"
               iconBgColor="bg-emerald-100 dark:bg-emerald-900"
-              onClick={() => openModal('shown-appointments', 'Total Shown Appointments - GHL Opportunities', Math.round(salesMetrics.totalAppointments * 0.65))}
+              onClick={() => openShownAppointmentsModal('Total Shown Appointments - GHL Opportunities')}
             />
           </div>
 
@@ -735,6 +814,19 @@ const SalesPipeline = () => {
           onTabPageChange={handleTabPageChange}
           tabbedPages={tabbedPages}
           queryParams={modalData.queryParams}
+        />
+
+        <ShownAppointmentsModal
+          isOpen={shownAppointmentsModalData.isOpen}
+          onClose={closeShownAppointmentsModal}
+          title={shownAppointmentsModalData.title}
+          events={shownAppointmentsModalData.events}
+          totalCount={shownAppointmentsModalData.totalCount}
+          loading={shownAppointmentsModalData.loading}
+          error={shownAppointmentsModalData.error}
+          currentPage={shownAppointmentsPage}
+          pageSize={PAGE_SIZE}
+          onPageChange={(page) => openShownAppointmentsModal(shownAppointmentsModalData.title, page)}
         />
 
         {/* Location-wise Modal */}

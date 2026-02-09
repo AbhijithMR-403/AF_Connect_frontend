@@ -106,6 +106,64 @@ export const fetchOpportunities = async (params = {}) => {
 };
 
 /**
+ * Fetch events from the API (e.g. shown appointments) with query parameters.
+ * @param {Object} params - Query parameters: pipeline, appointment_status, raw_created_at_min, raw_created_at_max, page, assigned_to?, country?, location?
+ * @returns {Promise<Object>} - The response JSON with count, next, previous, results.
+ */
+export const fetchEvents = async (params = {}) => {
+  const queryString = buildQueryString(params);
+  const url = `${config.api.baseUrl}/events/${queryString ? `?${queryString}` : ''}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch events');
+  }
+
+  return response.json();
+};
+
+/**
+ * Normalize events API response to the same shape as opportunities for reuse in OpportunityModal.
+ * @param {Object} apiResponse - The raw API response (with .results array)
+ * @param {Array} countries - Array of country objects with id and name properties
+ * @returns {Array} - Array of normalized objects compatible with opportunity display
+ */
+export function normalizeEventsResponse(apiResponse, countries = []) {
+  if (!apiResponse || !Array.isArray(apiResponse.results)) return [];
+
+  const countryMap = {};
+  (countries || []).forEach((c) => {
+    countryMap[c.id] = c.name;
+  });
+
+  return apiResponse.results.map((evt) => ({
+    id: evt.id,
+    name: evt.title || '-',
+    value: '-',
+    assignedTo: evt.assigned_user_full_name || '-',
+    pipeline: 'Sales',
+    contact: evt.contact_full_name || '-',
+    contactEmail: '-',
+    contactPhone: '-',
+    country: countryMap[evt.country] || evt.country || '-',
+    location: evt.location || '-',
+    location_name: evt.location_name || '-',
+    stage: evt.appointment_status || '-',
+    status: evt.status || '-',
+    createdDate: evt.raw_date_added ? new Date(evt.raw_date_added).toLocaleDateString() : '-',
+    lastActivity: '-',
+    source: '-',
+    raw: evt,
+  }));
+}
+
+/**
  * Normalize the API response for opportunities to a flat, UI-friendly schema.
  * @param {Object} apiResponse - The raw API response (with .results array)
  * @param {Array} countries - Array of country objects with id and name properties
@@ -297,7 +355,7 @@ export const generateDashboardData = async (filters, activeSection = 0) => {
     });
     
     // Debug: Log the API response to see what we're getting
-    const appointment_showed = appointmentStatsResponse?.opportunities_with_shown_appointments ?? 0;
+    const appointment_showed = appointmentStatsResponse?.total_showed_appointments ?? 0;
     // Use the dedicated sales metrics endpoint response
     const totalLeads = salesMetricsResponse?.total_leads ?? null;
     // Use appointment stats for total appointments
