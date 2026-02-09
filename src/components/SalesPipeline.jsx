@@ -151,8 +151,8 @@ const SalesPipeline = () => {
       params.location = filters.club;
     }
     if (filters.calculatedStartDate && filters.calculatedEndDate) {
-      params.raw_created_at_min = filters.calculatedStartDate;
-      params.raw_created_at_max = filters.calculatedEndDate;
+      params.raw_start_time_min = filters.calculatedStartDate;
+      params.raw_start_time_max = filters.calculatedEndDate;
     }
     return params;
   };
