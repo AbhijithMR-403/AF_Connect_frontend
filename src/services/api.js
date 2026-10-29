@@ -1,3 +1,4 @@
+import { apiFetch } from './http.js';
 import { config } from '../config/env.js';
 import { calculateDateRangeParams } from '../store/slices/dashboardSlice.js';
 import { store } from '../store';
@@ -63,7 +64,7 @@ const convertPipelineCategoriesToNames = (pipelineCategories) => {
 
 export const fetchUsers = async () => {
   try {
-    const response = await fetch(`${config.api.baseUrl}/ghlusers/`, {
+    const response = await apiFetch(`${config.api.baseUrl}/ghlusers/`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -91,7 +92,7 @@ export const fetchOpportunities = async (params = {}) => {
   const queryString = buildQueryString(params);
   const url = `${config.api.baseUrl}/opportunities/${queryString ? `?${queryString}` : ''}`;
 
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -114,7 +115,7 @@ export const fetchEvents = async (params = {}) => {
   const queryString = buildQueryString(params);
   const url = `${config.api.baseUrl}/events/${queryString ? `?${queryString}` : ''}`;
 
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -231,7 +232,7 @@ export function sumTrend(trend) {
  * @returns {Promise<{ clubs: Array, countries: Array }>} - Object with clubs and countries arrays
  */
 export const fetchClubsAndCountries = async () => {
-  const response = await fetch(`${config.api.baseUrl}/locations/`, {
+  const response = await apiFetch(`${config.api.baseUrl}/locations/`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -495,7 +496,7 @@ export const fetchMemberOnboardingMetrics = async (filters) => {
   const queryString = buildQueryString(apiParams);
   const url = `${config.api.baseUrl}/opportunity_dash/member-onboarding-metrics/${queryString ? `?${queryString}` : ''}`;
 
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -546,7 +547,7 @@ export const fetchDefaulterMetrics = async (filters) => {
   const queryString = buildQueryString(apiParams);
   const url = `${config.api.baseUrl}/opportunity_dash/defaulter-metrics/${queryString ? `?${queryString}` : ''}`;
 
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -597,7 +598,7 @@ export const fetchLocationStats = async (filters) => {
   const queryString = buildQueryString(apiParams);
   const url = `${config.api.baseUrl}/opportunity_dash/location-stats/${queryString ? `?${queryString}` : ''}`;
 
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -648,7 +649,7 @@ export const fetchLocationWiseData = async (filters) => {
   const queryString = buildQueryString(apiParams);
   const url = `${config.api.baseUrl}/opportunity_dash/location-vise/${queryString ? `?${queryString}` : ''}`;
 
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -699,7 +700,7 @@ export const fetchSalesMetrics = async (filters) => {
   const queryString = buildQueryString(apiParams);
   const url = `${config.api.baseUrl}/opportunity_dash/sales-metrics/${queryString ? `?${queryString}` : ''}`;
 
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -750,7 +751,7 @@ export const fetchTrendData = async (filters) => {
   const queryString = buildQueryString(apiParams);
   const url = `${config.api.baseUrl}/opportunity_dash/trend-data/${queryString ? `?${queryString}` : ''}`;
 
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -801,7 +802,7 @@ export const fetchAppointmentStats = async (filters) => {
   const queryString = buildQueryString(apiParams);
   const url = `${config.api.baseUrl}/opportunity_dash/appointment-stats/${queryString ? `?${queryString}` : ''}`;
 
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -854,7 +855,7 @@ export const fetchBreakdownData = async (filters) => {
   const queryString = buildQueryString(apiParams);
   const url = `${config.api.baseUrl}/opportunity_dash/breakdown-data/${queryString ? `?${queryString}` : ''}`;
 
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -895,7 +896,7 @@ export const fetchValidLeadSources = async (filters = {}) => {
     const baseUrl = 'https://reports.anytimefitnesscorporate.com/api';
     const url = `${baseUrl}/opportunity_dash/valid-lead-source/${queryString ? `?${queryString}` : ''}`;
 
-    const response = await fetch(url, {
+    const response = await apiFetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -948,7 +949,7 @@ export const exportOpportunitiesCsv = async (params = {}) => {
   const generateUrl = `${config.api.baseUrl}/opportunities/generate_csv/${queryString ? `?${queryString}` : ''}`;
 
   // Step 1: Generate CSV file (using backend as proxy)
-  const generateResponse = await fetch(generateUrl, {
+  const generateResponse = await apiFetch(generateUrl, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -1000,7 +1001,7 @@ export const exportOpportunitiesCsvDirect = async (params = {}) => {
   const generateUrl = `https://reports.anytimefitnesscorporate.com/api/opportunities/generate_csv/${queryString ? `?${queryString}` : ''}`;
 
   // Step 1: Generate CSV file
-  const generateResponse = await fetch(generateUrl, {
+  const generateResponse = await apiFetch(generateUrl, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -1034,7 +1035,7 @@ export const exportOpportunitiesCsvDirect = async (params = {}) => {
 export const fetchPipelineNames = async () => {
   try {
     // Use the new API endpoint as specified by the user
-    const response = await fetch('https://reports.anytimefitnesscorporate.com/api/pipelines/names/', {
+    const response = await apiFetch('https://reports.anytimefitnesscorporate.com/api/pipelines/names/', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -1064,7 +1065,7 @@ export const fetchPipelineNames = async () => {
 // Function to fetch pipeline stages (if needed in the future)
 export const fetchPipelineStages = async () => {
   try {
-    const response = await fetch('https://reports.anytimefitnesscorporate.com/api/pipelines/names/', {
+    const response = await apiFetch('https://reports.anytimefitnesscorporate.com/api/pipelines/names/', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

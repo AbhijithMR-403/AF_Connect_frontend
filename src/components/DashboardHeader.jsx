@@ -3,8 +3,9 @@ import { Activity, Download, FileText, RefreshCw, Moon, Sun } from 'lucide-react
 import { useAppSelector, useAppDispatch } from '../hooks';
 import { loadDashboardData } from '../store/slices/dashboardSlice';
 import { store } from '../store';
+import UserMenu from './auth/UserMenu';
 
-const DashboardHeader = () => {
+const DashboardHeader = ({ user, onLogout }) => {
   const dispatch = useAppDispatch();
   const { loading, lastUpdated, filters } = useAppSelector((state) => state.dashboard);
   const [darkMode, setDarkMode] = useState(false);
@@ -128,6 +129,8 @@ const DashboardHeader = () => {
               <RefreshCw className={`w-4 h-4 flex-shrink-0 ${loading ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
             </button>
+
+            {user && <UserMenu user={user} onLogout={onLogout} />}
           </div>
         </div>
       </div>
